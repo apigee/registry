@@ -17,14 +17,11 @@ package delete
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
 
@@ -43,8 +40,8 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
-			args[0] = c.FQName(args[0])
-			client, err := connection.NewRegistryClientWithSettings(ctx, c)
+			pattern := c.FQName(args[0])
+			registryClient, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				return err
 			}
@@ -55,20 +52,24 @@ func Command() *cobra.Command {
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
-			h := &deleteHandler{
-				ctx:         ctx,
-				client:      client,
-				adminClient: adminClient,
-				name:        args[0],
-				filter:      filter,
-				force:       force,
-				taskQueue:   taskQueue,
+			// Create the visitor that will perform deletion.
+			v := &deletionVisitor{
+				registryClient: registryClient,
+				adminClient:    adminClient,
+				force:          force,
+				taskQueue:      taskQueue,
 			}
-			err = h.traverse()
-			if err != nil {
+			// Visit the selected resources.
+			if err = core.Visit(ctx, v, core.VisitorOptions{
+				RegistryClient:          registryClient,
+				AdminClient:             adminClient,
+				Pattern:                 pattern,
+				Filter:                  filter,
+				AllowUnavailableProject: false,
+			}); err != nil {
 				return err
 			}
-			if h.count == 0 {
+			if v.count == 0 {
 				return errors.New("no resources found")
 			}
 			return nil
@@ -81,180 +82,101 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-type deleteHandler struct {
-	ctx         context.Context
-	client      connection.RegistryClient
-	adminClient connection.AdminClient
-	name        string
-	filter      string
-	force       bool
-	count       int
-	taskQueue   chan<- core.Task
+type deletionVisitor struct {
+	registryClient connection.RegistryClient
+	adminClient    connection.AdminClient
+	force          bool
+	count          int
+	taskQueue      chan<- core.Task
 }
 
-func (h *deleteHandler) traverse() error {
-	// Define aliases to simplify the subsequent code.
-	name := h.name
-	ctx := h.ctx
-	client := h.client
-	adminClient := h.adminClient
-	filter := h.filter
-
-	// First try to match collection names.
-	if project, err := names.ParseProjectCollection(name); err == nil {
-		return core.ListProjects(ctx, adminClient, project, filter, h.projectHandler())
-	} else if api, err := names.ParseApiCollection(name); err == nil {
-		return core.ListAPIs(ctx, client, api, filter, h.apiHandler())
-	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
-		return core.ListDeployments(ctx, client, deployment, filter, h.apiDeploymentHandler())
-	} else if rev, err := names.ParseDeploymentRevisionCollection(name); err == nil {
-		return core.ListDeploymentRevisions(ctx, client, rev, filter, h.apiDeploymentRevisionHandler())
-	} else if version, err := names.ParseVersionCollection(name); err == nil {
-		return core.ListVersions(ctx, client, version, filter, h.apiVersionHandler())
-	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		return core.ListSpecs(ctx, client, spec, filter, false, h.apiSpecHandler())
-	} else if rev, err := names.ParseSpecRevisionCollection(name); err == nil {
-		return core.ListSpecRevisions(ctx, client, rev, filter, false, h.apiSpecRevisionHandler())
-	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
-		return core.ListArtifacts(ctx, client, artifact, filter, false, h.artifactHandler())
-	}
-
-	// Then try to match resource names containing wildcards, these also are treated as collections.
-	if strings.Contains(name, "/-") || strings.Contains(name, "@-") {
-		if project, err := names.ParseProject(name); err == nil {
-			return core.ListProjects(ctx, adminClient, project, filter, h.projectHandler())
-		} else if api, err := names.ParseApi(name); err == nil {
-			return core.ListAPIs(ctx, client, api, filter, h.apiHandler())
-		} else if deployment, err := names.ParseDeployment(name); err == nil {
-			return core.ListDeployments(ctx, client, deployment, filter, h.apiDeploymentHandler())
-		} else if rev, err := names.ParseDeploymentRevision(name); err == nil {
-			return core.ListDeploymentRevisions(ctx, client, rev, filter, h.apiDeploymentRevisionHandler())
-		} else if version, err := names.ParseVersion(name); err == nil {
-			return core.ListVersions(ctx, client, version, filter, h.apiVersionHandler())
-		} else if spec, err := names.ParseSpec(name); err == nil {
-			return core.ListSpecs(ctx, client, spec, filter, false, h.apiSpecHandler())
-		} else if rev, err := names.ParseSpecRevision(name); err == nil {
-			return core.ListSpecRevisions(ctx, client, rev, filter, false, h.apiSpecRevisionHandler())
-		} else if artifact, err := names.ParseArtifact(name); err == nil {
-			return core.ListArtifacts(ctx, client, artifact, filter, false, h.artifactHandler())
-		}
-		return fmt.Errorf("unsupported pattern %+v", name)
-	}
-
-	// If we get here, name designates an individual resource to be displayed.
-	// So if a filter was specified, that's an error.
-	if filter != "" {
-		return errors.New("--filter must not be specified for a non-collection resource")
-	}
-
-	if project, err := names.ParseProject(name); err == nil {
-		return core.GetProject(ctx, adminClient, project, false, h.projectHandler())
-	} else if api, err := names.ParseApi(name); err == nil {
-		return core.GetAPI(ctx, client, api, h.apiHandler())
-	} else if deployment, err := names.ParseDeployment(name); err == nil {
-		return core.GetDeployment(ctx, client, deployment, h.apiDeploymentHandler())
-	} else if deployment, err := names.ParseDeploymentRevision(name); err == nil {
-		return core.GetDeploymentRevision(ctx, client, deployment, h.apiDeploymentRevisionHandler())
-	} else if version, err := names.ParseVersion(name); err == nil {
-		return core.GetVersion(ctx, client, version, h.apiVersionHandler())
-	} else if spec, err := names.ParseSpec(name); err == nil {
-		return core.GetSpec(ctx, client, spec, false, h.apiSpecHandler())
-	} else if spec, err := names.ParseSpecRevision(name); err == nil {
-		return core.GetSpecRevision(ctx, client, spec, false, h.apiSpecRevisionHandler())
-	} else if artifact, err := names.ParseArtifact(name); err == nil {
-		return core.GetArtifact(ctx, client, artifact, false, h.artifactHandler())
-	} else {
-		return fmt.Errorf("unsupported pattern %+v", name)
-	}
+func (v *deletionVisitor) enqueue(task core.Task) {
+	v.count++
+	v.taskQueue <- task
 }
 
-func (h *deleteHandler) enqueue(task core.Task) {
-	h.count++
-	h.taskQueue <- task
-}
-
-func (h *deleteHandler) projectHandler() func(message *rpc.Project) error {
+func (v *deletionVisitor) ProjectHandler() core.ProjectHandler {
 	return func(message *rpc.Project) error {
-		h.enqueue(&deleteProjectTask{
+		v.enqueue(&deleteProjectTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.adminClient,
-			force:      h.force,
+			client:     v.adminClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) apiHandler() func(message *rpc.Api) error {
+func (v *deletionVisitor) ApiHandler() core.ApiHandler {
 	return func(message *rpc.Api) error {
-		h.enqueue(&deleteApiTask{
+		v.enqueue(&deleteApiTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
-			force:      h.force,
+			client:     v.registryClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
+func (v *deletionVisitor) VersionHandler() core.VersionHandler {
 	return func(message *rpc.ApiVersion) error {
-		h.enqueue(&deleteApiVersionTask{
+		v.enqueue(&deleteApiVersionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
-			force:      h.force,
+			client:     v.registryClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) error {
+func (v *deletionVisitor) DeploymentHandler() core.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
-		h.enqueue(&deleteApiDeploymentTask{
+		v.enqueue(&deleteApiDeploymentTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
-			force:      h.force,
+			client:     v.registryClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) apiDeploymentRevisionHandler() func(message *rpc.ApiDeployment) error {
+func (v *deletionVisitor) DeploymentRevisionHandler() core.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
-		h.enqueue(&deleteApiDeploymentRevisionTask{
+		v.enqueue(&deleteApiDeploymentRevisionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
-			force:      h.force,
+			client:     v.registryClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
+func (v *deletionVisitor) SpecHandler() core.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
-		h.enqueue(&deleteApiSpecTask{
+		v.enqueue(&deleteApiSpecTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
-			force:      h.force,
+			client:     v.registryClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) apiSpecRevisionHandler() func(message *rpc.ApiSpec) error {
+func (v *deletionVisitor) SpecRevisionHandler() core.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
-		h.enqueue(&deleteApiSpecRevisionTask{
+		v.enqueue(&deleteApiSpecRevisionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
-			force:      h.force,
+			client:     v.registryClient,
+			force:      v.force,
 		})
 		return nil
 	}
 }
 
-func (h *deleteHandler) artifactHandler() func(message *rpc.Artifact) error {
+func (v *deletionVisitor) ArtifactHandler() core.ArtifactHandler {
 	return func(message *rpc.Artifact) error {
-		h.enqueue(&deleteArtifactTask{
+		v.enqueue(&deleteArtifactTask{
 			deleteTask: deleteTask{resourceName: message.Name},
-			client:     h.client,
+			client:     v.registryClient,
 		})
 		return nil
 	}
