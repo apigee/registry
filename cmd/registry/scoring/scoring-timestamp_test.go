@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -24,7 +24,7 @@ type fakeArtifactClient struct {
 	artifacts []*rpc.Artifact
 }
 
-func (f *fakeArtifactClient) GetArtifact(ctx context.Context, artifact names.Artifact, getContents bool, handler core.ArtifactHandler) error {
+func (f *fakeArtifactClient) GetArtifact(ctx context.Context, artifact names.Artifact, getContents bool, handler visitor.ArtifactHandler) error {
 	for _, a := range f.artifacts {
 		if a.GetName() == artifact.String() {
 			err := handler(a)
@@ -54,7 +54,7 @@ func (f *fakeArtifactClient) SetArtifact(ctx context.Context, artifact *rpc.Arti
 }
 
 // This implementation doesn't support filter functionality
-func (f *fakeArtifactClient) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler core.ArtifactHandler) error {
+func (f *fakeArtifactClient) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler visitor.ArtifactHandler) error {
 	for _, a := range f.artifacts {
 		name, _ := names.ParseArtifact(a.GetName())
 		if strings.Contains(filter, name.Parent()) || (artifact.ArtifactID() != "-" && name.ArtifactID() != artifact.ArtifactID()) {

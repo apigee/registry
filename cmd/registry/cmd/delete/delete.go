@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
@@ -60,7 +61,7 @@ func Command() *cobra.Command {
 				taskQueue:      taskQueue,
 			}
 			// Visit the selected resources.
-			if err = core.Visit(ctx, v, core.VisitorOptions{
+			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
 				RegistryClient:          registryClient,
 				AdminClient:             adminClient,
 				Pattern:                 pattern,
@@ -95,7 +96,7 @@ func (v *deletionVisitor) enqueue(task core.Task) {
 	v.taskQueue <- task
 }
 
-func (v *deletionVisitor) ProjectHandler() core.ProjectHandler {
+func (v *deletionVisitor) ProjectHandler() visitor.ProjectHandler {
 	return func(message *rpc.Project) error {
 		v.enqueue(&deleteProjectTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -106,7 +107,7 @@ func (v *deletionVisitor) ProjectHandler() core.ProjectHandler {
 	}
 }
 
-func (v *deletionVisitor) ApiHandler() core.ApiHandler {
+func (v *deletionVisitor) ApiHandler() visitor.ApiHandler {
 	return func(message *rpc.Api) error {
 		v.enqueue(&deleteApiTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -117,7 +118,7 @@ func (v *deletionVisitor) ApiHandler() core.ApiHandler {
 	}
 }
 
-func (v *deletionVisitor) VersionHandler() core.VersionHandler {
+func (v *deletionVisitor) VersionHandler() visitor.VersionHandler {
 	return func(message *rpc.ApiVersion) error {
 		v.enqueue(&deleteApiVersionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -128,7 +129,7 @@ func (v *deletionVisitor) VersionHandler() core.VersionHandler {
 	}
 }
 
-func (v *deletionVisitor) DeploymentHandler() core.DeploymentHandler {
+func (v *deletionVisitor) DeploymentHandler() visitor.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		v.enqueue(&deleteApiDeploymentTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -139,7 +140,7 @@ func (v *deletionVisitor) DeploymentHandler() core.DeploymentHandler {
 	}
 }
 
-func (v *deletionVisitor) DeploymentRevisionHandler() core.DeploymentHandler {
+func (v *deletionVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		v.enqueue(&deleteApiDeploymentRevisionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -150,7 +151,7 @@ func (v *deletionVisitor) DeploymentRevisionHandler() core.DeploymentHandler {
 	}
 }
 
-func (v *deletionVisitor) SpecHandler() core.SpecHandler {
+func (v *deletionVisitor) SpecHandler() visitor.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		v.enqueue(&deleteApiSpecTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -161,7 +162,7 @@ func (v *deletionVisitor) SpecHandler() core.SpecHandler {
 	}
 }
 
-func (v *deletionVisitor) SpecRevisionHandler() core.SpecHandler {
+func (v *deletionVisitor) SpecRevisionHandler() visitor.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		v.enqueue(&deleteApiSpecRevisionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
@@ -172,7 +173,7 @@ func (v *deletionVisitor) SpecRevisionHandler() core.SpecHandler {
 	}
 }
 
-func (v *deletionVisitor) ArtifactHandler() core.ArtifactHandler {
+func (v *deletionVisitor) ArtifactHandler() visitor.ArtifactHandler {
 	return func(message *rpc.Artifact) error {
 		v.enqueue(&deleteArtifactTask{
 			deleteTask: deleteTask{resourceName: message.Name},

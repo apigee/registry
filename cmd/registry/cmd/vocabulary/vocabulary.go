@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -61,7 +62,7 @@ func collectInputVocabularies(ctx context.Context, client connection.RegistryCli
 			continue
 		}
 
-		err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
+		err = visitor.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
 			messageType, err := types.MessageTypeForMimeType(artifact.GetMimeType())
 			if err != nil || messageType != "gnostic.metrics.Vocabulary" {
 				log.Debugf(ctx, "Skipping, not a vocabulary: %s", artifact.Name)

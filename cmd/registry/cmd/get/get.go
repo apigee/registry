@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +62,7 @@ func Command() *cobra.Command {
 				output:         output,
 			}
 			// Visit the selected resources.
-			if err = core.Visit(ctx, v, core.VisitorOptions{
+			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
 				RegistryClient:          registryClient,
 				AdminClient:             adminClient,
 				Pattern:                 pattern,
@@ -88,7 +89,7 @@ type getVisitor struct {
 	results        []interface{} // result values to be returned in a single message
 }
 
-func (v *getVisitor) ProjectHandler() core.ProjectHandler {
+func (v *getVisitor) ProjectHandler() visitor.ProjectHandler {
 	return func(message *rpc.Project) error {
 		switch v.output {
 		case "name":
@@ -108,7 +109,7 @@ func (v *getVisitor) ProjectHandler() core.ProjectHandler {
 	}
 }
 
-func (v *getVisitor) ApiHandler() core.ApiHandler {
+func (v *getVisitor) ApiHandler() visitor.ApiHandler {
 	return func(message *rpc.Api) error {
 		switch v.output {
 		case "name":
@@ -128,7 +129,7 @@ func (v *getVisitor) ApiHandler() core.ApiHandler {
 	}
 }
 
-func (v *getVisitor) VersionHandler() core.VersionHandler {
+func (v *getVisitor) VersionHandler() visitor.VersionHandler {
 	return func(message *rpc.ApiVersion) error {
 		switch v.output {
 		case "name":
@@ -148,7 +149,7 @@ func (v *getVisitor) VersionHandler() core.VersionHandler {
 	}
 }
 
-func (v *getVisitor) DeploymentHandler() core.DeploymentHandler {
+func (v *getVisitor) DeploymentHandler() visitor.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		switch v.output {
 		case "name":
@@ -168,11 +169,11 @@ func (v *getVisitor) DeploymentHandler() core.DeploymentHandler {
 	}
 }
 
-func (v *getVisitor) DeploymentRevisionHandler() core.DeploymentHandler {
+func (v *getVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler {
 	return v.DeploymentHandler()
 }
 
-func (v *getVisitor) SpecHandler() core.SpecHandler {
+func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		switch v.output {
 		case "name":
@@ -183,7 +184,7 @@ func (v *getVisitor) SpecHandler() core.SpecHandler {
 			if len(v.results) > 0 {
 				return fmt.Errorf("contents can be gotten for at most one spec")
 			}
-			if err := core.FetchSpecContents(v.ctx, v.registryClient, message); err != nil {
+			if err := visitor.FetchSpecContents(v.ctx, v.registryClient, message); err != nil {
 				return err
 			}
 			contents := message.GetContents()
@@ -205,11 +206,11 @@ func (v *getVisitor) SpecHandler() core.SpecHandler {
 	}
 }
 
-func (v *getVisitor) SpecRevisionHandler() core.SpecHandler {
+func (v *getVisitor) SpecRevisionHandler() visitor.SpecHandler {
 	return v.SpecHandler()
 }
 
-func (v *getVisitor) ArtifactHandler() core.ArtifactHandler {
+func (v *getVisitor) ArtifactHandler() visitor.ArtifactHandler {
 	return func(message *rpc.Artifact) error {
 		switch v.output {
 		case "name":
@@ -220,13 +221,13 @@ func (v *getVisitor) ArtifactHandler() core.ArtifactHandler {
 			if len(v.results) > 0 {
 				return fmt.Errorf("contents can be gotten for at most one artifact")
 			}
-			if err := core.FetchArtifactContents(v.ctx, v.registryClient, message); err != nil {
+			if err := visitor.FetchArtifactContents(v.ctx, v.registryClient, message); err != nil {
 				return err
 			}
 			v.results = append(v.results, message.GetContents())
 			return nil
 		case "yaml":
-			if err := core.FetchArtifactContents(v.ctx, v.registryClient, message); err != nil {
+			if err := visitor.FetchArtifactContents(v.ctx, v.registryClient, message); err != nil {
 				return err
 			}
 			artifact, err := patch.NewArtifact(v.ctx, v.registryClient, message)

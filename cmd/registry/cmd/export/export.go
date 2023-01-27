@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -63,7 +64,7 @@ func Command() *cobra.Command {
 				taskQueue:      taskQueue,
 			}
 			// Visit the selected resources.
-			if err = core.Visit(ctx, v, core.VisitorOptions{
+			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
 				RegistryClient:          registryClient,
 				AdminClient:             adminClient,
 				Pattern:                 pattern,
@@ -95,7 +96,7 @@ type exportVisitor struct {
 	taskQueue      chan<- core.Task
 }
 
-func (h *exportVisitor) ProjectHandler() core.ProjectHandler {
+func (h *exportVisitor) ProjectHandler() visitor.ProjectHandler {
 	return func(message *rpc.Project) error {
 		h.count++
 		name, err := names.ParseProject(message.Name)
@@ -106,7 +107,7 @@ func (h *exportVisitor) ProjectHandler() core.ProjectHandler {
 	}
 }
 
-func (h *exportVisitor) ApiHandler() core.ApiHandler {
+func (h *exportVisitor) ApiHandler() visitor.ApiHandler {
 	return func(message *rpc.Api) error {
 		h.count++
 		name, err := names.ParseApi(message.Name)
@@ -117,7 +118,7 @@ func (h *exportVisitor) ApiHandler() core.ApiHandler {
 	}
 }
 
-func (h *exportVisitor) VersionHandler() core.VersionHandler {
+func (h *exportVisitor) VersionHandler() visitor.VersionHandler {
 	return func(message *rpc.ApiVersion) error {
 		h.count++
 		name, err := names.ParseVersion(message.Name)
@@ -128,7 +129,7 @@ func (h *exportVisitor) VersionHandler() core.VersionHandler {
 	}
 }
 
-func (h *exportVisitor) DeploymentHandler() core.DeploymentHandler {
+func (h *exportVisitor) DeploymentHandler() visitor.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		h.count++
 		name, err := names.ParseDeployment(message.Name)
@@ -139,13 +140,13 @@ func (h *exportVisitor) DeploymentHandler() core.DeploymentHandler {
 	}
 }
 
-func (h *exportVisitor) DeploymentRevisionHandler() core.DeploymentHandler {
+func (h *exportVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		return errors.New("exports of specific revisions are not supported")
 	}
 }
 
-func (h *exportVisitor) SpecHandler() core.SpecHandler {
+func (h *exportVisitor) SpecHandler() visitor.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		h.count++
 		name, err := names.ParseSpec(message.Name)
@@ -156,13 +157,13 @@ func (h *exportVisitor) SpecHandler() core.SpecHandler {
 	}
 }
 
-func (h *exportVisitor) SpecRevisionHandler() core.SpecHandler {
+func (h *exportVisitor) SpecRevisionHandler() visitor.SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		return errors.New("exports of specific revisions are not supported")
 	}
 }
 
-func (h *exportVisitor) ArtifactHandler() core.ArtifactHandler {
+func (h *exportVisitor) ArtifactHandler() visitor.ArtifactHandler {
 	return func(message *rpc.Artifact) error {
 		h.count++
 		name, err := names.ParseArtifact(message.Name)

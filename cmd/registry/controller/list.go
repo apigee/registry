@@ -3,38 +3,38 @@ package controller
 import (
 	"context"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
 type listingClient interface {
-	ListAPIs(context.Context, names.Api, string, core.ApiHandler) error
-	ListVersions(context.Context, names.Version, string, core.VersionHandler) error
-	ListSpecs(context.Context, names.Spec, string, core.SpecHandler) error
-	ListArtifacts(context.Context, names.Artifact, string, bool, core.ArtifactHandler) error
+	ListAPIs(context.Context, names.Api, string, visitor.ApiHandler) error
+	ListVersions(context.Context, names.Version, string, visitor.VersionHandler) error
+	ListSpecs(context.Context, names.Spec, string, visitor.SpecHandler) error
+	ListArtifacts(context.Context, names.Artifact, string, bool, visitor.ArtifactHandler) error
 }
 
 type RegistryLister struct {
 	RegistryClient connection.RegistryClient
 }
 
-func (r *RegistryLister) ListAPIs(ctx context.Context, api names.Api, filter string, handler core.ApiHandler) error {
-	return core.ListAPIs(ctx, r.RegistryClient, api, filter, handler)
+func (r *RegistryLister) ListAPIs(ctx context.Context, api names.Api, filter string, handler visitor.ApiHandler) error {
+	return visitor.ListAPIs(ctx, r.RegistryClient, api, filter, handler)
 }
 
-func (r *RegistryLister) ListVersions(ctx context.Context, version names.Version, filter string, handler core.VersionHandler) error {
-	return core.ListVersions(ctx, r.RegistryClient, version, filter, handler)
+func (r *RegistryLister) ListVersions(ctx context.Context, version names.Version, filter string, handler visitor.VersionHandler) error {
+	return visitor.ListVersions(ctx, r.RegistryClient, version, filter, handler)
 }
 
-func (r *RegistryLister) ListSpecs(ctx context.Context, spec names.Spec, filter string, handler core.SpecHandler) error {
-	return core.ListSpecs(ctx, r.RegistryClient, spec, filter, false, handler)
+func (r *RegistryLister) ListSpecs(ctx context.Context, spec names.Spec, filter string, handler visitor.SpecHandler) error {
+	return visitor.ListSpecs(ctx, r.RegistryClient, spec, filter, false, handler)
 }
 
-func (r *RegistryLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler core.ArtifactHandler) error {
-	return core.ListArtifacts(ctx, r.RegistryClient, artifact, filter, contents, handler)
+func (r *RegistryLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler visitor.ArtifactHandler) error {
+	return visitor.ListArtifacts(ctx, r.RegistryClient, artifact, filter, contents, handler)
 }
 
 func listResources(ctx context.Context, client listingClient, pattern, filter string) ([]patterns.ResourceInstance, error) {

@@ -20,11 +20,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
@@ -807,7 +807,7 @@ func addSpecRevisions(t *testing.T, ctx context.Context, registryClient *gapic.R
 			VersionID: a.VersionID(),
 			SpecID:    a.SpecID(),
 		}
-		if err := core.GetSpec(ctx, registryClient, sr, false, func(s *rpc.ApiSpec) error {
+		if err := visitor.GetSpec(ctx, registryClient, sr, false, func(s *rpc.ApiSpec) error {
 			action.Command = strings.ReplaceAll(action.Command,
 				fmt.Sprintf("/%s", a.SpecID()), fmt.Sprintf("/%s@%s", a.SpecID(), s.GetRevisionId()))
 			action.GeneratedResource = strings.ReplaceAll(action.GeneratedResource,

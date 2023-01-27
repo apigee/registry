@@ -17,20 +17,20 @@ package tree
 import (
 	"context"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/server/registry/names"
 )
 
 // HandlerSet should return an appropriate Handler for each
 // rpc.* type.
 type HandlerSet interface {
-	ProjectHandler() core.ProjectHandler
-	ApiHandler() core.ApiHandler
-	DeploymentHandler() core.DeploymentHandler
-	VersionHandler() core.VersionHandler
-	SpecHandler() core.SpecHandler
-	ArtifactHandler() core.ArtifactHandler
+	ProjectHandler() visitor.ProjectHandler
+	ApiHandler() visitor.ApiHandler
+	DeploymentHandler() visitor.DeploymentHandler
+	VersionHandler() visitor.VersionHandler
+	SpecHandler() visitor.SpecHandler
+	ArtifactHandler() visitor.ArtifactHandler
 }
 
 // ListSubresources calls List* on all subtypes below the supplied root name.
@@ -47,134 +47,134 @@ func ListSubresources(ctx context.Context,
 	handler HandlerSet) (err error) {
 	switch name := root.(type) {
 	case names.Project:
-		err = core.ListProjects(ctx, adminClient, name, filter, handler.ProjectHandler())
+		err = visitor.ListProjects(ctx, adminClient, name, filter, handler.ProjectHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListAPIs(ctx, client, name.Api("-"), filter, handler.ApiHandler())
+		err = visitor.ListAPIs(ctx, client, name.Api("-"), filter, handler.ApiHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Api("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListDeployments(ctx, client, name.Api("-").Deployment("-"), filter, handler.DeploymentHandler())
+		err = visitor.ListDeployments(ctx, client, name.Api("-").Deployment("-"), filter, handler.DeploymentHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Deployment("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Api("-").Deployment("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListVersions(ctx, client, name.Api("-").Version("-"), filter, handler.VersionHandler())
+		err = visitor.ListVersions(ctx, client, name.Api("-").Version("-"), filter, handler.VersionHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Version("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Api("-").Version("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListSpecs(ctx, client, name.Api("-").Version("-").Spec("-"), filter, getContents, handler.SpecHandler())
+		err = visitor.ListSpecs(ctx, client, name.Api("-").Version("-").Spec("-"), filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Version("-").Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Api("-").Version("-").Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Api:
-		err = core.ListAPIs(ctx, client, name, filter, handler.ApiHandler())
+		err = visitor.ListAPIs(ctx, client, name, filter, handler.ApiHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListDeployments(ctx, client, name.Deployment("-"), filter, handler.DeploymentHandler())
+		err = visitor.ListDeployments(ctx, client, name.Deployment("-"), filter, handler.DeploymentHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Deployment("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Deployment("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListVersions(ctx, client, name.Version("-"), filter, handler.VersionHandler())
+		err = visitor.ListVersions(ctx, client, name.Version("-"), filter, handler.VersionHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Version("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Version("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListSpecs(ctx, client, name.Version("-").Spec("-"), filter, getContents, handler.SpecHandler())
+		err = visitor.ListSpecs(ctx, client, name.Version("-").Spec("-"), filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Version("-").Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Version("-").Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Deployment:
-		err = core.ListDeployments(ctx, client, name, filter, handler.DeploymentHandler())
+		err = visitor.ListDeployments(ctx, client, name, filter, handler.DeploymentHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.DeploymentRevision:
-		err = core.ListDeploymentRevisions(ctx, client, name, filter, handler.DeploymentHandler())
+		err = visitor.ListDeploymentRevisions(ctx, client, name, filter, handler.DeploymentHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Version:
-		err = core.ListVersions(ctx, client, name, filter, handler.VersionHandler())
+		err = visitor.ListVersions(ctx, client, name, filter, handler.VersionHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListSpecs(ctx, client, name.Spec("-"), filter, getContents, handler.SpecHandler())
+		err = visitor.ListSpecs(ctx, client, name.Spec("-"), filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Spec:
-		err = core.ListSpecs(ctx, client, name, filter, getContents, handler.SpecHandler())
+		err = visitor.ListSpecs(ctx, client, name, filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.SpecRevision:
-		err = core.ListSpecRevisions(ctx, client, name, filter, getContents, handler.SpecHandler())
+		err = visitor.ListSpecRevisions(ctx, client, name, filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Artifact:
-		err = core.ListArtifacts(ctx, client, name, filter, getContents, handler.ArtifactHandler())
+		err = visitor.ListArtifacts(ctx, client, name, filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
