@@ -99,6 +99,7 @@ func TestFetch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup: Failed to create test spec: %s", err)
 	}
+	specRevisionID := spec.RevisionId
 	specName, err := names.ParseSpec(spec.Name)
 	if err != nil {
 		t.Fatalf("Setup: Failed to create test spec: %s", err)
@@ -114,7 +115,7 @@ func TestFetch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup: Failed to create test artifact: %s", err)
 	}
-	t.Run("spec", func(t *testing.T) {
+	t.Run("fetch-spec-contents", func(t *testing.T) {
 		spec := &rpc.ApiSpec{Name: "projects/fetch-test/locations/global/apis/a/versions/v/specs/s"}
 		err := FetchSpecContents(ctx, registryClient, spec)
 		if err != nil {
@@ -124,7 +125,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 		}
 	})
-	t.Run("artifact", func(t *testing.T) {
+	t.Run("fetch-artifact-contents", func(t *testing.T) {
 		artifact := &rpc.Artifact{Name: "projects/fetch-test/locations/global/apis/a/versions/v/specs/s/artifacts/x"}
 		err := FetchArtifactContents(ctx, registryClient, artifact)
 		if err != nil {
@@ -132,6 +133,111 @@ func TestFetch(t *testing.T) {
 		}
 		if string(artifact.Contents) != artifactContents {
 			t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", artifactContents, artifact.Contents)
+		}
+	})
+	t.Run("get-spec-with-contents", func(t *testing.T) {
+		specName, err := names.ParseSpec("projects/fetch-test/locations/global/apis/a/versions/v/specs/s")
+		if err != nil {
+			t.Fatalf("Failed to parse spec name: %s", err)
+		}
+		err = GetSpec(ctx, registryClient, specName, true, func(spec *rpc.ApiSpec) error {
+			if string(spec.Contents) != specContents {
+				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Failed to get spec with contents: %s", err)
+		}
+	})
+	t.Run("list-specs-with-contents", func(t *testing.T) {
+		specName, err := names.ParseSpec("projects/fetch-test/locations/global/apis/a/versions/v/specs/-")
+		if err != nil {
+			t.Fatalf("Failed to parse spec name: %s", err)
+		}
+		count := 0
+		err = ListSpecs(ctx, registryClient, specName, "", true, func(spec *rpc.ApiSpec) error {
+			count++
+			if string(spec.Contents) != specContents {
+				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Failed to list specs with contents: %s", err)
+		}
+		if count != 1 {
+			t.Fatalf("Failed to list specs: got %d expected 1", count)
+		}
+	})
+	t.Run("get-spec-revision-with-contents", func(t *testing.T) {
+		specRevisionName, err := names.ParseSpecRevision("projects/fetch-test/locations/global/apis/a/versions/v/specs/s@" + specRevisionID)
+		if err != nil {
+			t.Fatalf("Failed to parse spec revision name: %s", err)
+		}
+		err = GetSpecRevision(ctx, registryClient, specRevisionName, true, func(spec *rpc.ApiSpec) error {
+			if string(spec.Contents) != specContents {
+				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Failed to get spec revision with contents: %s", err)
+		}
+	})
+	t.Run("list-spec-revisions-with-contents", func(t *testing.T) {
+		specRevisionName, err := names.ParseSpecRevision("projects/fetch-test/locations/global/apis/a/versions/v/specs/s@-")
+		if err != nil {
+			t.Fatalf("Failed to parse spec revision name: %s", err)
+		}
+		count := 0
+		err = ListSpecRevisions(ctx, registryClient, specRevisionName, "", true, func(spec *rpc.ApiSpec) error {
+			count++
+			if string(spec.Contents) != specContents {
+				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Failed to list spec revisions with contents: %s", err)
+		}
+		if count != 1 {
+			t.Fatalf("Failed to list spec revisions: got %d expected 1", count)
+		}
+	})
+	t.Run("get-artifact-with-contents", func(t *testing.T) {
+		artifactName, err := names.ParseArtifact("projects/fetch-test/locations/global/apis/a/versions/v/specs/s/artifacts/x")
+		if err != nil {
+			t.Fatalf("Failed to parse artifact name: %s", err)
+		}
+		err = GetArtifact(ctx, registryClient, artifactName, true, func(artifact *rpc.Artifact) error {
+			if string(artifact.Contents) != artifactContents {
+				t.Fatalf("Fetched unexpected artifact contents: wanted %q got %q", artifactContents, artifact.Contents)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Failed to get artifact with contents: %s", err)
+		}
+	})
+	t.Run("list-artifacts-with-contents", func(t *testing.T) {
+		artifactName, err := names.ParseArtifact("projects/fetch-test/locations/global/apis/a/versions/v/specs/s/artifacts/-")
+		if err != nil {
+			t.Fatalf("Failed to parse artifact name: %s", err)
+		}
+		count := 0
+		err = ListArtifacts(ctx, registryClient, artifactName, "", true, func(artifact *rpc.Artifact) error {
+			count++
+			if string(artifact.Contents) != artifactContents {
+				t.Fatalf("Fetched unexpected artifact contents: wanted %q got %q", artifactContents, artifact.Contents)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Failed to list artifacts with contents: %s", err)
+		}
+		if count != 1 {
+			t.Fatalf("Failed to list artifacts: got %d expected 1", count)
 		}
 	})
 }
