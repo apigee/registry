@@ -24,5 +24,6 @@ type ApiSpecData struct {
 	Description string      `yaml:"description,omitempty"`
 	MimeType    string      `yaml:"mimeType,omitempty"`
 	SourceURI   string      `yaml:"sourceURI,omitempty"`
+	Contents    string      `yaml:"contents,omitempty"`
 	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 }
