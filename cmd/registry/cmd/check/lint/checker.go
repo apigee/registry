@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/tree"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -149,35 +150,35 @@ func (c *listHandler) queueTask(r Resource) error {
 	return nil
 }
 
-func (c *listHandler) ProjectHandler() core.ProjectHandler {
+func (c *listHandler) ProjectHandler() visitor.ProjectHandler {
 	return func(p *rpc.Project) error {
 		return c.queueTask(p)
 	}
 }
 
-func (c *listHandler) ApiHandler() core.ApiHandler {
+func (c *listHandler) ApiHandler() visitor.ApiHandler {
 	return func(a *rpc.Api) error {
 		return c.queueTask(a)
 	}
 }
-func (c *listHandler) DeploymentHandler() core.DeploymentHandler {
+func (c *listHandler) DeploymentHandler() visitor.DeploymentHandler {
 	return func(a *rpc.ApiDeployment) error {
 		return c.queueTask(a)
 	}
 }
-func (c *listHandler) VersionHandler() core.VersionHandler {
+func (c *listHandler) VersionHandler() visitor.VersionHandler {
 	return func(a *rpc.ApiVersion) error {
 		return c.queueTask(a)
 	}
 }
 
-func (c *listHandler) SpecHandler() core.SpecHandler {
+func (c *listHandler) SpecHandler() visitor.SpecHandler {
 	return func(a *rpc.ApiSpec) error {
 		return c.queueTask(a)
 	}
 }
 
-func (c *listHandler) ArtifactHandler() core.ArtifactHandler {
+func (c *listHandler) ArtifactHandler() visitor.ArtifactHandler {
 	return func(a *rpc.Artifact) error {
 		return c.queueTask(a)
 	}

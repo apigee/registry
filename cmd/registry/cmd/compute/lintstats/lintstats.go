@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -120,7 +121,7 @@ func computeLintStatsSpecs(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return core.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
+	return visitor.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
 		// Iterate through a collection of specs and evaluate each.
 		log.Debug(ctx, spec.GetName())
 		// get the lint results
@@ -186,10 +187,10 @@ func computeLintStatsProjects(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return core.ListProjects(ctx, adminClient, projectName, filter, func(project *rpc.Project) error {
+	return visitor.ListProjects(ctx, adminClient, projectName, filter, func(project *rpc.Project) error {
 		project_stats := &rpc.LintStats{}
 
-		if err := core.ListAPIs(ctx, client, projectName.Api(""), filter, func(api *rpc.Api) error {
+		if err := visitor.ListAPIs(ctx, client, projectName.Api(""), filter, func(api *rpc.Api) error {
 			aggregateLintStats(ctx, client, api.GetName(), linter, project_stats)
 			return nil
 		}); err != nil {
@@ -212,10 +213,10 @@ func computeLintStatsAPIs(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return core.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) error {
+	return visitor.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) error {
 		api_stats := &rpc.LintStats{}
 
-		if err := core.ListVersions(ctx, client, apiName.Version(""), filter, func(version *rpc.ApiVersion) error {
+		if err := visitor.ListVersions(ctx, client, apiName.Version(""), filter, func(version *rpc.ApiVersion) error {
 			aggregateLintStats(ctx, client, version.GetName(), linter, api_stats)
 			return nil
 		}); err != nil {
@@ -239,9 +240,9 @@ func computeLintStatsVersions(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return core.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) error {
+	return visitor.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) error {
 		stats := &rpc.LintStats{}
-		if err := core.ListSpecs(ctx, client, versionName.Spec(""), filter, false, func(spec *rpc.ApiSpec) error {
+		if err := visitor.ListSpecs(ctx, client, versionName.Spec(""), filter, false, func(spec *rpc.ApiSpec) error {
 			aggregateLintStats(ctx, client, spec.GetName(), linter, stats)
 			return nil
 		}); err != nil {

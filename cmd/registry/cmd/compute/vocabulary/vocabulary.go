@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/gnostic/metrics/vocabulary"
@@ -75,7 +76,7 @@ func Command() *cobra.Command {
 
 			// Iterate through a collection of specs and summarize each.
 			if parsed.RevisionID == "" {
-				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),
@@ -84,7 +85,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = core.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),
