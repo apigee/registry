@@ -69,18 +69,21 @@ type Api struct {
 	// Label keys and values can be no longer than 64 characters
 	// (Unicode codepoints), can only contain lowercase letters, numeric
 	// characters, underscores and dashes. International characters are allowed.
-	// No more than 64 user labels can be associated with one resource (System
-	// labels are excluded).
+	// No more than 64 user labels can be associated with one resource.
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with
-	// "apigeeregistry.googleapis.com/" and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,9,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Annotations attach non-identifying metadata to resources.
+	// Annotations attach non-identifying metadata to resources. While annotations
+	// are less restricted than those of labels, they should generally be used
+	// for small values of broad interest. Larger, topic-specific metadata should
+	// be stored in Artifacts.
 	//
-	// Annotation keys and values are less restricted than those of labels, but
-	// should be generally used for small values of broad interest. Larger, topic-
-	// specific metadata should be stored in Artifacts.
+	// Annotations keys can be no longer than 64 characters
+	// (Unicode codepoints), can only contain lowercase letters, numeric
+	// characters, underscores and dashes. International characters are allowed.
+	// Annotation values can consist of any unicode characters and do not have
+	// a length limit (aside from the overall annotations limit).
+	// No more than 256k of annotations data can be associated with one resource.
 	Annotations map[string]string `protobuf:"bytes,10,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
@@ -214,18 +217,21 @@ type ApiVersion struct {
 	// Label keys and values can be no longer than 64 characters
 	// (Unicode codepoints), can only contain lowercase letters, numeric
 	// characters, underscores and dashes. International characters are allowed.
-	// No more than 64 user labels can be associated with one resource (System
-	// labels are excluded).
+	// No more than 64 user labels can be associated with one resource.
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with
-	// "apigeeregistry.googleapis.com/" and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Annotations attach non-identifying metadata to resources.
+	// Annotations attach non-identifying metadata to resources. While annotations
+	// are less restricted than those of labels, they should generally be used
+	// for small values of broad interest. Larger, topic-specific metadata should
+	// be stored in Artifacts.
 	//
-	// Annotation keys and values are less restricted than those of labels, but
-	// should be generally used for small values of broad interest. Larger, topic-
-	// specific metadata should be stored in Artifacts.
+	// Annotations keys can be no longer than 64 characters
+	// (Unicode codepoints), can only contain lowercase letters, numeric
+	// characters, underscores and dashes. International characters are allowed.
+	// Annotation values can consist of any unicode characters and do not have
+	// a length limit (aside from the overall annotations limit).
+	// No more than 256k of annotations data can be associated with one resource.
 	Annotations map[string]string `protobuf:"bytes,8,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// The primary spec for this version.
 	// Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}
@@ -386,18 +392,21 @@ type ApiSpec struct {
 	// Label keys and values can be no longer than 64 characters
 	// (Unicode codepoints), can only contain lowercase letters, numeric
 	// characters, underscores and dashes. International characters are allowed.
-	// No more than 64 user labels can be associated with one resource (System
-	// labels are excluded).
+	// No more than 64 user labels can be associated with one resource.
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with
-	// "apigeeregistry.googleapis.com/" and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,14,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Annotations attach non-identifying metadata to resources.
+	// Annotations attach non-identifying metadata to resources. While annotations
+	// are less restricted than those of labels, they should generally be used
+	// for small values of broad interest. Larger, topic-specific metadata should
+	// be stored in Artifacts.
 	//
-	// Annotation keys and values are less restricted than those of labels, but
-	// should be generally used for small values of broad interest. Larger, topic-
-	// specific metadata should be stored in Artifacts.
+	// Annotations keys can be no longer than 64 characters
+	// (Unicode codepoints), can only contain lowercase letters, numeric
+	// characters, underscores and dashes. International characters are allowed.
+	// Annotation values can consist of any unicode characters and do not have
+	// a length limit (aside from the overall annotations limit).
+	// No more than 256k of annotations data can be associated with one resource.
 	Annotations map[string]string `protobuf:"bytes,15,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
@@ -579,18 +588,21 @@ type ApiDeployment struct {
 	// Label keys and values can be no longer than 64 characters
 	// (Unicode codepoints), can only contain lowercase letters, numeric
 	// characters, underscores and dashes. International characters are allowed.
-	// No more than 64 user labels can be associated with one resource (System
-	// labels are excluded).
+	// No more than 64 user labels can be associated with one resource.
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with "registry.googleapis.com/"
-	// and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,14,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Annotations attach non-identifying metadata to resources.
+	// Annotations attach non-identifying metadata to resources. While annotations
+	// are less restricted than those of labels, they should generally be used
+	// for small values of broad interest. Larger, topic-specific metadata should
+	// be stored in Artifacts.
 	//
-	// Annotation keys and values are less restricted than those of labels, but
-	// should be generally used for small values of broad interest. Larger, topic-
-	// specific metadata should be stored in Artifacts.
+	// Annotations keys can be no longer than 64 characters
+	// (Unicode codepoints), can only contain lowercase letters, numeric
+	// characters, underscores and dashes. International characters are allowed.
+	// Annotation values can consist of any unicode characters and do not have
+	// a length limit (aside from the overall annotations limit).
+	// No more than 256k of annotations data can be associated with one resource.
 	Annotations map[string]string `protobuf:"bytes,15,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
@@ -766,18 +778,21 @@ type Artifact struct {
 	// Label keys and values can be no longer than 64 characters
 	// (Unicode codepoints), can only contain lowercase letters, numeric
 	// characters, underscores and dashes. International characters are allowed.
-	// No more than 64 user labels can be associated with one resource (System
-	// labels are excluded).
+	// No more than 64 user labels can be associated with one resource.
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with "registry.googleapis.com/"
-	// and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,8,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Annotations attach non-identifying metadata to resources.
+	// Annotations attach non-identifying metadata to resources. While annotations
+	// are less restricted than those of labels, they should generally be used
+	// for small values of broad interest. Larger, topic-specific metadata should
+	// be stored in Artifacts.
 	//
-	// Annotation keys and values are less restricted than those of labels, but
-	// should be generally used for small values of broad interest. Larger, topic-
-	// specific metadata should be stored in Artifacts.
+	// Annotations keys can be no longer than 64 characters
+	// (Unicode codepoints), can only contain lowercase letters, numeric
+	// characters, underscores and dashes. International characters are allowed.
+	// Annotation values can consist of any unicode characters and do not have
+	// a length limit (aside from the overall annotations limit).
+	// No more than 256k of annotations data can be associated with one resource.
 	Annotations map[string]string `protobuf:"bytes,9,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
