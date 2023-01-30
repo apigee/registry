@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule112
+package rule113
 
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -33,16 +32,7 @@ func TestAddRules(t *testing.T) {
 	}
 }
 
-func TestLabels(t *testing.T) {
-	many := make(map[string]string, 64)
-	for i := 0; i < 64; i++ {
-		many["key"+strconv.Itoa(i)] = "value" + strconv.Itoa(i)
-	}
-	tooMany := make(map[string]string, 65)
-	for k, v := range many {
-		tooMany[k] = v
-	}
-	tooMany["final"] = "straw"
+func TestAnnotations(t *testing.T) {
 	tests := []struct {
 		name     string
 		in       map[string]string
@@ -70,25 +60,39 @@ func TestLabels(t *testing.T) {
 					Suggestion: "Fix key.",
 					Severity:   lint.ERROR,
 				},
+			},
+		},
+		{
+			"big one",
+			map[string]string{
+				"key": strings.Repeat("x", totalSizeLimit-3),
+			},
+			nil,
+		},
+		{
+			"too big one",
+			map[string]string{
+				"key2": strings.Repeat("x", totalSizeLimit-3),
+			},
+			[]lint.Problem{
 				{
-					Message:    `Value for key "*" contains illegal character '*'.`,
-					Suggestion: "Fix value.",
+					Message:    `Maximum size of all annotations is 256k.`,
+					Suggestion: `Reduce size by 1 bytes.`,
 					Severity:   lint.ERROR,
 				},
 			},
 		},
 		{
-			"many",
-			many,
-			nil,
-		},
-		{
-			"too many",
-			tooMany,
+			"too big multiple",
+			map[string]string{
+				"key1": strings.Repeat("x", totalSizeLimit/3),
+				"key2": strings.Repeat("x", totalSizeLimit/3),
+				"key3": strings.Repeat("x", totalSizeLimit/3),
+			},
 			[]lint.Problem{
 				{
-					Message:    `Maximum number of labels is 64.`,
-					Suggestion: "Delete some entries.",
+					Message:    `Maximum size of all annotations is 256k.`,
+					Suggestion: `Reduce size by 11 bytes.`,
 					Severity:   lint.ERROR,
 				},
 			},
@@ -100,8 +104,8 @@ func TestLabels(t *testing.T) {
 			a := &rpc.ApiSpec{
 				Labels: test.in,
 			}
-			if labels.OnlyIf(a, fieldName) {
-				got := labels.ApplyToField(ctx, a, fieldName, test.in)
+			if annotations.OnlyIf(a, fieldName) {
+				got := annotations.ApplyToField(ctx, a, fieldName, test.in)
 				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
@@ -110,7 +114,7 @@ func TestLabels(t *testing.T) {
 	}
 }
 
-func TestCheckLabel(t *testing.T) {
+func TestCheckAnnotation(t *testing.T) {
 	tests := []struct {
 		name     string
 		key      string
@@ -124,21 +128,11 @@ func TestCheckLabel(t *testing.T) {
 				Suggestion: "Fix key.",
 				Severity:   lint.ERROR,
 			},
-			{
-				Message:    `Value for key "key." contains illegal character '.'.`,
-				Suggestion: "Fix value.",
-				Severity:   lint.ERROR,
-			},
 		}},
 		{"uppercase", "keY", "valuE", []lint.Problem{
 			{
 				Message:    `Key "keY" contains illegal character 'Y'.`,
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
-			},
-			{
-				Message:    `Value for key "keY" contains illegal character 'E'.`,
-				Suggestion: "Fix value.",
 				Severity:   lint.ERROR,
 			},
 		}},
@@ -149,16 +143,11 @@ func TestCheckLabel(t *testing.T) {
 				Suggestion: "Fix key.",
 				Severity:   lint.ERROR,
 			},
-			{
-				Message:    fmt.Sprintf(`Value for key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
-				Suggestion: "Fix value.",
-				Severity:   lint.ERROR,
-			},
 		}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := checkLabel(test.key, test.value)
+			got := checkAnnotation(test.key, test.value)
 			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}

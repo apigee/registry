@@ -31,7 +31,7 @@ func TestAddRules(t *testing.T) {
 	}
 }
 
-func Test_mimeTypeContents(t *testing.T) {
+func TestMimeTypeContents(t *testing.T) {
 	tests := []struct {
 		name     string
 		mimeType string

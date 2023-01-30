@@ -32,7 +32,7 @@ func TestAddRules(t *testing.T) {
 	}
 }
 
-func Test_displayName(t *testing.T) {
+func TestDisplayName(t *testing.T) {
 	bad := []lint.Problem{{
 		Severity:   lint.ERROR,
 		Message:    fmt.Sprintf("%s must contain only UTF-8 characters.", fieldName),

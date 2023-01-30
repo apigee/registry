@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Each resource can have multiple labels, up to a maximum of 64.
-// Each label must be a key-value pair.
+// Each resource can have multiple annotations, up to a maximum total size of 256k.
+// Each annotation must be a key-value pair.
 // Keys have a minimum length of 1 character and a maximum length of 63 characters, and cannot be empty.
-// Values can be empty, and have a maximum length of 63 characters.
-// Keys and values can contain only lowercase letters, numeric characters, underscores, and dashes.
+// Values can be empty, and have no maximum length (other than total size limit).
+// Keys can contain only lowercase letters, numeric characters, underscores, and dashes.
 // All characters must use UTF-8 encoding, and international characters are allowed.
+// Values can contain any characters.
 // The key portion of a label must be unique within a single resource. However,
 // you can use the same key with multiple resources.
 // Keys must start with a lowercase letter or international character.
-package rule112
+package rule113
 
 import (
 	"context"
@@ -32,21 +33,23 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 )
 
-const ruleNum = 112
-const fieldName = "labels"
+const ruleNum = 113
+const fieldName = "annotations"
 
-var ruleName = lint.NewRuleName(ruleNum, "labels-format")
+const totalSizeLimit int = 256 * (1 << 10) // 256 kB
+
+var ruleName = lint.NewRuleName(ruleNum, "annotations-format")
 
 // AddRules accepts a register function and registers each of
 // this rules' checks to the RuleRegistry.
 func AddRules(r lint.RuleRegistry) error {
 	return r.Register(
 		ruleNum,
-		labels,
+		annotations,
 	)
 }
 
-var labels = &lint.FieldRule{
+var annotations = &lint.FieldRule{
 	Name: ruleName,
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
@@ -56,15 +59,17 @@ var labels = &lint.FieldRule{
 		if len(labels) == 0 {
 			return nil
 		}
+		totalSize := 0
 		var probs []lint.Problem
 		for k, v := range labels {
-			probs = append(probs, checkLabel(k, v)...)
+			probs = append(probs, checkAnnotation(k, v)...)
+			totalSize += len(k) + len(v)
 		}
-		if len(labels) > 64 {
+		if totalSize > totalSizeLimit {
 			probs = append(probs, lint.Problem{
 				Severity:   lint.ERROR,
-				Message:    `Maximum number of labels is 64.`,
-				Suggestion: `Delete some entries.`,
+				Message:    `Maximum size of all annotations is 256k.`,
+				Suggestion: fmt.Sprintf(`Reduce size by %d bytes.`, totalSize-totalSizeLimit),
 			})
 		}
 
@@ -72,7 +77,7 @@ var labels = &lint.FieldRule{
 	},
 }
 
-func checkLabel(k string, v string) []lint.Problem {
+func checkAnnotation(k string, v string) []lint.Problem {
 	var probs []lint.Problem
 	if r, _ := utf8.DecodeRuneInString(k); r == utf8.RuneError || !unicode.In(r, unicode.Ll, unicode.Lo) {
 		probs = append(probs, lint.Problem{
@@ -80,7 +85,7 @@ func checkLabel(k string, v string) []lint.Problem {
 			Message:    fmt.Sprintf(`Key %q has illegal first character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
-	} else if ok, r := validLabelRunes(k); !ok {
+	} else if ok, r := validKeyRunes(k); !ok {
 		probs = append(probs, lint.Problem{
 			Severity:   lint.ERROR,
 			Message:    fmt.Sprintf(`Key %q contains illegal character %q.`, k, r),
@@ -94,24 +99,10 @@ func checkLabel(k string, v string) []lint.Problem {
 			Suggestion: `Fix key.`,
 		})
 	}
-	if ok, r := validLabelRunes(v); !ok {
-		probs = append(probs, lint.Problem{
-			Severity:   lint.ERROR,
-			Message:    fmt.Sprintf(`Value for key %q contains illegal character %q.`, k, r),
-			Suggestion: `Fix value.`,
-		})
-	}
-	if count := utf8.RuneCountInString(v); count > 64 {
-		probs = append(probs, lint.Problem{
-			Severity:   lint.ERROR,
-			Message:    fmt.Sprintf(`Value for key %q exceeds max length of 64 characters.`, k),
-			Suggestion: `Fix value.`,
-		})
-	}
 	return probs
 }
 
-func validLabelRunes(s string) (bool, rune) {
+func validKeyRunes(s string) (bool, rune) {
 	for _, r := range s {
 		if !unicode.In(r, unicode.Ll, unicode.Lo, unicode.N) && r != '_' && r != '-' {
 			return false, r
