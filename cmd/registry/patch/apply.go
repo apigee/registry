@@ -37,7 +37,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 				return filepath.SkipDir // Skip the directory and contents.
 			} else if entry.IsDir() {
 				return nil // Do nothing for the directory, but still walk its contents.
-			} else if !strings.HasSuffix(fileName, ".yaml") {
+			} else if !strings.HasSuffix(fileName, ".yaml") && !strings.HasSuffix(fileName, ".yml") {
 				return nil // Skip everything that's not a YAML file.
 			}
 			bytes, err := os.ReadFile(fileName)
