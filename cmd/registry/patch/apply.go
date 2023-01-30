@@ -35,7 +35,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 		if err != nil {
 			return err
 		}
-		if err := patches.parse(client, bytes, os.Stdin.Name(), parent); err != nil {
+		if err := patches.parse(client, bytes, "", parent); err != nil {
 			return err
 		}
 		return patches.run(ctx, jobs)

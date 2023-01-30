@@ -109,14 +109,13 @@ func applyApiSpecPatch(
 			Description: spec.Data.Description,
 			MimeType:    spec.Data.MimeType,
 			SourceUri:   spec.Data.SourceURI,
-			Contents:    []byte(spec.Data.Contents),
 			Labels:      spec.Metadata.Labels,
 			Annotations: spec.Metadata.Annotations,
 		},
 		AllowMissing: true,
 	}
 	// if the spec's filename points to a local file, use that as the spec's contents
-	if filename != "" && filename != os.Stdin.Name() {
+	if filename != "" {
 		body, err := os.ReadFile(filepath.Join(filepath.Dir(filename), spec.Data.FileName))
 		if err == nil {
 			if strings.Contains(spec.Data.MimeType, "+gzip") {
