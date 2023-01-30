@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -69,7 +70,7 @@ func Command() *cobra.Command {
 			}
 
 			// Iterate through a collection of specs and evaluate each.
-			err = core.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
+			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
 				taskQueue <- &computeLintTask{
 					client:   client,
 					specName: spec.Name,

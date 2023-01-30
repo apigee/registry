@@ -27,6 +27,7 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/metadata"
@@ -75,7 +76,7 @@ func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, 
 // ExportProject writes a project into a directory of YAML files.
 func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, projectName.ProjectID)
-	if err := core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) error {
+	if err := visitor.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) error {
 		taskQueue <- &exportAPITask{
 			client:  client,
 			message: message,
@@ -85,7 +86,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -95,7 +96,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListVersions(ctx, client, projectName.Api("-").Version("-"), "", func(message *rpc.ApiVersion) error {
+	if err := visitor.ListVersions(ctx, client, projectName.Api("-").Version("-"), "", func(message *rpc.ApiVersion) error {
 		taskQueue <- &exportVersionTask{
 			client:  client,
 			message: message,
@@ -105,7 +106,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListSpecs(ctx, client, projectName.Api("-").Version("-").Spec("-"), "", false, func(message *rpc.ApiSpec) error {
+	if err := visitor.ListSpecs(ctx, client, projectName.Api("-").Version("-").Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
 			client:  client,
 			message: message,
@@ -115,7 +116,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListDeployments(ctx, client, projectName.Api("-").Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+	if err := visitor.ListDeployments(ctx, client, projectName.Api("-").Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 		taskQueue <- &exportDeploymentTask{
 			client:  client,
 			message: message,
@@ -125,7 +126,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, projectName.Api("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, projectName.Api("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -135,7 +136,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, projectName.Api("-").Version("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, projectName.Api("-").Version("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -145,7 +146,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, projectName.Api("-").Version("-").Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, projectName.Api("-").Version("-").Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -155,7 +156,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}); err != nil {
 		return err
 	}
-	return core.ListArtifacts(ctx, client, projectName.Api("-").Deployment("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	return visitor.ListArtifacts(ctx, client, projectName.Api("-").Deployment("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -168,7 +169,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 // ExportAPI writes an API into a directory of YAML files.
 func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.Api, recursive bool, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, apiName.ProjectID)
-	if err := core.ListAPIs(ctx, client, apiName, "", func(message *rpc.Api) error {
+	if err := visitor.ListAPIs(ctx, client, apiName, "", func(message *rpc.Api) error {
 		taskQueue <- &exportAPITask{
 			client:  client,
 			message: message,
@@ -181,7 +182,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	if !recursive {
 		return nil
 	}
-	if err := core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
+	if err := visitor.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
 		taskQueue <- &exportVersionTask{
 			client:  client,
 			message: message,
@@ -191,7 +192,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	}); err != nil {
 		return err
 	}
-	if err := core.ListSpecs(ctx, client, apiName.Version("-").Spec("-"), "", false, func(message *rpc.ApiSpec) error {
+	if err := visitor.ListSpecs(ctx, client, apiName.Version("-").Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
 			client:  client,
 			message: message,
@@ -201,7 +202,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	}); err != nil {
 		return err
 	}
-	if err := core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+	if err := visitor.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 		taskQueue <- &exportDeploymentTask{
 			client:  client,
 			message: message,
@@ -211,7 +212,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, apiName.Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, apiName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -221,7 +222,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, apiName.Version("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, apiName.Version("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -231,7 +232,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, apiName.Version("-").Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, apiName.Version("-").Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -241,7 +242,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	}); err != nil {
 		return err
 	}
-	return core.ListArtifacts(ctx, client, apiName.Deployment("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	return visitor.ListArtifacts(ctx, client, apiName.Deployment("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -254,7 +255,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 // ExportAPIVersion writes an API version into a directory of YAML files.
 func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, versionName names.Version, recursive bool, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, versionName.ProjectID)
-	if err := core.ListVersions(ctx, client, versionName, "", func(message *rpc.ApiVersion) error {
+	if err := visitor.ListVersions(ctx, client, versionName, "", func(message *rpc.ApiVersion) error {
 		taskQueue <- &exportVersionTask{
 			client:  client,
 			message: message,
@@ -267,7 +268,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 	if !recursive {
 		return nil
 	}
-	if err := core.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
+	if err := visitor.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
 			client:  client,
 			message: message,
@@ -277,7 +278,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 	}); err != nil {
 		return err
 	}
-	if err := core.ListArtifacts(ctx, client, versionName.Artifact(""), "", false, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, versionName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -287,7 +288,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 	}); err != nil {
 		return err
 	}
-	return core.ListArtifacts(ctx, client, versionName.Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+	return visitor.ListArtifacts(ctx, client, versionName.Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -300,7 +301,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 // ExportAPISpec writes an API spec into a directory of YAML files.
 func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName names.Spec, recursive bool, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, specName.ProjectID)
-	if err := core.ListSpecs(ctx, client, specName, "", false, func(message *rpc.ApiSpec) error {
+	if err := visitor.ListSpecs(ctx, client, specName, "", false, func(message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
 			client:  client,
 			message: message,
@@ -313,7 +314,7 @@ func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName n
 	if !recursive {
 		return nil
 	}
-	return core.ListArtifacts(ctx, client, specName.Artifact(""), "", false, func(message *rpc.Artifact) error {
+	return visitor.ListArtifacts(ctx, client, specName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -326,7 +327,7 @@ func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName n
 // ExportAPIDeployment writes an API deployment into a directory of YAML files.
 func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, recursive bool, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, deploymentName.ProjectID)
-	if err := core.ListDeployments(ctx, client, deploymentName, "", func(message *rpc.ApiDeployment) error {
+	if err := visitor.ListDeployments(ctx, client, deploymentName, "", func(message *rpc.ApiDeployment) error {
 		taskQueue <- &exportDeploymentTask{
 			client:  client,
 			message: message,
@@ -339,7 +340,7 @@ func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, depl
 	if !recursive {
 		return nil
 	}
-	return core.ListArtifacts(ctx, client, deploymentName.Artifact(""), "", false, func(message *rpc.Artifact) error {
+	return visitor.ListArtifacts(ctx, client, deploymentName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
@@ -352,7 +353,7 @@ func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, depl
 // ExportArtifact writes an artifact into a directory of YAML files.
 func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, artifactName names.Artifact, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, artifactName.ProjectID())
-	return core.GetArtifact(ctx, client, artifactName, false, func(message *rpc.Artifact) error {
+	return visitor.GetArtifact(ctx, client, artifactName, false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,

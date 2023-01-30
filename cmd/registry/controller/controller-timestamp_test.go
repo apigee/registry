@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -26,7 +26,7 @@ type fakeLister struct {
 }
 
 // This implementation doesn't support filter functionality
-func (f *fakeLister) ListAPIs(ctx context.Context, api names.Api, filter string, handler core.ApiHandler) error {
+func (f *fakeLister) ListAPIs(ctx context.Context, api names.Api, filter string, handler visitor.ApiHandler) error {
 	for _, a := range f.apis {
 		name, _ := names.ParseApi(a.GetName())
 		if strings.Contains(filter, name.Parent()) || (api.ApiID != "-" && name.ApiID != api.ApiID) {
@@ -39,7 +39,7 @@ func (f *fakeLister) ListAPIs(ctx context.Context, api names.Api, filter string,
 	return nil
 }
 
-func (f *fakeLister) ListVersions(ctx context.Context, version names.Version, filter string, handler core.VersionHandler) error {
+func (f *fakeLister) ListVersions(ctx context.Context, version names.Version, filter string, handler visitor.VersionHandler) error {
 	for _, v := range f.versions {
 		name, _ := names.ParseVersion(v.GetName())
 		if strings.Contains(filter, name.Parent()) || (version.VersionID != "-" && name.VersionID != version.VersionID) {
@@ -52,7 +52,7 @@ func (f *fakeLister) ListVersions(ctx context.Context, version names.Version, fi
 	return nil
 }
 
-func (f *fakeLister) ListSpecs(ctx context.Context, spec names.Spec, filter string, handler core.SpecHandler) error {
+func (f *fakeLister) ListSpecs(ctx context.Context, spec names.Spec, filter string, handler visitor.SpecHandler) error {
 	for _, s := range f.specs {
 		name, _ := names.ParseSpec(s.GetName())
 		if strings.Contains(filter, name.Parent()) || (spec.SpecID != "-" && name.SpecID != spec.SpecID) {
@@ -66,7 +66,7 @@ func (f *fakeLister) ListSpecs(ctx context.Context, spec names.Spec, filter stri
 	return nil
 }
 
-func (f *fakeLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler core.ArtifactHandler) error {
+func (f *fakeLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler visitor.ArtifactHandler) error {
 	for _, a := range f.artifacts {
 		name, _ := names.ParseArtifact(a.GetName())
 		if strings.Contains(filter, name.Parent()) || (artifact.ArtifactID() != "-" && name.ArtifactID() != artifact.ArtifactID()) {
