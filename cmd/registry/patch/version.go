@@ -17,10 +17,10 @@ package patch
 import (
 	"context"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
@@ -37,7 +37,7 @@ func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	var artifacts []*models.Artifact
 	if nested {
 		specs = make([]*models.ApiSpec, 0)
-		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
+		if err = visitor.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 			spec, err := NewApiSpec(ctx, client, message, true)
 			if err != nil {
 				return err
