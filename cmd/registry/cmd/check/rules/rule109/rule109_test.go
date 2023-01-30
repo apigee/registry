@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule110
+package rule109
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func TestAddRules(t *testing.T) {
 	}
 }
 
-func TestDescription(t *testing.T) {
+func TestDisplayName(t *testing.T) {
 	bad := []lint.Problem{{
 		Severity:   lint.ERROR,
 		Message:    fmt.Sprintf("%s must contain only UTF-8 characters.", fieldName),
@@ -40,7 +40,7 @@ func TestDescription(t *testing.T) {
 
 	tooLong := []lint.Problem{{
 		Severity:   lint.ERROR,
-		Message:    fmt.Sprintf("%s exceeds limit of 5000 characters.", fieldName),
+		Message:    fmt.Sprintf("%s exceeds limit of 65 characters.", fieldName),
 		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
 
 	tests := []struct {
@@ -50,8 +50,8 @@ func TestDescription(t *testing.T) {
 	}{
 		{"empty", "", nil},
 		{"invalid", string([]byte{0xff}), bad},
-		{"long", strings.Repeat("x", 5000), nil},
-		{"too long", strings.Repeat("y", 5001), tooLong},
+		{"long", strings.Repeat("x", 65), nil},
+		{"too long", strings.Repeat("y", 66), tooLong},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -59,8 +59,8 @@ func TestDescription(t *testing.T) {
 			a := &rpc.ApiSpec{
 				Description: test.in,
 			}
-			if description.OnlyIf(a, fieldName) {
-				got := description.ApplyToField(ctx, a, fieldName, test.in)
+			if displayName.OnlyIf(a, fieldName) {
+				got := displayName.ApplyToField(ctx, a, fieldName, test.in)
 				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
