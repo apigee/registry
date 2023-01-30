@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package visitor
 
 import (
 	"context"
@@ -21,7 +21,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -160,36 +159,4 @@ func GetArtifact(ctx context.Context,
 	}
 
 	return handler(artifact)
-}
-
-func FetchSpecContents(ctx context.Context, client *gapic.RegistryClient, spec *rpc.ApiSpec) error {
-	if spec.Contents != nil {
-		return nil
-	}
-	request := &rpc.GetApiSpecContentsRequest{
-		Name: spec.GetName(),
-	}
-	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
-	contents, err := client.GetApiSpecContents(ctx, request)
-	if err != nil {
-		return err
-	}
-	spec.Contents = contents.GetData()
-	spec.MimeType = contents.GetContentType()
-	return nil
-}
-
-func FetchArtifactContents(ctx context.Context, client *gapic.RegistryClient, artifact *rpc.Artifact) error {
-	if artifact.Contents != nil {
-		return nil
-	}
-	contents, err := client.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
-		Name: artifact.GetName(),
-	})
-	if err != nil {
-		return err
-	}
-	artifact.Contents = contents.GetData()
-	artifact.MimeType = contents.GetContentType()
-	return nil
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -126,7 +127,7 @@ func annotateAPIs(ctx context.Context,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
+	return visitor.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
 		taskQueue <- &annotateApiTask{
 			client:   client,
 			api:      api,
@@ -143,7 +144,7 @@ func annotateVersions(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
+	return visitor.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
 		taskQueue <- &annotateVersionTask{
 			client:   client,
 			version:  version,
@@ -160,7 +161,7 @@ func annotateSpecs(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, spec, filterFlag, false, func(spec *rpc.ApiSpec) error {
+	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &annotateSpecTask{
 			client:   client,
 			spec:     spec,
@@ -177,7 +178,7 @@ func annotateDeployments(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) error {
+	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) error {
 		taskQueue <- &annotateDeploymentTask{
 			client:     client,
 			deployment: deployment,

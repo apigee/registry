@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -74,7 +75,7 @@ func Command() *cobra.Command {
 			}
 
 			if parsed.RevisionID == "" {
-				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeComplexityTask{
 						client:   client,
 						specName: spec.Name,
@@ -83,7 +84,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = core.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeComplexityTask{
 						client:   client,
 						specName: spec.Name,
@@ -120,7 +121,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		return err
 	}
 	var spec *rpc.ApiSpec
-	if err = core.GetSpecRevision(ctx, task.client, specName, true, func(s *rpc.ApiSpec) error {
+	if err = visitor.GetSpecRevision(ctx, task.client, specName, true, func(s *rpc.ApiSpec) error {
 		spec = s
 		return nil
 	}); err != nil {
