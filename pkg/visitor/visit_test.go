@@ -537,6 +537,24 @@ func TestVisit(t *testing.T) {
 			}
 		})
 	}
+	for _, test := range tests {
+		testname := "unsupported:" + test.pattern
+		if test.filter != "" {
+			testname = fmt.Sprintf("unsupported:%s(--filter=%s)", test.pattern, test.filter)
+		}
+		t.Run(testname, func(t *testing.T) {
+			v := &Unsupported{}
+			err = Visit(ctx, v, VisitorOptions{
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+				Pattern:        test.pattern,
+				Filter:         test.filter,
+			})
+			if err == nil {
+				t.Errorf("Visit() of Unsupported succeeded when it should have failed")
+			}
+		})
+	}
 }
 
 type testVisitor struct {
