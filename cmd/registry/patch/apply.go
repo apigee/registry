@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -27,7 +28,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
+func Apply(ctx context.Context, client connection.RegistryClient, path, project string, recursive bool, jobs int) error {
 	patches := &patchGroup{}
 	err := filepath.WalkDir(path,
 		func(fileName string, entry fs.DirEntry, err error) error {
@@ -65,21 +66,25 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 						continue
 					}
 					patches.add(&applyBytesTask{
-						client: client,
-						path:   fileName,
-						parent: parent,
-						kind:   itemHeader.Kind,
-						bytes:  itemBytes,
+						client:  client,
+						path:    fileName,
+						project: project,
+						parent:  itemHeader.Metadata.Parent,
+						name:    itemHeader.Metadata.Name,
+						kind:    itemHeader.Kind,
+						bytes:   itemBytes,
 					})
 				}
 				return nil
 			}
 			patches.add(&applyBytesTask{
-				client: client,
-				path:   fileName,
-				parent: parent,
-				kind:   header.Kind,
-				bytes:  bytes,
+				client:  client,
+				path:    fileName,
+				project: project,
+				parent:  header.Metadata.Parent,
+				name:    header.Metadata.Name,
+				kind:    header.Kind,
+				bytes:   bytes,
 			})
 			return nil
 		})
@@ -131,40 +136,55 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 }
 
 type applyBytesTask struct {
-	client connection.RegistryClient
-	path   string
-	parent string
-	kind   string
-	bytes  []byte
+	client  connection.RegistryClient
+	path    string
+	project string
+	parent  string
+	name    string
+	kind    string
+	bytes   []byte
 }
 
 func (task *applyBytesTask) String() string {
-	return "apply " + task.path
+	return fmt.Sprintf("apply %s (from path: %s)", task.resource(), task.path)
+}
+
+func (task *applyBytesTask) resource() string {
+	var collection string
+	switch task.kind {
+	case "API":
+		collection = "/apis/"
+	case "Version":
+		collection = "/versions/"
+	case "Spec":
+		collection = "/specs/"
+	case "Deployment":
+		collection = "/deployments/"
+	default:
+		collection = "/artifacts/"
+	}
+	return task.parent + collection + task.name
 }
 
 func (task *applyBytesTask) Run(ctx context.Context) error {
 	header, err := readHeader(task.bytes)
 	if err != nil {
 		return err
-	}
-	if header.ApiVersion != RegistryV1 {
+	} else if header.ApiVersion != RegistryV1 {
 		return nil
 	}
-	name := header.Metadata.Name
-	if header.Metadata.Parent != "" {
-		name = header.Metadata.Parent + "/" + name
-	}
-	log.FromContext(ctx).Infof("Applying %s %s", task.path, name)
+
+	log.FromContext(ctx).Infof("Applying %s", task.resource())
 	switch header.Kind {
 	case "API":
-		return applyApiPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project)
 	case "Version":
-		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.project)
 	case "Spec":
-		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.parent, task.path)
+		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Deployment":
-		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.project)
 	default: // for everything else, try an artifact type
-		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.project)
 	}
 }
