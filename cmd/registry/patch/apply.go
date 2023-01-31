@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -176,6 +177,17 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 		return err
 	} else if header.ApiVersion != RegistryV1 {
 		return nil
+	}
+
+	switch header.Kind {
+	case "Version", "Spec", "Deployment":
+		if header.Metadata.Parent == "" {
+			return errors.New("metadata.parent should be set to the project-local parent path")
+		}
+	case "API":
+		if header.Metadata.Parent != "" {
+			return errors.New("metadata.parent should not be set for top-level resources")
+		}
 	}
 
 	log.FromContext(ctx).Infof("Applying %s", task.resource())
