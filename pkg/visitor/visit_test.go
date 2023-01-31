@@ -538,20 +538,20 @@ func TestVisit(t *testing.T) {
 		})
 	}
 	for _, test := range tests {
-		testname := "default:" + test.pattern
+		testname := "unimplemented:" + test.pattern
 		if test.filter != "" {
-			testname = fmt.Sprintf("default:%s(--filter=%s)", test.pattern, test.filter)
+			testname = fmt.Sprintf("unimplemented:%s(--filter=%s)", test.pattern, test.filter)
 		}
 		t.Run(testname, func(t *testing.T) {
-			d := &DefaultVisitor{}
-			err = Visit(ctx, d, VisitorOptions{
+			v := &Unimplemented{}
+			err = Visit(ctx, v, VisitorOptions{
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 				Pattern:        test.pattern,
 				Filter:         test.filter,
 			})
 			if err == nil {
-				t.Errorf("Visit() of DefaultVisitor succeeded when it should have failed")
+				t.Errorf("Visit() of Unimplemented succeeded when it should have failed")
 			}
 		})
 	}
