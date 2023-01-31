@@ -19,6 +19,7 @@ import (
 
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/visitor"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
@@ -47,7 +48,8 @@ func ListSubresources(ctx context.Context,
 	handler HandlerSet) (err error) {
 	switch name := root.(type) {
 	case names.Project:
-		err = visitor.ListProjects(ctx, adminClient, name, filter, handler.ProjectHandler())
+		implicit := &rpc.Project{Name: "Implicit"}
+		err = visitor.ListProjects(ctx, adminClient, name, implicit, filter, handler.ProjectHandler())
 		if err != nil {
 			return err
 		}
