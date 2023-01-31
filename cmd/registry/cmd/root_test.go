@@ -93,8 +93,8 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 				if f.Usage == "" {
 					t.Errorf("%q %q flag usage must not be empty.", name, f.Name)
 				} else {
-					first := []rune(f.Usage)[0]
-					if unicode.IsUpper(first) {
+					// Check if the first word is uppercase and not an initialism.
+					if words := strings.Split(f.Usage, " "); unicode.IsUpper([]rune(f.Usage)[0]) && strings.ToUpper(words[0]) != words[0] {
 						t.Errorf("%q %q flag usage must not begin with an upper case letter.", name, f.Name)
 					}
 					if strings.HasSuffix(f.Usage, ".") {
