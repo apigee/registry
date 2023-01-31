@@ -184,10 +184,6 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 		if header.Metadata.Parent == "" {
 			return errors.New("metadata.parent should be set to the project-local parent path")
 		}
-	case "API":
-		if header.Metadata.Parent != "" {
-			return errors.New("metadata.parent should not be set for top-level resources")
-		}
 	}
 
 	log.FromContext(ctx).Infof("Applying %s", task.resource())

@@ -43,7 +43,7 @@ func Command() *cobra.Command {
 				}
 				project, err = c.ProjectWithLocation()
 				if err != nil {
-					return fmt.Errorf("%s: please use --project or set registry.project in configuration", err)
+					return fmt.Errorf("%s: please use --parent or set registry.project in configuration", err)
 				}
 			} else if !strings.Contains(project, "/locations/") {
 				project += "/locations/global"
@@ -60,7 +60,7 @@ func Command() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "file or directory containing the patch(es) to apply. Use '-' to read from standard input")
 	_ = cmd.MarkFlagRequired("file")
-	cmd.Flags().StringVar(&project, "project", "", "GCP project containing the API registry")
+	cmd.Flags().StringVar(&project, "parent", "", "GCP project containing the API registry")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false, "process the directory used in -f, --file recursively")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
