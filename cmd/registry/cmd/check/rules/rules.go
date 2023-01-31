@@ -42,7 +42,11 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule106"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule107"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule108"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule109"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule110"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule111"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule112"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule113"
 )
 
 type addRulesFuncType func(lint.RuleRegistry) error
@@ -57,7 +61,11 @@ var addRulesFuncs = []addRulesFuncType{
 	rule106.AddRules,
 	rule107.AddRules,
 	rule108.AddRules,
+	rule109.AddRules,
 	rule110.AddRules,
+	rule111.AddRules,
+	rule112.AddRules,
+	rule113.AddRules,
 }
 
 // Add all rules to the given registry.

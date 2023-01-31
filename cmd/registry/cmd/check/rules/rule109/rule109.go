@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// max length of 5k, all characters must use UTF-8 encoding
-package rule110
+package rule109
 
 import (
 	"context"
@@ -22,25 +21,26 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/util"
 )
 
-var ruleNum = 110
-var fieldName = "description"
-var ruleName = lint.NewRuleName(ruleNum, "description-format")
+var ruleNum = 109
+var fieldName = "display_name"
+var ruleName = lint.NewRuleName(ruleNum, "display-name-format")
 
 // AddRules accepts a register function and registers each of
 // this rules' checks to the RuleRegistry.
 func AddRules(r lint.RuleRegistry) error {
 	return r.Register(
 		ruleNum,
-		description,
+		displayName,
 	)
 }
 
-var description = &lint.FieldRule{
+// max length of 64, all characters must use UTF-8 encoding
+var displayName = &lint.FieldRule{
 	Name: ruleName,
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
 	},
 	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []lint.Problem {
-		return util.CheckUTF(fieldName, value, 5000)
+		return util.CheckUTF(fieldName, value, 65)
 	},
 }

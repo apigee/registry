@@ -12,36 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule110
+package util
 
 import (
-	"context"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func TestAddRules(t *testing.T) {
-	if err := AddRules(lint.NewRuleRegistry()); err != nil {
-		t.Errorf("AddRules got an error: %v", err)
-	}
-}
-
-func TestDescription(t *testing.T) {
+func TestCheckUTF(t *testing.T) {
 	bad := []lint.Problem{{
 		Severity:   lint.ERROR,
-		Message:    fmt.Sprintf("%s must contain only UTF-8 characters.", fieldName),
-		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
+		Message:    `xxx must contain only UTF-8 characters.`,
+		Suggestion: `Fix xxx.`}}
 
 	tooLong := []lint.Problem{{
 		Severity:   lint.ERROR,
-		Message:    fmt.Sprintf("%s exceeds limit of 5000 characters.", fieldName),
-		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
+		Message:    `xxx exceeds limit of 64 characters.`,
+		Suggestion: `Fix xxx.`}}
 
 	tests := []struct {
 		name     string
@@ -50,20 +41,14 @@ func TestDescription(t *testing.T) {
 	}{
 		{"empty", "", nil},
 		{"invalid", string([]byte{0xff}), bad},
-		{"long", strings.Repeat("x", 5000), nil},
-		{"too long", strings.Repeat("y", 5001), tooLong},
+		{"long", strings.Repeat("y", 64), nil},
+		{"too long", strings.Repeat("n", 65), tooLong},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := context.Background()
-			a := &rpc.ApiSpec{
-				Description: test.in,
-			}
-			if description.OnlyIf(a, fieldName) {
-				got := description.ApplyToField(ctx, a, fieldName, test.in)
-				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
-					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
-				}
+			got := CheckUTF("xxx", test.in, 64)
+			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})
 	}
