@@ -538,12 +538,12 @@ func TestVisit(t *testing.T) {
 		})
 	}
 	for _, test := range tests {
-		testname := "unimplemented:" + test.pattern
+		testname := "unsupported:" + test.pattern
 		if test.filter != "" {
-			testname = fmt.Sprintf("unimplemented:%s(--filter=%s)", test.pattern, test.filter)
+			testname = fmt.Sprintf("unsupported:%s(--filter=%s)", test.pattern, test.filter)
 		}
 		t.Run(testname, func(t *testing.T) {
-			v := &Unimplemented{}
+			v := &Unsupported{}
 			err = Visit(ctx, v, VisitorOptions{
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
@@ -551,7 +551,7 @@ func TestVisit(t *testing.T) {
 				Filter:         test.filter,
 			})
 			if err == nil {
-				t.Errorf("Visit() of Unimplemented succeeded when it should have failed")
+				t.Errorf("Visit() of Unsupported succeeded when it should have failed")
 			}
 		})
 	}

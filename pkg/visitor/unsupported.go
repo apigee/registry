@@ -20,54 +20,54 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-// Unimplemented provides default handlers for all types that return "unsupported" errors.
+// Unsupported provides default handlers for all types that return "unsupported" errors.
 // Include it as an extension to fill out incomplete visitor implementations.
-type Unimplemented struct {
+type Unsupported struct {
 }
 
-func (v *Unimplemented) ProjectHandler() ProjectHandler {
+func (v *Unsupported) ProjectHandler() ProjectHandler {
 	return func(message *rpc.Project) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) ApiHandler() ApiHandler {
+func (v *Unsupported) ApiHandler() ApiHandler {
 	return func(message *rpc.Api) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) VersionHandler() VersionHandler {
+func (v *Unsupported) VersionHandler() VersionHandler {
 	return func(message *rpc.ApiVersion) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) DeploymentHandler() DeploymentHandler {
+func (v *Unsupported) DeploymentHandler() DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) DeploymentRevisionHandler() DeploymentHandler {
+func (v *Unsupported) DeploymentRevisionHandler() DeploymentHandler {
 	return func(message *rpc.ApiDeployment) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) SpecHandler() SpecHandler {
+func (v *Unsupported) SpecHandler() SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) SpecRevisionHandler() SpecHandler {
+func (v *Unsupported) SpecRevisionHandler() SpecHandler {
 	return func(message *rpc.ApiSpec) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
-func (v *Unimplemented) ArtifactHandler() ArtifactHandler {
+func (v *Unsupported) ArtifactHandler() ArtifactHandler {
 	return func(message *rpc.Artifact) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
