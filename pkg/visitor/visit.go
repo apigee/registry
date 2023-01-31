@@ -36,11 +36,11 @@ type Visitor interface {
 }
 
 type VisitorOptions struct {
-	RegistryClient          connection.RegistryClient
-	AdminClient             connection.AdminClient
-	Pattern                 string
-	Filter                  string
-	AllowUnavailableProject bool
+	RegistryClient  connection.RegistryClient
+	AdminClient     connection.AdminClient
+	Pattern         string
+	Filter          string
+	ImplicitProject bool
 }
 
 // Visit traverses a registry, applying the Visitor to each selected resource.
@@ -52,7 +52,7 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 
 	// First try to match collection names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
-		return ListProjects(ctx, ac, project, filter, v.ProjectHandler())
+		return ListProjects(ctx, ac, project, options.ImplicitProject, filter, v.ProjectHandler())
 	} else if api, err := names.ParseApiCollection(name); err == nil {
 		return ListAPIs(ctx, rc, api, filter, v.ApiHandler())
 	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
@@ -71,7 +71,7 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	// Then try to match resource names containing wildcards, these also are treated as collections.
 	if strings.Contains(name, "/-") || strings.Contains(name, "@-") {
 		if project, err := names.ParseProject(name); err == nil {
-			return ListProjects(ctx, ac, project, filter, v.ProjectHandler())
+			return ListProjects(ctx, ac, project, options.ImplicitProject, filter, v.ProjectHandler())
 		} else if api, err := names.ParseApi(name); err == nil {
 			return ListAPIs(ctx, rc, api, filter, v.ApiHandler())
 		} else if deployment, err := names.ParseDeployment(name); err == nil {
@@ -96,7 +96,7 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	}
 	// Finally, match individual resources
 	if project, err := names.ParseProject(name); err == nil {
-		return GetProject(ctx, ac, project, options.AllowUnavailableProject, v.ProjectHandler())
+		return GetProject(ctx, ac, project, options.ImplicitProject, v.ProjectHandler())
 	} else if api, err := names.ParseApi(name); err == nil {
 		return GetAPI(ctx, rc, api, v.ApiHandler())
 	} else if deployment, err := names.ParseDeployment(name); err == nil {

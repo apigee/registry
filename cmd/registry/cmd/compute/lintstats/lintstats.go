@@ -187,7 +187,7 @@ func computeLintStatsProjects(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return visitor.ListProjects(ctx, adminClient, projectName, filter, func(project *rpc.Project) error {
+	return visitor.ListProjects(ctx, adminClient, projectName, false, filter, func(project *rpc.Project) error {
 		project_stats := &rpc.LintStats{}
 
 		if err := visitor.ListAPIs(ctx, client, projectName.Api(""), filter, func(api *rpc.Api) error {

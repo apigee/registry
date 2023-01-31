@@ -47,7 +47,7 @@ func ListSubresources(ctx context.Context,
 	handler HandlerSet) (err error) {
 	switch name := root.(type) {
 	case names.Project:
-		err = visitor.ListProjects(ctx, adminClient, name, filter, handler.ProjectHandler())
+		err = visitor.ListProjects(ctx, adminClient, name, true, filter, handler.ProjectHandler())
 		if err != nil {
 			return err
 		}

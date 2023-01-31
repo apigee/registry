@@ -22,11 +22,14 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func ListProjects(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
+	implicitProject bool,
 	filter string,
 	handler ProjectHandler) error {
 	if id := name.ProjectID; id != "" && id != "-" {
@@ -40,6 +43,13 @@ func ListProjects(ctx context.Context,
 		Filter: filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil && status.Code(err) == codes.Unimplemented && implicitProject {
+			// If the admin service is unavailable, provide a placeholder project.
+			// If the project is invalid, downstream actions will fail.
+			p := &rpc.Project{Name: name.String()}
+			return handler(p)
+		}
+
 		if err != nil {
 			return err
 		}

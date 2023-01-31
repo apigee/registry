@@ -27,12 +27,12 @@ import (
 func GetProject(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
-	allowUnavailable bool,
+	implicitProject bool,
 	handler ProjectHandler) error {
 	project, err := client.GetProject(ctx, &rpc.GetProjectRequest{
 		Name: name.String(),
 	})
-	if err != nil && status.Code(err) == codes.Unimplemented && allowUnavailable {
+	if err != nil && status.Code(err) == codes.Unimplemented && implicitProject {
 		// If the admin service is unavailable, provide a placeholder project.
 		// If the project is invalid, downstream actions will fail.
 		project = &rpc.Project{Name: name.String()}
