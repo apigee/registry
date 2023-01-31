@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
@@ -40,7 +41,7 @@ type VisitorOptions struct {
 	AdminClient     connection.AdminClient
 	Pattern         string
 	Filter          string
-	ImplicitProject bool
+	ImplicitProject *rpc.Project // used as placeholder if Project is unaccessible
 }
 
 // Visit traverses a registry, applying the Visitor to each selected resource.

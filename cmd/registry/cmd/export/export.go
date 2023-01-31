@@ -69,7 +69,7 @@ func Command() *cobra.Command {
 				AdminClient:     adminClient,
 				Pattern:         pattern,
 				Filter:          filter,
-				ImplicitProject: true,
+				ImplicitProject: &rpc.Project{Name: "Implicit"},
 			}); err != nil {
 				return err
 			}

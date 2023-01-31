@@ -29,7 +29,7 @@ import (
 func ListProjects(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
-	implicitProject bool,
+	implicitProject *rpc.Project,
 	filter string,
 	handler ProjectHandler) error {
 	if id := name.ProjectID; id != "" && id != "-" {
@@ -43,11 +43,10 @@ func ListProjects(ctx context.Context,
 		Filter: filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
-		if err != nil && status.Code(err) == codes.Unimplemented && implicitProject {
+		if err != nil && status.Code(err) == codes.Unimplemented && implicitProject != nil {
 			// If the admin service is unavailable, provide a placeholder project.
 			// If the project is invalid, downstream actions will fail.
-			p := &rpc.Project{Name: name.String()}
-			return handler(p)
+			return handler(implicitProject)
 		}
 
 		if err != nil {
