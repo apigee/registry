@@ -153,17 +153,21 @@ func (task *applyBytesTask) resource() string {
 	var collection string
 	switch task.kind {
 	case "API":
-		collection = "/apis/"
+		collection = "apis/"
 	case "Version":
-		collection = "/versions/"
+		collection = "versions/"
 	case "Spec":
-		collection = "/specs/"
+		collection = "specs/"
 	case "Deployment":
-		collection = "/deployments/"
+		collection = "deployments/"
 	default:
-		collection = "/artifacts/"
+		collection = "artifacts/"
 	}
-	return task.parent + collection + task.name
+
+	if task.parent == "" {
+		return collection + task.name
+	}
+	return task.parent + "/" + collection + task.name
 }
 
 func (task *applyBytesTask) Run(ctx context.Context) error {
