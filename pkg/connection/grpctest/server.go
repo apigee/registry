@@ -115,6 +115,18 @@ func SetupRegistry(ctx context.Context, t *testing.T, projectID string, seeds []
 	}
 	t.Cleanup(func() { _ = adminClient.DeleteProject(ctx, delProjReq) })
 
+	if len(seeds) == 0 {
+		_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+			ProjectId: projectID,
+			Project: &rpc.Project{
+				DisplayName: "Test",
+			},
+		})
+		if err != nil {
+			t.Fatalf("Failed to create project: %+v", err)
+		}
+	}
+
 	seedClient := seeder.Client{
 		RegistryClient: registryClient,
 		AdminClient:    adminClient,
