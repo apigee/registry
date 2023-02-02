@@ -26,7 +26,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var defaultDisabledRules = []string{}
+// defaultDisabledRules is the list of rules or groups that are by default
+// disabled, because they are scoped to a very specific set of checks.
+var defaultDisabledRules = []string{"apihub", "score"}
 
 // Configs determine if a rule is enabled or not.
 type Configs []Config
