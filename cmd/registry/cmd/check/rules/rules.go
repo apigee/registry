@@ -34,6 +34,9 @@ package rules
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule100"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule1000"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule1001"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule1002"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule101"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule102"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule103"
@@ -66,6 +69,9 @@ var addRulesFuncs = []addRulesFuncType{
 	rule111.AddRules,
 	rule112.AddRules,
 	rule113.AddRules,
+	rule1000.AddRules,
+	rule1001.AddRules,
+	rule1002.AddRules,
 }
 
 // Add all rules to the given registry.

@@ -34,6 +34,11 @@ func (p Project) Validate() error {
 	return validateID(p.ProjectID)
 }
 
+// Project returns this resource
+func (p Project) Project() Project {
+	return p
+}
+
 // Api returns an API with the provided ID and this resource as its parent.
 func (p Project) Api(id string) Api {
 	return Api{

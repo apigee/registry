@@ -41,6 +41,13 @@ type Artifact struct {
 	}
 }
 
+// Project returns the name of this resource's parent project.
+func (a Artifact) Project() Project {
+	return Project{
+		ProjectID: a.ProjectID(),
+	}
+}
+
 // ProjectID returns the artifact's project ID, or empty string if it doesn't have one.
 func (a Artifact) ProjectID() string {
 	switch name := a.name.(type) {
