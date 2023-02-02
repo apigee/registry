@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -71,14 +72,14 @@ func applyApiSpecPatchBytes(
 	ctx context.Context,
 	client connection.RegistryClient,
 	bytes []byte,
-	parent string,
+	project string,
 	filename string) error {
 	var spec models.ApiSpec
 	err := yaml.Unmarshal(bytes, &spec)
 	if err != nil {
 		return err
 	}
-	return applyApiSpecPatch(ctx, client, &spec, parent, filename)
+	return applyApiSpecPatch(ctx, client, &spec, project, filename)
 }
 
 func specName(parent string, metadata models.Metadata) (names.Spec, error) {
@@ -190,7 +191,7 @@ func applyApiSpecPatch(
 	}
 	_, err = client.UpdateApiSpec(ctx, req)
 	if err != nil {
-		return err
+		return fmt.Errorf("UpdateApiSpec: %s", err)
 	}
 	for _, artifactPatch := range spec.Data.Artifacts {
 		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())

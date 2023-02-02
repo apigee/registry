@@ -15,8 +15,8 @@
 package apply
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
@@ -26,39 +26,42 @@ import (
 
 func Command() *cobra.Command {
 	var fileName string
-	var parent string
+	var project string
 	var recursive bool
 	var jobs int
 	cmd := &cobra.Command{
-		Use:   "apply",
-		Short: "Apply patches that add content to the API Registry",
-		Args:  cobra.ExactArgs(0),
+		Use:   "apply (-f FILENAME | -f -)",
+		Short: "Apply an object to the API Registry",
+		Long:  "Apply an object to the API Registry by file name or stdin. Resources will be created if they don't exist yet.\n\nMore info and example usage at https://github.com/apigee/registry/wiki/registry-apply",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			if parent == "" {
+			if project == "" {
 				c, err := connection.ActiveConfig()
 				if err != nil {
-					return errors.New("Unable to identify parent: please use --parent or registry configuration")
+					return err
 				}
-				parent, err = c.ProjectWithLocation()
+				project, err = c.ProjectWithLocation()
 				if err != nil {
-					return errors.New("Unable to identify parent: please use --parent or set registry.project in configuration")
+					return fmt.Errorf("%s: please use --parent or set registry.project in configuration", err)
 				}
+			} else if !strings.Contains(project, "/locations/") {
+				project += "/locations/global"
 			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				return err
 			}
-			if err := core.VerifyLocation(ctx, client, parent); err != nil {
-				return fmt.Errorf("parent does not exist (%s)", err)
+			if err := core.VerifyLocation(ctx, client, project); err != nil {
+				return fmt.Errorf("parent project %q does not exist: %s", project, err)
 			}
-			return patch.Apply(ctx, client, fileName, parent, recursive, jobs)
+			return patch.Apply(ctx, client, fileName, project, recursive, jobs)
 		},
 	}
-	cmd.Flags().StringVarP(&fileName, "file", "f", "", "file or directory containing the patch(es) to apply")
-	cmd.Flags().StringVar(&parent, "parent", "", "parent resource for the patch")
-	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false,
-		"process the directory used in -f, --file recursively")
+	cmd.Flags().StringVarP(&fileName, "file", "f", "", "file or directory containing the patch(es) to apply. Use '-' to read from standard input")
+	_ = cmd.MarkFlagRequired("file")
+	cmd.Flags().StringVar(&project, "parent", "", "GCP project containing the API registry")
+	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false, "process the directory used in -f, --file recursively")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }

@@ -16,6 +16,8 @@ package patch
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -28,14 +30,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
+func Apply(ctx context.Context, client connection.RegistryClient, path, project string, recursive bool, jobs int) error {
 	patches := &patchGroup{}
 	if path == "-" {
 		bytes, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
-		if err := patches.parse(client, bytes, "", parent); err != nil {
+		if err := patches.parse(client, bytes, "", project); err != nil {
 			return err
 		}
 		return patches.run(ctx, jobs)
@@ -56,7 +58,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 			if err != nil {
 				return err
 			}
-			return patches.parse(client, bytes, fileName, parent)
+			return patches.parse(client, bytes, fileName, project)
 		})
 	if err != nil {
 		return err
@@ -87,7 +89,7 @@ func (p *patchGroup) add(task *applyBytesTask) {
 	}
 }
 
-func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileName, parent string) error {
+func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileName, project string) error {
 	header, items, err := readHeaderWithItems(bytes)
 	if err != nil {
 		return err
@@ -97,11 +99,13 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 
 	if items.Kind != yaml.SequenceNode {
 		p.add(&applyBytesTask{
-			client: client,
-			path:   fileName,
-			parent: parent,
-			kind:   header.Kind,
-			bytes:  bytes,
+			client:  client,
+			path:    fileName,
+			project: project,
+			parent:  header.Metadata.Parent,
+			name:    header.Metadata.Name,
+			kind:    header.Kind,
+			bytes:   bytes,
 		})
 		return nil
 	}
@@ -119,11 +123,13 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 			continue
 		}
 		p.add(&applyBytesTask{
-			client: client,
-			path:   fileName,
-			parent: parent,
-			kind:   itemHeader.Kind,
-			bytes:  itemBytes,
+			client:  client,
+			path:    fileName,
+			project: project,
+			parent:  itemHeader.Metadata.Parent,
+			name:    itemHeader.Metadata.Name,
+			kind:    itemHeader.Kind,
+			bytes:   itemBytes,
 		})
 	}
 
@@ -149,40 +155,66 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 }
 
 type applyBytesTask struct {
-	client connection.RegistryClient
-	path   string
-	parent string
-	kind   string
-	bytes  []byte
+	client  connection.RegistryClient
+	path    string
+	project string
+	parent  string
+	name    string
+	kind    string
+	bytes   []byte
 }
 
 func (task *applyBytesTask) String() string {
-	return "apply " + task.path
+	return fmt.Sprintf("apply %s (from path: %s)", task.resource(), task.path)
+}
+
+func (task *applyBytesTask) resource() string {
+	var collection string
+	switch task.kind {
+	case "API":
+		collection = "apis/"
+	case "Version":
+		collection = "versions/"
+	case "Spec":
+		collection = "specs/"
+	case "Deployment":
+		collection = "deployments/"
+	default:
+		collection = "artifacts/"
+	}
+
+	if task.parent == "" {
+		return collection + task.name
+	}
+	return task.parent + "/" + collection + task.name
 }
 
 func (task *applyBytesTask) Run(ctx context.Context) error {
 	header, err := readHeader(task.bytes)
 	if err != nil {
 		return err
-	}
-	if header.ApiVersion != RegistryV1 {
+	} else if header.ApiVersion != RegistryV1 {
 		return nil
 	}
-	name := header.Metadata.Name
-	if header.Metadata.Parent != "" {
-		name = header.Metadata.Parent + "/" + name
+
+	switch header.Kind {
+	case "Version", "Spec", "Deployment":
+		if header.Metadata.Parent == "" {
+			return errors.New("metadata.parent should be set to the project-local parent path")
+		}
 	}
-	log.FromContext(ctx).Infof("Applying %s %s", task.path, name)
+
+	log.FromContext(ctx).Infof("Applying %s", task.resource())
 	switch header.Kind {
 	case "API":
-		return applyApiPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project)
 	case "Version":
-		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.project)
 	case "Spec":
-		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.parent, task.path)
+		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Deployment":
-		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.project)
 	default: // for everything else, try an artifact type
-		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.parent)
+		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.project)
 	}
 }

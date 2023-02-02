@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
@@ -214,7 +215,7 @@ func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, b
 	}
 	_, err = client.UpdateApi(ctx, req)
 	if err != nil {
-		return err
+		return fmt.Errorf("UpdateApi: %s", err)
 	}
 	for _, versionPatch := range api.Data.ApiVersions {
 		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String())

@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
@@ -82,13 +83,13 @@ func applyApiVersionPatchBytes(
 	ctx context.Context,
 	client connection.RegistryClient,
 	bytes []byte,
-	parent string) error {
+	project string) error {
 	var version models.ApiVersion
 	err := yaml.Unmarshal(bytes, &version)
 	if err != nil {
 		return err
 	}
-	return applyApiVersionPatch(ctx, client, &version, parent)
+	return applyApiVersionPatch(ctx, client, &version, project)
 }
 
 func versionName(parent string, metadata models.Metadata) (names.Version, error) {
@@ -125,7 +126,7 @@ func applyApiVersionPatch(
 	}
 	_, err = client.UpdateApiVersion(ctx, req)
 	if err != nil {
-		return err
+		return fmt.Errorf("UpdateApiVersion: %s", err)
 	}
 	for _, specPatch := range version.Data.ApiSpecs {
 		err := applyApiSpecPatch(ctx, client, specPatch, name.String(), "")
