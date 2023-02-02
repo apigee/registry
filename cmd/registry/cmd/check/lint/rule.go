@@ -218,7 +218,7 @@ func (r *FieldRule) Apply(ctx context.Context, res Resource) (problems []Problem
 	for i := 0; i < in.NumField(); i++ {
 		name := t.Elem().Field(i).Name
 		if r.OnlyIf == nil || r.OnlyIf(res, name) {
-			value := v.Elem().Field(i)
+			value := v.Elem().Field(i).Interface()
 			probs := r.ApplyToField(ctx, res, name, value)
 			for i := range probs {
 				if probs[i].Location == "" {
