@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -29,6 +30,17 @@ import (
 
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
 	patches := &patchGroup{}
+	if path == "-" {
+		bytes, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+		if err := patches.parse(client, bytes, "", parent); err != nil {
+			return err
+		}
+		return patches.run(ctx, jobs)
+	}
+
 	err := filepath.WalkDir(path,
 		func(fileName string, entry fs.DirEntry, err error) error {
 			if err != nil {
@@ -44,44 +56,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 			if err != nil {
 				return err
 			}
-			header, items, err := readHeaderWithItems(bytes)
-			if err != nil {
-				return err
-			}
-			if header.ApiVersion != RegistryV1 {
-				return nil
-			}
-			if items.Kind == yaml.SequenceNode {
-				for _, n := range items.Content {
-					itemBytes, err := yaml.Marshal(n)
-					if err != nil {
-						return err
-					}
-					itemHeader, err := readHeader(itemBytes)
-					if err != nil {
-						return err
-					}
-					if itemHeader.ApiVersion != RegistryV1 {
-						continue
-					}
-					patches.add(&applyBytesTask{
-						client: client,
-						path:   fileName,
-						parent: parent,
-						kind:   itemHeader.Kind,
-						bytes:  itemBytes,
-					})
-				}
-				return nil
-			}
-			patches.add(&applyBytesTask{
-				client: client,
-				path:   fileName,
-				parent: parent,
-				kind:   header.Kind,
-				bytes:  bytes,
-			})
-			return nil
+			return patches.parse(client, bytes, fileName, parent)
 		})
 	if err != nil {
 		return err
@@ -110,6 +85,49 @@ func (p *patchGroup) add(task *applyBytesTask) {
 	default: // for everything else, try an artifact type
 		p.artifactTasks = append(p.artifactTasks, task)
 	}
+}
+
+func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileName, parent string) error {
+	header, items, err := readHeaderWithItems(bytes)
+	if err != nil {
+		return err
+	} else if header.ApiVersion != RegistryV1 {
+		return nil
+	}
+
+	if items.Kind != yaml.SequenceNode {
+		p.add(&applyBytesTask{
+			client: client,
+			path:   fileName,
+			parent: parent,
+			kind:   header.Kind,
+			bytes:  bytes,
+		})
+		return nil
+	}
+
+	for _, n := range items.Content {
+		itemBytes, err := yaml.Marshal(n)
+		if err != nil {
+			return err
+		}
+		itemHeader, err := readHeader(itemBytes)
+		if err != nil {
+			return err
+		}
+		if itemHeader.ApiVersion != RegistryV1 {
+			continue
+		}
+		p.add(&applyBytesTask{
+			client: client,
+			path:   fileName,
+			parent: parent,
+			kind:   itemHeader.Kind,
+			bytes:  itemBytes,
+		})
+	}
+
+	return nil
 }
 
 func (p *patchGroup) run(ctx context.Context, jobs int) error {
