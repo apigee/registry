@@ -42,7 +42,7 @@ func TestChecker_run(t *testing.T) {
 	testRuleName := NewRuleName(111, "test-rule")
 	ruleProblems := []Problem{{
 		Message:  "rule1_problem",
-		Location: "projects/test",
+		Location: "projects/checker-test",
 		RuleID:   testRuleName,
 	}}
 
@@ -51,7 +51,7 @@ func TestChecker_run(t *testing.T) {
 		configs  Configs
 		problems []Problem
 	}{
-		{"Empty", Configs{}, []Problem{}},
+		{"Empty", Configs{}, ruleProblems},
 		{
 			"NonMatchingFile",
 			append(
@@ -93,7 +93,9 @@ func TestChecker_run(t *testing.T) {
 					if c := RegistryClient(ctx); c == nil {
 						t.Errorf("RegistryClient missing in context: %v", ctx)
 					}
-					return test.problems
+					return []Problem{{
+						Message: "rule1_problem",
+					}}
 				},
 			})
 			if err != nil {
