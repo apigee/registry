@@ -16,6 +16,7 @@ package check
 
 import (
 	"log"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules"
@@ -41,6 +42,14 @@ func defaultConfigs() lint.Configs {
 	return lint.Configs{}
 }
 
+var (
+	filter     string
+	jobs       int
+	enable     []string
+	disable    []string
+	configFile string
+)
+
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check [pattern]",
@@ -53,17 +62,8 @@ func Command() *cobra.Command {
 				return err
 			}
 
-			root, err := names.Parse(c.FQName(args[0]))
-			if err != nil {
-				return err
-			}
-
-			filter, err := cmd.Flags().GetString("filter")
-			if err != nil {
-				return err
-			}
-
-			jobs, err := cmd.Flags().GetInt("jobs")
+			name := strings.TrimSuffix(c.FQName(args[0]), "/locations/global")
+			root, err := names.Parse(name)
 			if err != nil {
 				return err
 			}
@@ -77,7 +77,19 @@ func Command() *cobra.Command {
 				return err
 			}
 
-			linter := lint.New(globalRules, globalConfigs)
+			configs := globalConfigs
+			if configFile != "" {
+				c, err := lint.ReadConfigsFromFile(configFile)
+				if err != nil {
+					return err
+				}
+				configs = append(configs, c...)
+			}
+			configs = append(configs, lint.Config{
+				EnabledRules:  enable,
+				DisabledRules: disable,
+			})
+			linter := lint.New(globalRules, configs)
 			response, err := linter.Check(ctx, adminClient, client, root, filter, jobs)
 			if err != nil {
 				return err
@@ -93,8 +105,11 @@ func Command() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("filter", "", "filter selected resources")
-	cmd.Flags().IntP("jobs", "j", 10, "number of actions to perform concurrently")
+	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
+	cmd.Flags().StringVar(&configFile, "config", "", "rule config")
+	cmd.Flags().StringArrayVar(&enable, "enable", nil, "enable rules")
+	cmd.Flags().StringArrayVar(&disable, "disable", nil, "disable rules")
 
 	return cmd
 }

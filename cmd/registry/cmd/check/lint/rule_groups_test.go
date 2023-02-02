@@ -12,8 +12,8 @@ func TestGroups(t *testing.T) {
 	}{
 		{"registry", 1, "registry"},
 		{"registry", 999, "registry"},
-		{"hub", 1000, "hub"},
-		{"hub", 1099, "hub"},
+		{"apihub", 1000, "apihub"},
+		{"apihub", 1099, "apihub"},
 		{"score", 1100, "score"},
 		{"score", 1199, "score"},
 	}

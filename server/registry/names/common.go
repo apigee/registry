@@ -78,7 +78,8 @@ const Location = "global"
 
 // Name is an interface that represents resource names.
 type Name interface {
-	String() string // all names have a string representation.
+	String() string   // all names have a string representation.
+	Project() Project // all names are associated with a project
 }
 
 // ExportableName returns a name suitable for export.

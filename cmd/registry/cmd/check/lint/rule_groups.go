@@ -21,7 +21,7 @@ func registryGroup(ruleNum int) string {
 
 func hubGroup(ruleNum int) string {
 	if ruleNum >= 1000 && ruleNum < 1100 {
-		return "hub"
+		return "apihub"
 	}
 	return ""
 }
