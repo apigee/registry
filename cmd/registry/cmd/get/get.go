@@ -63,11 +63,10 @@ func Command() *cobra.Command {
 			}
 			// Visit the selected resources.
 			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
-				RegistryClient:          registryClient,
-				AdminClient:             adminClient,
-				Pattern:                 pattern,
-				Filter:                  filter,
-				AllowUnavailableProject: false,
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+				Pattern:        pattern,
+				Filter:         filter,
 			}); err != nil {
 				return err
 			}
