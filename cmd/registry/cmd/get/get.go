@@ -16,6 +16,7 @@ package get
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -33,6 +34,7 @@ import (
 func Command() *cobra.Command {
 	var filter string
 	var output string
+	var nested bool
 
 	cmd := &cobra.Command{
 		Use:   "get PATTERN",
@@ -53,6 +55,9 @@ func Command() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if nested && output != "yaml" {
+				return errors.New("--nested is only supported for yaml output")
+			}
 			// Create the visitor that will perform gets.
 			v := &getVisitor{
 				ctx:            ctx,
@@ -60,6 +65,7 @@ func Command() *cobra.Command {
 				adminClient:    adminClient,
 				writer:         cmd.OutOrStdout(),
 				output:         output,
+				nested:         nested,
 			}
 			// Visit the selected resources.
 			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
@@ -76,6 +82,7 @@ func Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
 	cmd.Flags().StringVarP(&output, "output", "o", "name", "output type (name|yaml|contents)")
+	cmd.Flags().BoolVar(&nested, "nested", false, "include nested subresources in YAML output")
 	return cmd
 }
 
@@ -85,6 +92,7 @@ type getVisitor struct {
 	adminClient    connection.AdminClient
 	writer         io.Writer
 	output         string
+	nested         bool
 	results        []interface{} // result values to be returned in a single message
 }
 
@@ -116,7 +124,7 @@ func (v *getVisitor) ApiHandler() visitor.ApiHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			api, err := patch.NewApi(v.ctx, v.registryClient, message, false)
+			api, err := patch.NewApi(v.ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -136,7 +144,7 @@ func (v *getVisitor) VersionHandler() visitor.VersionHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			version, err := patch.NewApiVersion(v.ctx, v.registryClient, message, false)
+			version, err := patch.NewApiVersion(v.ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -156,7 +164,7 @@ func (v *getVisitor) DeploymentHandler() visitor.DeploymentHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			deployment, err := patch.NewApiDeployment(v.ctx, v.registryClient, message, false)
+			deployment, err := patch.NewApiDeployment(v.ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -193,7 +201,7 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			v.results = append(v.results, contents)
 			return nil
 		case "yaml":
-			spec, err := patch.NewApiSpec(v.ctx, v.registryClient, message, false)
+			spec, err := patch.NewApiSpec(v.ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}

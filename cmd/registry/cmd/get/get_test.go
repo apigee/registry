@@ -179,6 +179,28 @@ func TestGetValidResources(t *testing.T) {
 			}
 		})
 	}
+	resourcesWithChildren := []string{
+		"projects/my-project/locations/global/apis/a",
+		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/a/deployments/d",
+	}
+	// Get the contents of these resources.
+	for _, r := range resourcesWithChildren {
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			args := []string{r, "-o", "yaml", "--nested"}
+			cmd.SetArgs(args)
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOut(out)
+			if err := cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+			if len(out.Bytes()) == 0 {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
+	}
 }
 
 func TestGetInvalidResources(t *testing.T) {
@@ -290,6 +312,20 @@ func TestGetInvalidResources(t *testing.T) {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 			args := []string{r, "-o", "invalid"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+	// attempts to use `--nested` with unsupported output types should fail
+	outputs := []string{"name", "contents"}
+	for _, o := range outputs {
+		t.Run(o+"--nested", func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{resources[0], "-o", o, "--nested"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
 				t.Errorf("Execute() with args %v succeeded but should have failed", args)
