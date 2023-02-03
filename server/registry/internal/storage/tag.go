@@ -17,8 +17,8 @@ package storage
 import (
 	"context"
 
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
