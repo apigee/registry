@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/types/known/durationpb"

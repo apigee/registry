@@ -18,10 +18,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

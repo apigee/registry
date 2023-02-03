@@ -18,9 +18,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

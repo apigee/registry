@@ -17,7 +17,7 @@ package patterns
 import (
 	"testing"
 
-	"github.com/apigee/registry/server/registry/names"
+	"github.com/apigee/registry/pkg/names"
 )
 
 func generateSpecName(t *testing.T, specName string) SpecName {
