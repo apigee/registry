@@ -15,11 +15,13 @@
 package vocabulary
 
 import (
-	"github.com/apigee/registry/cmd/registry/core"
+	"fmt"
+
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func differenceCommand() *cobra.Command {
@@ -46,7 +48,7 @@ func differenceCommand() *cobra.Command {
 			if output != "" {
 				setVocabularyToArtifact(ctx, client, vocab, output)
 			} else {
-				core.PrintMessage(vocab)
+				fmt.Println(protojson.Format((vocab)))
 			}
 		},
 	}
