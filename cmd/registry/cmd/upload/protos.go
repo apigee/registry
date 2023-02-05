@@ -208,8 +208,7 @@ func (task *uploadProtoTask) createAPI(ctx context.Context) error {
 	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName(),
-			DisplayName: task.apiTitle,
-			Description: task.apiDescription,
+			DisplayName: task.apiID,
 		},
 		AllowMissing: true,
 	})
@@ -232,7 +231,8 @@ func (task *uploadProtoTask) createVersion(ctx context.Context) error {
 	// Create an API version if needed (or update an existing one)
 	response, err := task.client.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
 		ApiVersion: &rpc.ApiVersion{
-			Name: task.versionName(),
+			Name:        task.versionName(),
+			DisplayName: task.versionID,
 		},
 		AllowMissing: true,
 	})
@@ -262,6 +262,10 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 			MimeType: types.ProtobufMimeType("+zip"),
 			Filename: task.fileName(),
 			Contents: task.contents,
+			Labels: map[string]string{
+				"source":    "Google APIs",
+				"source-id": "https://github.com/googleapis/googleapis/blob/master" + strings.TrimPrefix(task.path, task.directory),
+			},
 		},
 		AllowMissing: true,
 	}

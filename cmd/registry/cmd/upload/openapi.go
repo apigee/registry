@@ -27,6 +27,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -35,6 +36,8 @@ import (
 )
 
 const openAPISpecID = "openapi"
+
+var list models.List
 
 func openAPICommand() *cobra.Command {
 	var baseURI string
@@ -70,10 +73,24 @@ func openAPICommand() *cobra.Command {
 				}
 				scanDirectoryForOpenAPI(ctx, client, parent, baseURI, path, taskQueue)
 			}
+
+			list.Header.ApiVersion = "apigeeregistry/v1"
+			listbytes, err := yaml.Marshal(list)
+			if err != nil {
+				return err
+			}
+			f, err := os.Create("upload.yaml")
+			if err != nil {
+				return err
+			}
+			_, err = f.Write(listbytes)
+			if err != nil {
+				return err
+			}
+			f.Close()
 			return nil
 		},
 	}
-
 	cmd.Flags().StringVar(&baseURI, "base-uri", "", "prefix to use for the source_uri field of each spec upload")
 	return cmd
 }
@@ -96,12 +113,40 @@ func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClie
 		switch {
 		case strings.HasSuffix(path, "swagger.yaml"), strings.HasSuffix(path, "swagger.json"):
 			task.version = "2"
-			taskQueue <- task
+			if true {
+				taskQueue <- task
+			}
 		case strings.HasSuffix(path, "openapi.yaml"), strings.HasSuffix(path, "openapi.json"):
 			task.version = "3"
-			taskQueue <- task
+			if true {
+				taskQueue <- task
+			}
 		}
 
+		if task.version != "" {
+			err := task.prepare()
+			if err != nil {
+				return err
+			}
+			spec := &models.ApiSpec{
+				Header: models.Header{
+					ApiVersion: "apigeeregistry/v1",
+					Kind:       "Spec",
+					Metadata: models.Metadata{
+						Name:   "openapi",
+						Parent: "apis/" + task.apiID + "/versions/" + task.versionID,
+						Labels: map[string]string{
+							"source":    "OpenAPI Directory",
+							"source-id": "https://github.com/apis-guru/openapi-directory/blob/main/APIs" + strings.TrimPrefix(path, directory),
+						},
+					},
+				},
+				Data: models.ApiSpecData{
+					SourceURI: fmt.Sprintf("%s/%s", task.baseURI, task.apiPath()),
+				},
+			}
+			list.Items = append(list.Items, spec)
+		}
 		return nil
 	}); err != nil {
 		log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
@@ -163,6 +208,21 @@ func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 	return nil
 }
 
+func (task *uploadOpenAPITask) prepare() error {
+	parts := strings.Split(task.apiPath(), "/")
+	if len(parts) < 3 {
+		return fmt.Errorf("invalid API path: %s", task.apiPath())
+	}
+
+	apiParts := parts[0 : len(parts)-2]
+	apiPart := strings.ReplaceAll(strings.Join(apiParts, "-"), "/", "-")
+	task.apiID = sanitize(apiPart)
+
+	versionPart := parts[len(parts)-2]
+	task.versionID = sanitize(versionPart)
+	return nil
+}
+
 func (task *uploadOpenAPITask) populateFields() error {
 	parts := strings.Split(task.apiPath(), "/")
 	if len(parts) < 3 {
@@ -190,7 +250,6 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 		Api: &rpc.Api{
 			Name:        task.apiName(),
 			DisplayName: task.apiID,
-			Description: task.document.Info.Title,
 		},
 		AllowMissing: true,
 	})
@@ -213,7 +272,8 @@ func (task *uploadOpenAPITask) createVersion(ctx context.Context) error {
 	// Create an API version if needed (or update an existing one)
 	response, err := task.client.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
 		ApiVersion: &rpc.ApiVersion{
-			Name: task.versionName(),
+			Name:        task.versionName(),
+			DisplayName: task.versionID,
 		},
 		AllowMissing: true,
 	})
@@ -248,6 +308,10 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 			MimeType: types.OpenAPIMimeType("+gzip", task.version),
 			Filename: task.fileName(),
 			Contents: gzippedContents,
+			Labels: map[string]string{
+				"source":    "OpenAPI Directory",
+				"source-id": "https://github.com/apis-guru/openapi-directory/blob/main/APIs" + strings.TrimPrefix(task.path, task.directory),
+			},
 		},
 		AllowMissing: true,
 	}

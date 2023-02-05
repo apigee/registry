@@ -139,8 +139,7 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName(),
-			DisplayName: task.info.Title,
-			Description: task.info.Description,
+			DisplayName: task.apiID,
 		},
 		AllowMissing: true,
 	})
@@ -163,7 +162,8 @@ func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
 	// Create an API version if needed (or update an existing one)
 	response, err := task.client.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
 		ApiVersion: &rpc.ApiVersion{
-			Name: task.versionName(),
+			Name:        task.versionName(),
+			DisplayName: task.versionID,
 		},
 		AllowMissing: true,
 	})
@@ -199,6 +199,10 @@ func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
 			Filename:  "discovery.json",
 			Contents:  gzippedContents,
 			SourceUri: task.path,
+			Labels: map[string]string{
+				"source":    "Google API Discovery Service",
+				"source-id": task.path,
+			},
 		},
 		AllowMissing: true,
 	}
