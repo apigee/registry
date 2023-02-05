@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -28,6 +27,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -116,7 +116,7 @@ func CalculateScore(
 		}
 
 		if dryRun {
-			core.PrintMessage(score)
+			fmt.Println(protojson.Format((score)))
 			return nil
 		}
 		return uploadScore(ctx, client, resource, score)
