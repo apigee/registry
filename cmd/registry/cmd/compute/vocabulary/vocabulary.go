@@ -27,6 +27,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	discovery "github.com/google/gnostic/discovery"
@@ -154,7 +155,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	}
 
 	if task.dryRun {
-		core.PrintMessage(vocab)
+		fmt.Println(protojson.Format((vocab)))
 		return nil
 	}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	metrics "github.com/google/gnostic/metrics"
@@ -172,7 +173,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		}
 
 		if dryRun {
-			core.PrintMessage(lintStats)
+			fmt.Println(protojson.Format(lintStats))
 		} else {
 			_ = storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
 		}
@@ -197,7 +198,7 @@ func computeLintStatsProjects(ctx context.Context,
 			return nil
 		}
 		if dryRun {
-			core.PrintMessage(project_stats)
+			fmt.Println(protojson.Format((project_stats)))
 		} else {
 			// Store the aggregate stats on this project
 			_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
@@ -224,7 +225,7 @@ func computeLintStatsAPIs(ctx context.Context,
 		}
 
 		if dryRun {
-			core.PrintMessage(api_stats)
+			fmt.Println(protojson.Format((api_stats)))
 		} else {
 			// Store the aggregate stats on this api
 			_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
@@ -250,7 +251,7 @@ func computeLintStatsVersions(ctx context.Context,
 		}
 
 		if dryRun {
-			core.PrintMessage(stats)
+			fmt.Println(protojson.Format((stats)))
 		} else {
 			// Store the aggregate stats on this version
 			_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, stats)

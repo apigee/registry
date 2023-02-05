@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
@@ -1072,7 +1072,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 			}
 			err = visitor.GetArtifact(ctx, registryClient, artifactName, true,
 				func(artifact *rpc.Artifact) error {
-					contents, err := core.GetArtifactMessageContents(artifact)
+					contents, err := getArtifactMessageContents(artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -1253,4 +1253,19 @@ func TestInvalidArtifactPatches(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
+	message, err := types.MessageForMimeType(artifact.GetMimeType())
+	if err != nil {
+		return nil, err
+	}
+	return unmarshal(artifact.GetContents(), message)
+}
+
+func unmarshal(value []byte, message proto.Message) (proto.Message, error) {
+	if err := proto.Unmarshal(value, message); err != nil {
+		return nil, err
+	}
+	return message, nil
 }
