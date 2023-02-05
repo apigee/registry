@@ -21,7 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/compute/lintstats"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/score"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/scorecard"
-	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/vocabulary"
 	"github.com/spf13/cobra"
 )
 
