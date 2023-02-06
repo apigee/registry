@@ -27,8 +27,9 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -136,7 +137,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	}
 
 	if task.DryRun {
-		core.PrintMessage(conformanceReport)
+		fmt.Println(protojson.Format((conformanceReport)))
 		return nil
 	}
 	return task.storeConformanceReport(ctx, conformanceReport)

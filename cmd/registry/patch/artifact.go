@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -26,8 +27,8 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -149,13 +150,13 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 	}, nil
 }
 
-func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string) error {
 	var artifact models.Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
 	}
-	return applyArtifactPatch(ctx, client, &artifact, parent)
+	return applyArtifactPatch(ctx, client, &artifact, project)
 }
 
 func artifactName(parent string, metadata models.Metadata) (names.Artifact, error) {
@@ -227,9 +228,11 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 		req := &rpc.ReplaceArtifactRequest{
 			Artifact: artifact,
 		}
-		_, err = client.ReplaceArtifact(ctx, req)
+		if _, err := client.ReplaceArtifact(ctx, req); err != nil {
+			return fmt.Errorf("ReplaceArtifact: %s", err)
+		}
 	}
-	return err
+	return nil
 }
 
 // populateIdAndKind inserts the "id" and "kind" fields in the supplied json bytes.

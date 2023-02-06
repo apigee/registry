@@ -110,9 +110,9 @@ that is likely to become a recommended way to populate an API registry.
   As above, `$PROJECT_ID` should be set to your registry project id.
 
 - `registry apply` reads API information from YAML files using a mechanism
-  similar to `kubectl apply`. For details, see
-  [this GitHub issue](https://github.com/apigee/registry/issues/450). To try
-  it, run the following from the root of the `registry` repo:
+  similar to `kubectl apply`. For details,
+  [check the wiki entry](https://github.com/apigee/registry/wiki/registry-apply)
+  To try it, run the following from the root of the `registry` repo:
 
   ```
   registry apply -f cmd/registry/cmd/apply/testdata/registry.yaml --parent projects/$PROJECT_ID/locations/global

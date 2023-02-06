@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

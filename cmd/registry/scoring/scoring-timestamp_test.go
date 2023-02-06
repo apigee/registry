@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"

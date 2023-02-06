@@ -23,10 +23,11 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	discovery "github.com/google/gnostic/discovery"
@@ -169,7 +170,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	}
 
 	if task.dryRun {
-		core.PrintMessage(complexity)
+		fmt.Println(protojson.Format(complexity))
 		return nil
 	}
 	subject := task.specName

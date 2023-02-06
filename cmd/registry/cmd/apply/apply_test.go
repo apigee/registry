@@ -16,13 +16,14 @@ package apply
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -165,6 +166,71 @@ func TestApplyErrors(t *testing.T) {
 			cmd.SetArgs(test.args)
 			if err := cmd.Execute(); err == nil {
 				t.Fatalf("Execute() with args %+v succeeded, expected error", cmd.Args)
+			}
+		})
+	}
+}
+
+func TestApply_Stdin(t *testing.T) {
+	project := names.Project{ProjectID: "apply-test-stdin"}
+	parent := project.String() + "/locations/global"
+
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+
+	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil && status.Code(err) != codes.NotFound {
+		t.Errorf("Setup: failed to delete test project: %s", err)
+	}
+
+	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project.ProjectID,
+		Project:   &rpc.Project{},
+	}); err != nil {
+		t.Fatalf("Setup: Failed to create test project: %s", err)
+	}
+
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+
+	tests := []struct {
+		desc string
+		file string
+		args []string
+	}{
+		{
+			desc: "apis-registry.yaml",
+			file: sampleDir + "/apis/registry.yaml",
+			args: []string{"-f", "-", "--parent", parent, "--jobs", "1"},
+		},
+		{
+			desc: "artifacts-lifecycle.yaml",
+			file: sampleDir + "/artifacts/lifecycle.yaml",
+			args: []string{"-f", "-", "--parent", parent, "--jobs", "1"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			r, err := os.Open(test.file)
+			if err != nil {
+				t.Fatalf("Setup: failed to read file: %s", err)
+			}
+			defer r.Close()
+
+			cmd := Command()
+			cmd.SetArgs(test.args)
+			cmd.SetIn(r)
+			if err := cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 			}
 		})
 	}

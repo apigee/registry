@@ -22,11 +22,12 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	discovery "github.com/google/gnostic/discovery"
@@ -154,7 +155,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	}
 
 	if task.dryRun {
-		core.PrintMessage(vocab)
+		fmt.Println(protojson.Format((vocab)))
 		return nil
 	}
 

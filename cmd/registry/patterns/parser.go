@@ -19,7 +19,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apigee/registry/server/registry/names"
+	"github.com/apigee/registry/pkg/names"
 )
 
 const ResourceKW = "$resource"

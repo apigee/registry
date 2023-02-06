@@ -21,7 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/server/registry/names"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

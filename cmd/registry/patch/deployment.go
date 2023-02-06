@@ -16,13 +16,14 @@ package patch
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
 )
 
@@ -83,13 +84,13 @@ func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	}, nil
 }
 
-func applyApiDeploymentPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+func applyApiDeploymentPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string) error {
 	var deployment models.ApiDeployment
 	err := yaml.Unmarshal(bytes, &deployment)
 	if err != nil {
 		return err
 	}
-	return applyApiDeploymentPatch(ctx, client, &deployment, parent)
+	return applyApiDeploymentPatch(ctx, client, &deployment, project)
 }
 
 func deploymentName(parent string, metadata models.Metadata) (names.Deployment, error) {
@@ -132,7 +133,7 @@ func applyApiDeploymentPatch(
 	}
 	_, err = client.UpdateApiDeployment(ctx, req)
 	if err != nil {
-		return err
+		return fmt.Errorf("UpdateApiDeployment: %s", err)
 	}
 	for _, artifactPatch := range deployment.Data.Artifacts {
 		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())

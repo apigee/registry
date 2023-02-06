@@ -16,14 +16,15 @@ package patch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
 )
 
@@ -214,7 +215,7 @@ func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, b
 	}
 	_, err = client.UpdateApi(ctx, req)
 	if err != nil {
-		return err
+		return fmt.Errorf("UpdateApi: %s", err)
 	}
 	for _, versionPatch := range api.Data.ApiVersions {
 		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String())

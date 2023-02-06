@@ -24,9 +24,9 @@ import (
 
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
-	"github.com/apigee/registry/server/registry/names"
 	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
