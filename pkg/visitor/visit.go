@@ -89,7 +89,7 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 		} else if artifact, err := names.ParseArtifact(name); err == nil {
 			return ListArtifacts(ctx, rc, artifact, filter, options.GetContents, v.ArtifactHandler())
 		}
-		return fmt.Errorf("subtreeVisitor pattern %+v", name)
+		return fmt.Errorf("unsupported pattern %+v", name)
 	}
 	// If we get here, name designates an individual resource to be displayed.
 	// So if a filter was specified, that's an error.
@@ -114,6 +114,6 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return GetArtifact(ctx, rc, artifact, options.GetContents, v.ArtifactHandler())
 	} else {
-		return fmt.Errorf("subtreeVisitor pattern %+v", name)
+		return fmt.Errorf("unsupported pattern %+v", name)
 	}
 }
