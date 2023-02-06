@@ -41,6 +41,7 @@ type VisitorOptions struct {
 	AdminClient     connection.AdminClient
 	Pattern         string
 	Filter          string
+	GetContents     bool
 	ImplicitProject *rpc.Project // used as placeholder if Project is unaccessible
 }
 
@@ -63,11 +64,11 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
 		return ListVersions(ctx, rc, version, filter, v.VersionHandler())
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		return ListSpecs(ctx, rc, spec, filter, false, v.SpecHandler())
+		return ListSpecs(ctx, rc, spec, filter, options.GetContents, v.SpecHandler())
 	} else if rev, err := names.ParseSpecRevisionCollection(name); err == nil {
-		return ListSpecRevisions(ctx, rc, rev, filter, false, v.SpecRevisionHandler())
+		return ListSpecRevisions(ctx, rc, rev, filter, options.GetContents, v.SpecRevisionHandler())
 	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
-		return ListArtifacts(ctx, rc, artifact, filter, false, v.ArtifactHandler())
+		return ListArtifacts(ctx, rc, artifact, filter, options.GetContents, v.ArtifactHandler())
 	}
 	// Then try to match resource names containing wildcards, these also are treated as collections.
 	if strings.Contains(name, "/-") || strings.Contains(name, "@-") {
@@ -82,13 +83,13 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 		} else if version, err := names.ParseVersion(name); err == nil {
 			return ListVersions(ctx, rc, version, filter, v.VersionHandler())
 		} else if spec, err := names.ParseSpec(name); err == nil {
-			return ListSpecs(ctx, rc, spec, filter, false, v.SpecHandler())
+			return ListSpecs(ctx, rc, spec, filter, options.GetContents, v.SpecHandler())
 		} else if rev, err := names.ParseSpecRevision(name); err == nil {
-			return ListSpecRevisions(ctx, rc, rev, filter, false, v.SpecRevisionHandler())
+			return ListSpecRevisions(ctx, rc, rev, filter, options.GetContents, v.SpecRevisionHandler())
 		} else if artifact, err := names.ParseArtifact(name); err == nil {
-			return ListArtifacts(ctx, rc, artifact, filter, false, v.ArtifactHandler())
+			return ListArtifacts(ctx, rc, artifact, filter, options.GetContents, v.ArtifactHandler())
 		}
-		return fmt.Errorf("unsupported pattern %+v", name)
+		return fmt.Errorf("subtreeVisitor pattern %+v", name)
 	}
 	// If we get here, name designates an individual resource to be displayed.
 	// So if a filter was specified, that's an error.
@@ -107,12 +108,12 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	} else if version, err := names.ParseVersion(name); err == nil {
 		return GetVersion(ctx, rc, version, v.VersionHandler())
 	} else if spec, err := names.ParseSpec(name); err == nil {
-		return GetSpec(ctx, rc, spec, false, v.SpecHandler())
+		return GetSpec(ctx, rc, spec, options.GetContents, v.SpecHandler())
 	} else if spec, err := names.ParseSpecRevision(name); err == nil {
-		return GetSpecRevision(ctx, rc, spec, false, v.SpecRevisionHandler())
+		return GetSpecRevision(ctx, rc, spec, options.GetContents, v.SpecRevisionHandler())
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
-		return GetArtifact(ctx, rc, artifact, false, v.ArtifactHandler())
+		return GetArtifact(ctx, rc, artifact, options.GetContents, v.ArtifactHandler())
 	} else {
-		return fmt.Errorf("unsupported pattern %+v", name)
+		return fmt.Errorf("subtreeVisitor pattern %+v", name)
 	}
 }
