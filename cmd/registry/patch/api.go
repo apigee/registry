@@ -47,7 +47,7 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 	var artifacts []*models.Artifact
 	if nested {
 		versions = make([]*models.ApiVersion, 0)
-		if err = visitor.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
+		if err = visitor.ListVersions(ctx, client, apiName.Version("-"), "", func(ctx context.Context, message *rpc.ApiVersion) error {
 			var version *models.ApiVersion
 			version, err := NewApiVersion(ctx, client, message, true)
 			if err != nil {
@@ -63,7 +63,7 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 			return nil, err
 		}
 		deployments = make([]*models.ApiDeployment, 0)
-		if err = visitor.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+		if err = visitor.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(ctx context.Context, message *rpc.ApiDeployment) error {
 			var deployment *models.ApiDeployment
 			deployment, err = NewApiDeployment(ctx, client, message, true)
 			if err != nil {
@@ -109,7 +109,7 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 
 func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, artifactPattern names.Artifact) ([]*models.Artifact, error) {
 	artifacts := make([]*models.Artifact, 0)
-	if err := visitor.ListArtifacts(ctx, client, artifactPattern, "", true, func(message *rpc.Artifact) error {
+	if err := visitor.ListArtifacts(ctx, client, artifactPattern, "", true, func(ctx context.Context, message *rpc.Artifact) error {
 		artifact, err := NewArtifact(ctx, client, message)
 		if err != nil {
 			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)

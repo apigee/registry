@@ -70,12 +70,12 @@ func Command() *cobra.Command {
 
 			specs := make([]*rpc.ApiSpec, 0)
 			if name.RevisionID == "" {
-				err = visitor.ListSpecs(ctx, client, name.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecs(ctx, client, name.Spec(), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					specs = append(specs, spec)
 					return nil
 				})
 			} else {
-				err = visitor.ListSpecRevisions(ctx, client, name, filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecRevisions(ctx, client, name, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					specs = append(specs, spec)
 					return nil
 				})
@@ -85,7 +85,7 @@ func Command() *cobra.Command {
 			}
 
 			guides := make([]*rpc.StyleGuide, 0)
-			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(artifact *rpc.Artifact) error {
+			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
 				guide := new(rpc.StyleGuide)
 				if err := proto.Unmarshal(artifact.GetContents(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())

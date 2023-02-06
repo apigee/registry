@@ -97,7 +97,7 @@ type getVisitor struct {
 }
 
 func (v *getVisitor) ProjectHandler() visitor.ProjectHandler {
-	return func(message *rpc.Project) error {
+	return func(ctx context.Context, message *rpc.Project) error {
 		switch v.output {
 		case "name":
 			v.results = append(v.results, message.Name)
@@ -117,7 +117,7 @@ func (v *getVisitor) ProjectHandler() visitor.ProjectHandler {
 }
 
 func (v *getVisitor) ApiHandler() visitor.ApiHandler {
-	return func(message *rpc.Api) error {
+	return func(ctx context.Context, message *rpc.Api) error {
 		switch v.output {
 		case "name":
 			v.results = append(v.results, message.Name)
@@ -137,7 +137,7 @@ func (v *getVisitor) ApiHandler() visitor.ApiHandler {
 }
 
 func (v *getVisitor) VersionHandler() visitor.VersionHandler {
-	return func(message *rpc.ApiVersion) error {
+	return func(ctx context.Context, message *rpc.ApiVersion) error {
 		switch v.output {
 		case "name":
 			v.results = append(v.results, message.Name)
@@ -157,7 +157,7 @@ func (v *getVisitor) VersionHandler() visitor.VersionHandler {
 }
 
 func (v *getVisitor) DeploymentHandler() visitor.DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		switch v.output {
 		case "name":
 			v.results = append(v.results, message.Name)
@@ -181,7 +181,7 @@ func (v *getVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler {
 }
 
 func (v *getVisitor) SpecHandler() visitor.SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		switch v.output {
 		case "name":
 			v.results = append(v.results, message.Name)
@@ -218,7 +218,7 @@ func (v *getVisitor) SpecRevisionHandler() visitor.SpecHandler {
 }
 
 func (v *getVisitor) ArtifactHandler() visitor.ArtifactHandler {
-	return func(message *rpc.Artifact) error {
+	return func(ctx context.Context, message *rpc.Artifact) error {
 		switch v.output {
 		case "name":
 			v.results = append(v.results, message.Name)

@@ -91,7 +91,7 @@ func TestProjectPatches(t *testing.T) {
 				protocmp.IgnoreFields(new(rpc.Project), "create_time", "update_time"),
 			}
 			err = visitor.GetProject(ctx, adminClient, projectName, nil,
-				func(project *rpc.Project) error {
+				func(ctx context.Context, project *rpc.Project) error {
 					if !cmp.Equal(test.message, project, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, project, opts))
 					}
@@ -214,7 +214,7 @@ func TestApiPatches(t *testing.T) {
 				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
 			}
 			err = visitor.GetAPI(ctx, registryClient, apiName,
-				func(api *rpc.Api) error {
+				func(ctx context.Context, api *rpc.Api) error {
 					if !cmp.Equal(test.message, api, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, api, opts))
 					}
@@ -317,7 +317,7 @@ func TestVersionPatches(t *testing.T) {
 				protocmp.IgnoreFields(new(rpc.ApiVersion), "create_time", "update_time"),
 			}
 			err = visitor.GetVersion(ctx, registryClient, versionName,
-				func(version *rpc.ApiVersion) error {
+				func(ctx context.Context, version *rpc.ApiVersion) error {
 					if !cmp.Equal(test.message, version, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, version, opts))
 					}
@@ -420,7 +420,7 @@ func TestSpecPatches(t *testing.T) {
 				protocmp.IgnoreFields(new(rpc.ApiSpec), "hash", "size_bytes", "revision_id", "create_time", "revision_create_time", "revision_update_time"),
 			}
 			err = visitor.GetSpec(ctx, registryClient, specName, false,
-				func(spec *rpc.ApiSpec) error {
+				func(ctx context.Context, spec *rpc.ApiSpec) error {
 					if !cmp.Equal(test.message, spec, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, spec, opts))
 					}
@@ -526,7 +526,7 @@ func TestDeploymentPatches(t *testing.T) {
 				protocmp.IgnoreFields(new(rpc.ApiDeployment), "revision_id", "create_time", "revision_create_time", "revision_update_time"),
 			}
 			err = visitor.GetDeployment(ctx, registryClient, deploymentName,
-				func(deployment *rpc.ApiDeployment) error {
+				func(ctx context.Context, deployment *rpc.ApiDeployment) error {
 					if !cmp.Equal(test.message, deployment, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, deployment, opts))
 					}
@@ -1071,7 +1071,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 				t.Fatalf("%s", err)
 			}
 			err = visitor.GetArtifact(ctx, registryClient, artifactName, true,
-				func(artifact *rpc.Artifact) error {
+				func(ctx context.Context, artifact *rpc.Artifact) error {
 					contents, err := getArtifactMessageContents(artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
@@ -1169,7 +1169,7 @@ func TestYamlArtifactPatches(t *testing.T) {
 				t.Fatalf("%s", err)
 			}
 			err = visitor.GetArtifact(ctx, registryClient, artifactName, true,
-				func(artifact *rpc.Artifact) error {
+				func(ctx context.Context, artifact *rpc.Artifact) error {
 					model, err := NewArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)

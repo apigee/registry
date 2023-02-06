@@ -40,7 +40,7 @@ func GetProject(ctx context.Context,
 		return err
 	}
 
-	return handler(project)
+	return handler(ctx, project)
 }
 
 func GetAPI(ctx context.Context,
@@ -54,7 +54,7 @@ func GetAPI(ctx context.Context,
 		return err
 	}
 
-	return handler(api)
+	return handler(ctx, api)
 }
 
 func GetDeployment(ctx context.Context,
@@ -68,7 +68,7 @@ func GetDeployment(ctx context.Context,
 		return err
 	}
 
-	return handler(deployment)
+	return handler(ctx, deployment)
 }
 
 func GetDeploymentRevision(ctx context.Context,
@@ -83,7 +83,7 @@ func GetDeploymentRevision(ctx context.Context,
 		return err
 	}
 
-	return handler(deployment)
+	return handler(ctx, deployment)
 }
 
 func GetVersion(ctx context.Context,
@@ -97,7 +97,7 @@ func GetVersion(ctx context.Context,
 		return err
 	}
 
-	return handler(version)
+	return handler(ctx, version)
 }
 
 func GetSpec(ctx context.Context,
@@ -117,7 +117,7 @@ func GetSpec(ctx context.Context,
 		}
 	}
 
-	return handler(spec)
+	return handler(ctx, spec)
 }
 
 func GetSpecRevision(ctx context.Context,
@@ -138,7 +138,7 @@ func GetSpecRevision(ctx context.Context,
 		}
 	}
 
-	return handler(spec)
+	return handler(ctx, spec)
 }
 
 func GetArtifact(ctx context.Context,
@@ -158,5 +158,5 @@ func GetArtifact(ctx context.Context,
 		}
 	}
 
-	return handler(artifact)
+	return handler(ctx, artifact)
 }

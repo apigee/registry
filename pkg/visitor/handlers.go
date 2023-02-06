@@ -15,12 +15,14 @@
 package visitor
 
 import (
+	"context"
+
 	"github.com/apigee/registry/rpc"
 )
 
-type ProjectHandler func(*rpc.Project) error
-type ApiHandler func(*rpc.Api) error
-type DeploymentHandler func(*rpc.ApiDeployment) error
-type VersionHandler func(*rpc.ApiVersion) error
-type SpecHandler func(*rpc.ApiSpec) error
-type ArtifactHandler func(*rpc.Artifact) error
+type ProjectHandler func(context.Context, *rpc.Project) error
+type ApiHandler func(context.Context, *rpc.Api) error
+type DeploymentHandler func(context.Context, *rpc.ApiDeployment) error
+type VersionHandler func(context.Context, *rpc.ApiVersion) error
+type SpecHandler func(context.Context, *rpc.ApiSpec) error
+type ArtifactHandler func(context.Context, *rpc.Artifact) error
