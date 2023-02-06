@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -26,6 +25,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -105,7 +105,7 @@ func CalculateScoreCard(
 
 	if result.needsUpdate {
 		if dryRun {
-			core.PrintMessage(result.scoreCard)
+			fmt.Println(protojson.Format((result.scoreCard)))
 			return nil
 		}
 		// upload the scoreCard to registry
