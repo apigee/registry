@@ -47,7 +47,7 @@ func FetchScoreDefinitions(
 	}
 	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
-		func(artifact *rpc.Artifact) error {
+		func(ctx context.Context, artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreDefinition{}
 			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
@@ -459,7 +459,7 @@ func getArtifact(ctx context.Context, client artifactClient, artifactPattern str
 	}
 
 	gotArtifact := &rpc.Artifact{}
-	err = client.GetArtifact(ctx, artifactName, true, func(artifact *rpc.Artifact) error {
+	err = client.GetArtifact(ctx, artifactName, true, func(ctx context.Context, artifact *rpc.Artifact) error {
 		gotArtifact = artifact
 		return nil
 	})

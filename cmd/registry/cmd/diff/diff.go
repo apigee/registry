@@ -57,7 +57,7 @@ func Command() *cobra.Command {
 			var spec1, spec2 *rpc.ApiSpec
 			var path1 names.Spec
 			if name1, err := names.ParseSpec(args[0]); err == nil {
-				err = visitor.GetSpec(ctx, client, name1, true, func(s *rpc.ApiSpec) error {
+				err = visitor.GetSpec(ctx, client, name1, true, func(ctx context.Context, s *rpc.ApiSpec) error {
 					spec1 = s
 					return nil
 				})
@@ -66,7 +66,7 @@ func Command() *cobra.Command {
 				}
 				path1 = name1
 			} else if name1, err := names.ParseSpecRevision(args[0]); err == nil {
-				err = visitor.GetSpecRevision(ctx, client, name1, true, func(s *rpc.ApiSpec) error {
+				err = visitor.GetSpecRevision(ctx, client, name1, true, func(ctx context.Context, s *rpc.ApiSpec) error {
 					spec1 = s
 					return nil
 				})
@@ -77,7 +77,7 @@ func Command() *cobra.Command {
 			}
 
 			if name2, err := names.ParseSpec(args[1]); err == nil {
-				err = visitor.GetSpec(ctx, client, name2, true, func(s *rpc.ApiSpec) error {
+				err = visitor.GetSpec(ctx, client, name2, true, func(ctx context.Context, s *rpc.ApiSpec) error {
 					spec2 = s
 					return nil
 				})
@@ -85,7 +85,7 @@ func Command() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
 				}
 			} else if name2, err := names.ParseSpecRevision(args[1]); err == nil {
-				err = visitor.GetSpecRevision(ctx, client, name2, true, func(s *rpc.ApiSpec) error {
+				err = visitor.GetSpecRevision(ctx, client, name2, true, func(ctx context.Context, s *rpc.ApiSpec) error {
 					spec2 = s
 					return nil
 				})
@@ -93,7 +93,7 @@ func Command() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
 				}
 			} else if name2, err := resolveSpecRevision(ctx, client, path1.String(), args[1]); err == nil {
-				err = visitor.GetSpecRevision(ctx, client, name2, true, func(s *rpc.ApiSpec) error {
+				err = visitor.GetSpecRevision(ctx, client, name2, true, func(ctx context.Context, s *rpc.ApiSpec) error {
 					spec2 = s
 					return nil
 				})

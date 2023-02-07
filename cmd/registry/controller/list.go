@@ -69,8 +69,8 @@ func listResources(ctx context.Context, client listingClient, pattern, filter st
 	return result, nil
 }
 
-func generateApiHandler(result *[]patterns.ResourceInstance) func(*rpc.Api) error {
-	return func(api *rpc.Api) error {
+func generateApiHandler(result *[]patterns.ResourceInstance) func(context.Context, *rpc.Api) error {
+	return func(ctx context.Context, api *rpc.Api) error {
 		(*result) = append((*result), patterns.ApiResource{
 			Api: api,
 		})
@@ -79,8 +79,8 @@ func generateApiHandler(result *[]patterns.ResourceInstance) func(*rpc.Api) erro
 	}
 }
 
-func generateVersionHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiVersion) error {
-	return func(version *rpc.ApiVersion) error {
+func generateVersionHandler(result *[]patterns.ResourceInstance) func(context.Context, *rpc.ApiVersion) error {
+	return func(ctx context.Context, version *rpc.ApiVersion) error {
 		(*result) = append((*result), patterns.VersionResource{
 			Version: version,
 		})
@@ -89,8 +89,8 @@ func generateVersionHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiVe
 	}
 }
 
-func generateSpecHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiSpec) error {
-	return func(spec *rpc.ApiSpec) error {
+func generateSpecHandler(result *[]patterns.ResourceInstance) func(context.Context, *rpc.ApiSpec) error {
+	return func(ctx context.Context, spec *rpc.ApiSpec) error {
 		(*result) = append((*result), patterns.SpecResource{
 			Spec: spec,
 		})
@@ -99,8 +99,8 @@ func generateSpecHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiSpec)
 	}
 }
 
-func generateArtifactHandler(result *[]patterns.ResourceInstance) func(*rpc.Artifact) error {
-	return func(artifact *rpc.Artifact) error {
+func generateArtifactHandler(result *[]patterns.ResourceInstance) func(context.Context, *rpc.Artifact) error {
+	return func(ctx context.Context, artifact *rpc.Artifact) error {
 		(*result) = append((*result), patterns.ArtifactResource{
 			Artifact: artifact,
 		})

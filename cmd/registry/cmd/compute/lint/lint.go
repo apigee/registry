@@ -71,7 +71,7 @@ func Command() *cobra.Command {
 			}
 
 			// Iterate through a collection of specs and evaluate each.
-			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
+			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 				taskQueue <- &computeLintTask{
 					client:   client,
 					specName: spec.Name,

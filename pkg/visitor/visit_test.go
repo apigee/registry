@@ -562,56 +562,56 @@ type testVisitor struct {
 }
 
 func (v *testVisitor) ProjectHandler() ProjectHandler {
-	return func(message *rpc.Project) error {
+	return func(ctx context.Context, message *rpc.Project) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) ApiHandler() ApiHandler {
-	return func(message *rpc.Api) error {
+	return func(ctx context.Context, message *rpc.Api) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) VersionHandler() VersionHandler {
-	return func(message *rpc.ApiVersion) error {
+	return func(ctx context.Context, message *rpc.ApiVersion) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) DeploymentHandler() DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) DeploymentRevisionHandler() DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) SpecHandler() SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) SpecRevisionHandler() SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		v.count++
 		return nil
 	}
 }
 
 func (v *testVisitor) ArtifactHandler() ArtifactHandler {
-	return func(message *rpc.Artifact) error {
+	return func(ctx context.Context, message *rpc.Artifact) error {
 		v.count++
 		return nil
 	}

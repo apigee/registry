@@ -77,7 +77,7 @@ func Command() *cobra.Command {
 
 			// Iterate through a collection of specs and summarize each.
 			if parsed.RevisionID == "" {
-				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),
@@ -86,7 +86,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),

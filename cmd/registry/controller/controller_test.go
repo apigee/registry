@@ -807,7 +807,7 @@ func addSpecRevisions(t *testing.T, ctx context.Context, registryClient *gapic.R
 			VersionID: a.VersionID(),
 			SpecID:    a.SpecID(),
 		}
-		if err := visitor.GetSpec(ctx, registryClient, sr, false, func(s *rpc.ApiSpec) error {
+		if err := visitor.GetSpec(ctx, registryClient, sr, false, func(ctx context.Context, s *rpc.ApiSpec) error {
 			action.Command = strings.ReplaceAll(action.Command,
 				fmt.Sprintf("/%s", a.SpecID()), fmt.Sprintf("/%s@%s", a.SpecID(), s.GetRevisionId()))
 			action.GeneratedResource = strings.ReplaceAll(action.GeneratedResource,

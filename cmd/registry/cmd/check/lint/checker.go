@@ -151,35 +151,35 @@ func (c *listHandler) queueTask(r Resource) error {
 }
 
 func (c *listHandler) ProjectHandler() visitor.ProjectHandler {
-	return func(p *rpc.Project) error {
+	return func(ctx context.Context, p *rpc.Project) error {
 		return c.queueTask(p)
 	}
 }
 
 func (c *listHandler) ApiHandler() visitor.ApiHandler {
-	return func(a *rpc.Api) error {
+	return func(ctx context.Context, a *rpc.Api) error {
 		return c.queueTask(a)
 	}
 }
 func (c *listHandler) DeploymentHandler() visitor.DeploymentHandler {
-	return func(a *rpc.ApiDeployment) error {
+	return func(ctx context.Context, a *rpc.ApiDeployment) error {
 		return c.queueTask(a)
 	}
 }
 func (c *listHandler) VersionHandler() visitor.VersionHandler {
-	return func(a *rpc.ApiVersion) error {
+	return func(ctx context.Context, a *rpc.ApiVersion) error {
 		return c.queueTask(a)
 	}
 }
 
 func (c *listHandler) SpecHandler() visitor.SpecHandler {
-	return func(a *rpc.ApiSpec) error {
+	return func(ctx context.Context, a *rpc.ApiSpec) error {
 		return c.queueTask(a)
 	}
 }
 
 func (c *listHandler) ArtifactHandler() visitor.ArtifactHandler {
-	return func(a *rpc.Artifact) error {
+	return func(ctx context.Context, a *rpc.Artifact) error {
 		return c.queueTask(a)
 	}
 }
