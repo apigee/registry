@@ -592,7 +592,7 @@ func TestVisitSubtree(t *testing.T) {
 				Filter:         test.filter,
 			}
 			v := &testVisitor{}
-			subtreeVisitor := &SubtreeHandlers{
+			subtreeVisitor := &SubtreeVisitor{
 				Visitor: v,
 				Options: opts,
 			}

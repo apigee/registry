@@ -21,19 +21,19 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-// SubtreeHandlers is a Visitor implementation that can be passed to the
+// SubtreeVisitor is a Visitor implementation that can be passed to the
 // Visit() function. It will run the handlers in Visitor against each
 // resource directly matched in Visit() as well as each resource that is
 // a descendant of those resources. (For example, if the pattern matches
 // a Version, the SubtreeVisitor will be run against all of that Versions's
 // Artifacts and Specs, and the Spec's Artifacts as well.)
 // Only the current revisions of Specs and Deployments are visited.
-type SubtreeHandlers struct {
+type SubtreeVisitor struct {
 	Options VisitorOptions
 	Visitor Visitor
 }
 
-func (v *SubtreeHandlers) ProjectHandler() ProjectHandler {
+func (v *SubtreeVisitor) ProjectHandler() ProjectHandler {
 	return func(ctx context.Context, message *rpc.Project) error {
 		name, _ := names.ParseProject(message.GetName())
 
@@ -50,7 +50,7 @@ func (v *SubtreeHandlers) ProjectHandler() ProjectHandler {
 	}
 }
 
-func (v *SubtreeHandlers) ApiHandler() ApiHandler {
+func (v *SubtreeVisitor) ApiHandler() ApiHandler {
 	return func(ctx context.Context, message *rpc.Api) error {
 		name, _ := names.ParseApi(message.GetName())
 
@@ -70,7 +70,7 @@ func (v *SubtreeHandlers) ApiHandler() ApiHandler {
 	}
 }
 
-func (v *SubtreeHandlers) VersionHandler() VersionHandler {
+func (v *SubtreeVisitor) VersionHandler() VersionHandler {
 	return func(ctx context.Context, message *rpc.ApiVersion) error {
 		name, _ := names.ParseVersion(message.GetName())
 
@@ -87,7 +87,7 @@ func (v *SubtreeHandlers) VersionHandler() VersionHandler {
 	}
 }
 
-func (v *SubtreeHandlers) DeploymentHandler() DeploymentHandler {
+func (v *SubtreeVisitor) DeploymentHandler() DeploymentHandler {
 	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		name, _ := names.ParseDeployment(message.GetName())
 
@@ -101,7 +101,7 @@ func (v *SubtreeHandlers) DeploymentHandler() DeploymentHandler {
 	}
 }
 
-func (v *SubtreeHandlers) DeploymentRevisionHandler() DeploymentHandler {
+func (v *SubtreeVisitor) DeploymentRevisionHandler() DeploymentHandler {
 	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		name, _ := names.ParseDeploymentRevision(message.GetName())
 
@@ -115,7 +115,7 @@ func (v *SubtreeHandlers) DeploymentRevisionHandler() DeploymentHandler {
 	}
 }
 
-func (v *SubtreeHandlers) SpecHandler() SpecHandler {
+func (v *SubtreeVisitor) SpecHandler() SpecHandler {
 	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		name, _ := names.ParseSpec(message.GetName())
 
@@ -129,7 +129,7 @@ func (v *SubtreeHandlers) SpecHandler() SpecHandler {
 	}
 }
 
-func (v *SubtreeHandlers) SpecRevisionHandler() SpecHandler {
+func (v *SubtreeVisitor) SpecRevisionHandler() SpecHandler {
 	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		name, _ := names.ParseSpecRevision(message.GetName())
 
@@ -143,7 +143,7 @@ func (v *SubtreeHandlers) SpecRevisionHandler() SpecHandler {
 	}
 }
 
-func (v *SubtreeHandlers) ArtifactHandler() ArtifactHandler {
+func (v *SubtreeVisitor) ArtifactHandler() ArtifactHandler {
 	return func(ctx context.Context, message *rpc.Artifact) error {
 		return v.Visitor.ArtifactHandler()(ctx, message)
 	}

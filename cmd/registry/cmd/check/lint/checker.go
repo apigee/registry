@@ -90,7 +90,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 		GetContents:     true,
 		ImplicitProject: &rpc.Project{Name: root.String()},
 	}
-	subtreeVisitor := &visitor.SubtreeHandlers{
+	subtreeVisitor := &visitor.SubtreeVisitor{
 		Visitor: taskEnqueuer,
 		Options: options,
 	}
