@@ -60,7 +60,6 @@ func Command() *cobra.Command {
 			}
 			// Create the visitor that will perform gets.
 			v := &getVisitor{
-				ctx:            ctx,
 				registryClient: registryClient,
 				adminClient:    adminClient,
 				writer:         cmd.OutOrStdout(),
@@ -87,7 +86,6 @@ func Command() *cobra.Command {
 }
 
 type getVisitor struct {
-	ctx            context.Context
 	registryClient connection.RegistryClient
 	adminClient    connection.AdminClient
 	writer         io.Writer
@@ -104,7 +102,7 @@ func (v *getVisitor) ProjectHandler() visitor.ProjectHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			project, err := patch.NewProject(v.ctx, v.registryClient, message)
+			project, err := patch.NewProject(ctx, v.registryClient, message)
 			if err != nil {
 				return err
 			}
@@ -124,7 +122,7 @@ func (v *getVisitor) ApiHandler() visitor.ApiHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			api, err := patch.NewApi(v.ctx, v.registryClient, message, v.nested)
+			api, err := patch.NewApi(ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -144,7 +142,7 @@ func (v *getVisitor) VersionHandler() visitor.VersionHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			version, err := patch.NewApiVersion(v.ctx, v.registryClient, message, v.nested)
+			version, err := patch.NewApiVersion(ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -164,7 +162,7 @@ func (v *getVisitor) DeploymentHandler() visitor.DeploymentHandler {
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
-			deployment, err := patch.NewApiDeployment(v.ctx, v.registryClient, message, v.nested)
+			deployment, err := patch.NewApiDeployment(ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -191,7 +189,7 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			if len(v.results) > 0 {
 				return fmt.Errorf("contents can be gotten for at most one spec")
 			}
-			if err := visitor.FetchSpecContents(v.ctx, v.registryClient, message); err != nil {
+			if err := visitor.FetchSpecContents(ctx, v.registryClient, message); err != nil {
 				return err
 			}
 			contents := message.GetContents()
@@ -201,7 +199,7 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			v.results = append(v.results, contents)
 			return nil
 		case "yaml":
-			spec, err := patch.NewApiSpec(v.ctx, v.registryClient, message, v.nested)
+			spec, err := patch.NewApiSpec(ctx, v.registryClient, message, v.nested)
 			if err != nil {
 				return err
 			}
@@ -228,16 +226,16 @@ func (v *getVisitor) ArtifactHandler() visitor.ArtifactHandler {
 			if len(v.results) > 0 {
 				return fmt.Errorf("contents can be gotten for at most one artifact")
 			}
-			if err := visitor.FetchArtifactContents(v.ctx, v.registryClient, message); err != nil {
+			if err := visitor.FetchArtifactContents(ctx, v.registryClient, message); err != nil {
 				return err
 			}
 			v.results = append(v.results, message.GetContents())
 			return nil
 		case "yaml":
-			if err := visitor.FetchArtifactContents(v.ctx, v.registryClient, message); err != nil {
+			if err := visitor.FetchArtifactContents(ctx, v.registryClient, message); err != nil {
 				return err
 			}
-			artifact, err := patch.NewArtifact(v.ctx, v.registryClient, message)
+			artifact, err := patch.NewArtifact(ctx, v.registryClient, message)
 			if err != nil {
 				return err
 			}
