@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apigee/registry/cmd/registry/cmd/check/tree"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
@@ -77,13 +76,25 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 		}
 	}()
 
-	handler := &listHandler{
+	taskEnqueuer := &listHandler{
 		taskQueue: taskQueue,
 		newTask: func(r Resource) *checkTask {
 			return &checkTask{l, response, r}
 		},
 	}
-	err = tree.ListSubresources(ctx, admin, client, root, filter, true, handler)
+	options := visitor.VisitorOptions{
+		RegistryClient:  client,
+		AdminClient:     admin,
+		Pattern:         root.String(),
+		Filter:          filter,
+		GetContents:     true,
+		ImplicitProject: &rpc.Project{Name: root.String()},
+	}
+	subtreeVisitor := &visitor.SubtreeHandlers{
+		Visitor: taskEnqueuer,
+		Options: options,
+	}
+	err = visitor.Visit(ctx, subtreeVisitor, options)
 	return response, err
 }
 
@@ -145,41 +156,49 @@ type listHandler struct {
 	newTask   func(r Resource) *checkTask
 }
 
-func (c *listHandler) queueTask(r Resource) error {
+func (c *listHandler) enqueueTask(r Resource) error {
 	c.taskQueue <- c.newTask(r)
 	return nil
 }
 
 func (c *listHandler) ProjectHandler() visitor.ProjectHandler {
 	return func(ctx context.Context, p *rpc.Project) error {
-		return c.queueTask(p)
+		return c.enqueueTask(p)
 	}
 }
 
 func (c *listHandler) ApiHandler() visitor.ApiHandler {
 	return func(ctx context.Context, a *rpc.Api) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 func (c *listHandler) DeploymentHandler() visitor.DeploymentHandler {
 	return func(ctx context.Context, a *rpc.ApiDeployment) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 func (c *listHandler) VersionHandler() visitor.VersionHandler {
 	return func(ctx context.Context, a *rpc.ApiVersion) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 
 func (c *listHandler) SpecHandler() visitor.SpecHandler {
 	return func(ctx context.Context, a *rpc.ApiSpec) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 
 func (c *listHandler) ArtifactHandler() visitor.ArtifactHandler {
 	return func(ctx context.Context, a *rpc.Artifact) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
+}
+
+func (c *listHandler) DeploymentRevisionHandler() visitor.DeploymentHandler {
+	return c.DeploymentHandler()
+}
+
+func (c *listHandler) SpecRevisionHandler() visitor.SpecHandler {
+	return c.SpecHandler()
 }

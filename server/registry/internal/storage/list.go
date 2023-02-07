@@ -523,6 +523,7 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"name":         version.Name(),
 		"project_id":   version.ProjectID,
+		"api_id":       version.ApiID,
 		"version_id":   version.VersionID,
 		"display_name": version.DisplayName,
 		"description":  version.Description,
@@ -1446,15 +1447,16 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 
 func artifactMap(artifact models.Artifact) map[string]interface{} {
 	return map[string]interface{}{
-		"name":        artifact.Name(),
-		"project_id":  artifact.ProjectID,
-		"api_id":      artifact.ApiID,
-		"version_id":  artifact.VersionID,
-		"spec_id":     artifact.SpecID,
-		"artifact_id": artifact.ArtifactID,
-		"create_time": artifact.CreateTime,
-		"update_time": artifact.UpdateTime,
-		"mime_type":   artifact.MimeType,
-		"size_bytes":  artifact.SizeInBytes,
+		"name":          artifact.Name(),
+		"project_id":    artifact.ProjectID,
+		"api_id":        artifact.ApiID,
+		"version_id":    artifact.VersionID,
+		"spec_id":       artifact.SpecID,
+		"deployment_id": artifact.DeploymentID,
+		"artifact_id":   artifact.ArtifactID,
+		"create_time":   artifact.CreateTime,
+		"update_time":   artifact.UpdateTime,
+		"mime_type":     artifact.MimeType,
+		"size_bytes":    artifact.SizeInBytes,
 	}
 }
