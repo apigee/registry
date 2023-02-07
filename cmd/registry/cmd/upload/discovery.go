@@ -83,7 +83,7 @@ func discoveryCommand() *cobra.Command {
 					client:    client,
 					path:      api.DiscoveryRestURL,
 					parent:    parent,
-					apiID:     sanitize(api.Name),
+					apiID:     "googleapis.com-" + sanitize(api.Name),
 					versionID: sanitize(api.Version),
 					specID:    "discovery",
 				}

@@ -138,7 +138,7 @@ func scanDirectoryForProtos(client connection.RegistryClient, parent, baseURI, s
 			client:         client,
 			baseURI:        baseURI,
 			parent:         parent,
-			apiID:          strings.TrimSuffix(sc.Name, ".googleapis.com"),
+			apiID:          "googleapis.com-" + strings.TrimSuffix(sc.Name, ".googleapis.com"),
 			apiTitle:       sc.Title,
 			apiDescription: strings.ReplaceAll(sc.Documentation.Summary, "\n", " "),
 			path:           container,
