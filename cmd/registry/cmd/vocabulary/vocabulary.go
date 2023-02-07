@@ -62,7 +62,7 @@ func collectInputVocabularies(ctx context.Context, client connection.RegistryCli
 			continue
 		}
 
-		err = visitor.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
+		err = visitor.ListArtifacts(ctx, client, artifact, filter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
 			messageType, err := types.MessageTypeForMimeType(artifact.GetMimeType())
 			if err != nil || messageType != "gnostic.metrics.Vocabulary" {
 				log.Debugf(ctx, "Skipping, not a vocabulary: %s", artifact.Name)

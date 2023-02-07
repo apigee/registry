@@ -96,7 +96,7 @@ func (v *deletionVisitor) enqueue(task core.Task) {
 }
 
 func (v *deletionVisitor) ProjectHandler() visitor.ProjectHandler {
-	return func(message *rpc.Project) error {
+	return func(ctx context.Context, message *rpc.Project) error {
 		v.enqueue(&deleteProjectTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.adminClient,
@@ -107,7 +107,7 @@ func (v *deletionVisitor) ProjectHandler() visitor.ProjectHandler {
 }
 
 func (v *deletionVisitor) ApiHandler() visitor.ApiHandler {
-	return func(message *rpc.Api) error {
+	return func(ctx context.Context, message *rpc.Api) error {
 		v.enqueue(&deleteApiTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,
@@ -118,7 +118,7 @@ func (v *deletionVisitor) ApiHandler() visitor.ApiHandler {
 }
 
 func (v *deletionVisitor) VersionHandler() visitor.VersionHandler {
-	return func(message *rpc.ApiVersion) error {
+	return func(ctx context.Context, message *rpc.ApiVersion) error {
 		v.enqueue(&deleteApiVersionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,
@@ -129,7 +129,7 @@ func (v *deletionVisitor) VersionHandler() visitor.VersionHandler {
 }
 
 func (v *deletionVisitor) DeploymentHandler() visitor.DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		v.enqueue(&deleteApiDeploymentTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,
@@ -140,7 +140,7 @@ func (v *deletionVisitor) DeploymentHandler() visitor.DeploymentHandler {
 }
 
 func (v *deletionVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		v.enqueue(&deleteApiDeploymentRevisionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,
@@ -151,7 +151,7 @@ func (v *deletionVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler 
 }
 
 func (v *deletionVisitor) SpecHandler() visitor.SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		v.enqueue(&deleteApiSpecTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,
@@ -162,7 +162,7 @@ func (v *deletionVisitor) SpecHandler() visitor.SpecHandler {
 }
 
 func (v *deletionVisitor) SpecRevisionHandler() visitor.SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		v.enqueue(&deleteApiSpecRevisionTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,
@@ -173,7 +173,7 @@ func (v *deletionVisitor) SpecRevisionHandler() visitor.SpecHandler {
 }
 
 func (v *deletionVisitor) ArtifactHandler() visitor.ArtifactHandler {
-	return func(message *rpc.Artifact) error {
+	return func(ctx context.Context, message *rpc.Artifact) error {
 		v.enqueue(&deleteArtifactTask{
 			deleteTask: deleteTask{resourceName: message.Name},
 			client:     v.registryClient,

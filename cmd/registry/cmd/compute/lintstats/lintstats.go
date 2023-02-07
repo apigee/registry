@@ -28,6 +28,7 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	metrics "github.com/google/gnostic/metrics"
@@ -121,7 +122,7 @@ func computeLintStatsSpecs(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return visitor.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
+	return visitor.ListSpecs(ctx, client, spec, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 		// Iterate through a collection of specs and evaluate each.
 		log.Debug(ctx, spec.GetName())
 		// get the lint results
@@ -172,7 +173,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		}
 
 		if dryRun {
-			core.PrintMessage(lintStats)
+			fmt.Println(protojson.Format(lintStats))
 		} else {
 			_ = storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
 		}
@@ -187,17 +188,17 @@ func computeLintStatsProjects(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return visitor.ListProjects(ctx, adminClient, projectName, nil, filter, func(project *rpc.Project) error {
+	return visitor.ListProjects(ctx, adminClient, projectName, nil, filter, func(ctx context.Context, project *rpc.Project) error {
 		project_stats := &rpc.LintStats{}
 
-		if err := visitor.ListAPIs(ctx, client, projectName.Api(""), filter, func(api *rpc.Api) error {
+		if err := visitor.ListAPIs(ctx, client, projectName.Api(""), filter, func(ctx context.Context, api *rpc.Api) error {
 			aggregateLintStats(ctx, client, api.GetName(), linter, project_stats)
 			return nil
 		}); err != nil {
 			return nil
 		}
 		if dryRun {
-			core.PrintMessage(project_stats)
+			fmt.Println(protojson.Format((project_stats)))
 		} else {
 			// Store the aggregate stats on this project
 			_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
@@ -213,10 +214,10 @@ func computeLintStatsAPIs(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return visitor.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) error {
+	return visitor.ListAPIs(ctx, client, apiName, filter, func(ctx context.Context, api *rpc.Api) error {
 		api_stats := &rpc.LintStats{}
 
-		if err := visitor.ListVersions(ctx, client, apiName.Version(""), filter, func(version *rpc.ApiVersion) error {
+		if err := visitor.ListVersions(ctx, client, apiName.Version(""), filter, func(ctx context.Context, version *rpc.ApiVersion) error {
 			aggregateLintStats(ctx, client, version.GetName(), linter, api_stats)
 			return nil
 		}); err != nil {
@@ -224,7 +225,7 @@ func computeLintStatsAPIs(ctx context.Context,
 		}
 
 		if dryRun {
-			core.PrintMessage(api_stats)
+			fmt.Println(protojson.Format((api_stats)))
 		} else {
 			// Store the aggregate stats on this api
 			_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
@@ -240,9 +241,9 @@ func computeLintStatsVersions(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return visitor.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) error {
+	return visitor.ListVersions(ctx, client, versionName, filter, func(ctx context.Context, version *rpc.ApiVersion) error {
 		stats := &rpc.LintStats{}
-		if err := visitor.ListSpecs(ctx, client, versionName.Spec(""), filter, false, func(spec *rpc.ApiSpec) error {
+		if err := visitor.ListSpecs(ctx, client, versionName.Spec(""), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 			aggregateLintStats(ctx, client, spec.GetName(), linter, stats)
 			return nil
 		}); err != nil {
@@ -250,7 +251,7 @@ func computeLintStatsVersions(ctx context.Context,
 		}
 
 		if dryRun {
-			core.PrintMessage(stats)
+			fmt.Println(protojson.Format((stats)))
 		} else {
 			// Store the aggregate stats on this version
 			_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, stats)

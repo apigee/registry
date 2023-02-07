@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -26,6 +25,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -45,7 +45,7 @@ func FetchScoreCardDefinitions(
 	}
 	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreCardDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
-		func(artifact *rpc.Artifact) error {
+		func(ctx context.Context, artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreCardDefinition{}
 			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
@@ -105,7 +105,7 @@ func CalculateScoreCard(
 
 	if result.needsUpdate {
 		if dryRun {
-			core.PrintMessage(result.scoreCard)
+			fmt.Println(protojson.Format((result.scoreCard)))
 			return nil
 		}
 		// upload the scoreCard to registry

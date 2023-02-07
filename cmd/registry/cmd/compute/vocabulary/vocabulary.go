@@ -27,6 +27,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	discovery "github.com/google/gnostic/discovery"
@@ -76,7 +77,7 @@ func Command() *cobra.Command {
 
 			// Iterate through a collection of specs and summarize each.
 			if parsed.RevisionID == "" {
-				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),
@@ -85,7 +86,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),
@@ -154,7 +155,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	}
 
 	if task.dryRun {
-		core.PrintMessage(vocab)
+		fmt.Println(protojson.Format((vocab)))
 		return nil
 	}
 

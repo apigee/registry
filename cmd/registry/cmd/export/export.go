@@ -56,7 +56,6 @@ func Command() *cobra.Command {
 			defer wait()
 			// Create the visitor that will perform exports.
 			v := &exportVisitor{
-				ctx:            ctx,
 				registryClient: registryClient,
 				adminClient:    adminClient,
 				recursive:      recursive,
@@ -87,7 +86,6 @@ func Command() *cobra.Command {
 }
 
 type exportVisitor struct {
-	ctx            context.Context
 	registryClient connection.RegistryClient
 	adminClient    connection.AdminClient
 	recursive      bool
@@ -97,79 +95,79 @@ type exportVisitor struct {
 }
 
 func (h *exportVisitor) ProjectHandler() visitor.ProjectHandler {
-	return func(message *rpc.Project) error {
+	return func(ctx context.Context, message *rpc.Project) error {
 		h.count++
 		name, err := names.ParseProject(message.Name)
 		if err != nil {
 			return err
 		}
-		return patch.ExportProject(h.ctx, h.registryClient, name, h.root, h.taskQueue)
+		return patch.ExportProject(ctx, h.registryClient, name, h.root, h.taskQueue)
 	}
 }
 
 func (h *exportVisitor) ApiHandler() visitor.ApiHandler {
-	return func(message *rpc.Api) error {
+	return func(ctx context.Context, message *rpc.Api) error {
 		h.count++
 		name, err := names.ParseApi(message.Name)
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPI(h.ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
+		return patch.ExportAPI(ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
 func (h *exportVisitor) VersionHandler() visitor.VersionHandler {
-	return func(message *rpc.ApiVersion) error {
+	return func(ctx context.Context, message *rpc.ApiVersion) error {
 		h.count++
 		name, err := names.ParseVersion(message.Name)
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPIVersion(h.ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
+		return patch.ExportAPIVersion(ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
 func (h *exportVisitor) DeploymentHandler() visitor.DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		h.count++
 		name, err := names.ParseDeployment(message.Name)
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPIDeployment(h.ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
+		return patch.ExportAPIDeployment(ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
 func (h *exportVisitor) DeploymentRevisionHandler() visitor.DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		return errors.New("exports of specific revisions are not supported")
 	}
 }
 
 func (h *exportVisitor) SpecHandler() visitor.SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		h.count++
 		name, err := names.ParseSpec(message.Name)
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPISpec(h.ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
+		return patch.ExportAPISpec(ctx, h.registryClient, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
 func (h *exportVisitor) SpecRevisionHandler() visitor.SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		return errors.New("exports of specific revisions are not supported")
 	}
 }
 
 func (h *exportVisitor) ArtifactHandler() visitor.ArtifactHandler {
-	return func(message *rpc.Artifact) error {
+	return func(ctx context.Context, message *rpc.Artifact) error {
 		h.count++
 		name, err := names.ParseArtifact(message.Name)
 		if err != nil {
 			return err
 		}
-		return patch.ExportArtifact(h.ctx, h.registryClient, name, h.root, h.taskQueue)
+		return patch.ExportArtifact(ctx, h.registryClient, name, h.root, h.taskQueue)
 	}
 }

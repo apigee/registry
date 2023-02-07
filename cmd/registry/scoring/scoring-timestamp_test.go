@@ -27,7 +27,7 @@ type fakeArtifactClient struct {
 func (f *fakeArtifactClient) GetArtifact(ctx context.Context, artifact names.Artifact, getContents bool, handler visitor.ArtifactHandler) error {
 	for _, a := range f.artifacts {
 		if a.GetName() == artifact.String() {
-			err := handler(a)
+			err := handler(ctx, a)
 			if err != nil {
 				return err
 			}
@@ -61,7 +61,7 @@ func (f *fakeArtifactClient) ListArtifacts(ctx context.Context, artifact names.A
 			continue
 		}
 
-		if err := handler(a); err != nil {
+		if err := handler(ctx, a); err != nil {
 			return err
 		}
 	}

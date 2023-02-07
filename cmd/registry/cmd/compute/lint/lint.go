@@ -26,6 +26,7 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -70,7 +71,7 @@ func Command() *cobra.Command {
 			}
 
 			// Iterate through a collection of specs and evaluate each.
-			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
+			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 				taskQueue <- &computeLintTask{
 					client:   client,
 					specName: spec.Name,
@@ -147,7 +148,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	}
 
 	if task.dryRun {
-		core.PrintMessage(lint)
+		fmt.Println(protojson.Format((lint)))
 		return nil
 	}
 

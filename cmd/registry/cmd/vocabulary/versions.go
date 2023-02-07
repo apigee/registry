@@ -15,13 +15,14 @@
 package vocabulary
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func versionsCommand() *cobra.Command {
@@ -53,7 +54,7 @@ func versionsCommand() *cobra.Command {
 			if output != "" {
 				setVersionHistoryToArtifact(ctx, client, history, output)
 			} else {
-				core.PrintMessage(history)
+				fmt.Println(protojson.Format((history)))
 			}
 		},
 	}

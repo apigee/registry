@@ -32,7 +32,7 @@ func (f *fakeLister) ListAPIs(ctx context.Context, api names.Api, filter string,
 		if strings.Contains(filter, name.Parent()) || (api.ApiID != "-" && name.ApiID != api.ApiID) {
 			continue
 		}
-		if err := handler(a); err != nil {
+		if err := handler(ctx, a); err != nil {
 			return err
 		}
 	}
@@ -45,7 +45,7 @@ func (f *fakeLister) ListVersions(ctx context.Context, version names.Version, fi
 		if strings.Contains(filter, name.Parent()) || (version.VersionID != "-" && name.VersionID != version.VersionID) {
 			continue
 		}
-		if err := handler(v); err != nil {
+		if err := handler(ctx, v); err != nil {
 			return err
 		}
 	}
@@ -59,7 +59,7 @@ func (f *fakeLister) ListSpecs(ctx context.Context, spec names.Spec, filter stri
 			continue
 		}
 
-		if err := handler(s); err != nil {
+		if err := handler(ctx, s); err != nil {
 			return err
 		}
 	}
@@ -73,7 +73,7 @@ func (f *fakeLister) ListArtifacts(ctx context.Context, artifact names.Artifact,
 			continue
 		}
 
-		if err := handler(a); err != nil {
+		if err := handler(ctx, a); err != nil {
 			return err
 		}
 	}

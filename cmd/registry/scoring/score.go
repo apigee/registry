@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -28,6 +27,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -47,7 +47,7 @@ func FetchScoreDefinitions(
 	}
 	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
-		func(artifact *rpc.Artifact) error {
+		func(ctx context.Context, artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreDefinition{}
 			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
@@ -116,7 +116,7 @@ func CalculateScore(
 		}
 
 		if dryRun {
-			core.PrintMessage(score)
+			fmt.Println(protojson.Format((score)))
 			return nil
 		}
 		return uploadScore(ctx, client, resource, score)
@@ -459,7 +459,7 @@ func getArtifact(ctx context.Context, client artifactClient, artifactPattern str
 	}
 
 	gotArtifact := &rpc.Artifact{}
-	err = client.GetArtifact(ctx, artifactName, true, func(artifact *rpc.Artifact) error {
+	err = client.GetArtifact(ctx, artifactName, true, func(ctx context.Context, artifact *rpc.Artifact) error {
 		gotArtifact = artifact
 		return nil
 	})

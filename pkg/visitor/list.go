@@ -46,14 +46,14 @@ func ListProjects(ctx context.Context,
 		if err != nil && status.Code(err) == codes.Unimplemented && implicitProject != nil {
 			// If the admin service is unavailable, provide a placeholder project.
 			// If the project is invalid, downstream actions will fail.
-			return handler(implicitProject)
+			return handler(ctx, implicitProject)
 		}
 
 		if err != nil {
 			return err
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -81,7 +81,7 @@ func ListAPIs(ctx context.Context,
 			return err
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -109,7 +109,7 @@ func ListDeployments(ctx context.Context,
 			return err
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -128,7 +128,7 @@ func ListDeploymentRevisions(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -156,7 +156,7 @@ func ListVersions(ctx context.Context,
 			return err
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -195,7 +195,7 @@ func ListSpecs(ctx context.Context,
 			r.Contents = resp.GetData()
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -226,7 +226,7 @@ func ListSpecRevisions(ctx context.Context,
 			r.Contents = resp.GetData()
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}
@@ -265,7 +265,7 @@ func ListArtifacts(ctx context.Context,
 			r.Contents = resp.GetData()
 		}
 
-		if err := handler(r); err != nil {
+		if err := handler(ctx, r); err != nil {
 			return err
 		}
 	}

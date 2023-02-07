@@ -127,7 +127,7 @@ func labelAPIs(ctx context.Context,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return visitor.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
+	return visitor.ListAPIs(ctx, client, api, filterFlag, func(ctx context.Context, api *rpc.Api) error {
 		taskQueue <- &labelApiTask{
 			client:   client,
 			api:      api,
@@ -144,7 +144,7 @@ func labelVersions(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return visitor.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
+	return visitor.ListVersions(ctx, client, version, filterFlag, func(ctx context.Context, version *rpc.ApiVersion) error {
 		taskQueue <- &labelVersionTask{
 			client:   client,
 			version:  version,
@@ -161,7 +161,7 @@ func labelSpecs(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(spec *rpc.ApiSpec) error {
+	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 		taskQueue <- &labelSpecTask{
 			client:   client,
 			spec:     spec,
@@ -178,7 +178,7 @@ func labelDeployments(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) error {
+	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(ctx context.Context, deployment *rpc.ApiDeployment) error {
 		taskQueue <- &labelDeploymentTask{
 			client:     client,
 			deployment: deployment,

@@ -15,6 +15,7 @@
 package visitor
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
@@ -26,49 +27,49 @@ type Unsupported struct {
 }
 
 func (v *Unsupported) ProjectHandler() ProjectHandler {
-	return func(message *rpc.Project) error {
+	return func(ctx context.Context, message *rpc.Project) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) ApiHandler() ApiHandler {
-	return func(message *rpc.Api) error {
+	return func(ctx context.Context, message *rpc.Api) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) VersionHandler() VersionHandler {
-	return func(message *rpc.ApiVersion) error {
+	return func(ctx context.Context, message *rpc.ApiVersion) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) DeploymentHandler() DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) DeploymentRevisionHandler() DeploymentHandler {
-	return func(message *rpc.ApiDeployment) error {
+	return func(ctx context.Context, message *rpc.ApiDeployment) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) SpecHandler() SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) SpecRevisionHandler() SpecHandler {
-	return func(message *rpc.ApiSpec) error {
+	return func(ctx context.Context, message *rpc.ApiSpec) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
 
 func (v *Unsupported) ArtifactHandler() ArtifactHandler {
-	return func(message *rpc.Artifact) error {
+	return func(ctx context.Context, message *rpc.Artifact) error {
 		return fmt.Errorf("unsupported operand type: %T", message)
 	}
 }
