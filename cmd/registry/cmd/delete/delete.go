@@ -60,14 +60,22 @@ func Command() *cobra.Command {
 				force:          force,
 				taskQueue:      taskQueue,
 			}
-			// Visit the selected resources.
-			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-				Pattern:        pattern,
-				Filter:         filter,
-			}); err != nil {
-				return err
+			lastCount := 0
+			for {
+				// Visit the selected resources.
+				if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
+					RegistryClient: registryClient,
+					AdminClient:    adminClient,
+					Pattern:        pattern,
+					Filter:         filter,
+				}); err != nil {
+					return err
+				}
+				// Iterate until no more items have been deleted.
+				if v.count == lastCount {
+					break
+				}
+				lastCount = v.count
 			}
 			if v.count == 0 {
 				return errors.New("no resources found")
