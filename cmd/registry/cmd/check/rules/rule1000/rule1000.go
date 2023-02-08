@@ -46,7 +46,7 @@ var requiredArtifacts = &lint.ProjectRule{
 	OnlyIf: func(a *rpc.Project) bool {
 		return true
 	},
-	ApplyToProject: func(ctx context.Context, a *rpc.Project) []lint.Problem {
+	ApplyToProject: func(ctx context.Context, a *rpc.Project) []*rpc.Problem {
 		client := lint.RegistryClient(ctx)
 
 		var filter string
@@ -58,7 +58,7 @@ var requiredArtifacts = &lint.ProjectRule{
 			filter += fmt.Sprintf("artifact_id == '%s'", n)
 		}
 		projectName, _ := names.ParseProject(a.GetName())
-		var probs []lint.Problem
+		var probs []*rpc.Problem
 		if err := visitor.ListArtifacts(ctx, client, projectName.Artifact("-"), filter, true, func(ctx context.Context, a *rpc.Artifact) error {
 			found[a.GetName()] = true
 
@@ -75,8 +75,8 @@ var requiredArtifacts = &lint.ProjectRule{
 		for _, id := range requiredIDs {
 			fn := projectName.Artifact(id).String()
 			if !found[fn] {
-				probs = append(probs, lint.Problem{
-					Severity:   lint.ERROR,
+				probs = append(probs, &rpc.Problem{
+					Severity:   rpc.Problem_ERROR,
 					Message:    fmt.Sprintf(`artifact %q not found in registry.`, fn),
 					Suggestion: `Initialize API Hub.`,
 				})
@@ -87,14 +87,14 @@ var requiredArtifacts = &lint.ProjectRule{
 	},
 }
 
-func checkTaxonomies(a *rpc.Artifact) []lint.Problem {
+func checkTaxonomies(a *rpc.Artifact) []*rpc.Problem {
 	message, err := types.MessageForMimeType(a.GetMimeType())
 	if err == nil {
 		err = proto.Unmarshal(a.GetContents(), message)
 	}
 	if err != nil {
-		return []lint.Problem{{
-			Severity:   lint.ERROR,
+		return []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    fmt.Sprintf(`Unable to verify %s`, a.GetName()),
 			Suggestion: fmt.Sprintf(`Error: %s`, err),
 		}}
@@ -111,8 +111,8 @@ func checkTaxonomies(a *rpc.Artifact) []lint.Problem {
 		}
 	}
 	if len(missing) > 0 {
-		return []lint.Problem{{
-			Severity:   lint.ERROR,
+		return []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    fmt.Sprintf(`TaxonomyList %q must include items: %s.`, a.GetName(), strings.Join(missing, `, `)),
 			Suggestion: `Initialize API Hub.`,
 		}}

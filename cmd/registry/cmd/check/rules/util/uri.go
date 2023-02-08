@@ -18,15 +18,15 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/rpc"
 )
 
-func CheckURI(field, uri string) []lint.Problem {
+func CheckURI(field, uri string) []*rpc.Problem {
 	if uri != "" {
 		u, err := url.ParseRequestURI(uri)
 		if err != nil || u.Host == "" {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`%s must be an absolute URI.`, field),
 				Suggestion: fmt.Sprintf(`Ensure %s includes a host.`, field),
 			}}

@@ -44,7 +44,7 @@ var taxonomyLabels = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "Labels"
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []lint.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*rpc.Problem {
 		labels := map[string]string{}
 		for k, v := range value.(map[string]string) {
 			if strings.HasPrefix(k, "apihub-") {
@@ -59,11 +59,11 @@ var taxonomyLabels = &lint.FieldRule{
 		project := name.Project()
 		taxonomies := taxonomies(ctx, project)
 
-		var probs []lint.Problem
+		var probs []*rpc.Problem
 		for k, v := range labels {
 			if !taxonomies.exists(k, v) {
-				probs = append(probs, lint.Problem{
-					Severity:   lint.ERROR,
+				probs = append(probs, &rpc.Problem{
+					Severity:   rpc.Problem_ERROR,
 					Message:    fmt.Sprintf(`Label value %q not present in Taxonomy %q`, v, k),
 					Suggestion: `Adjust label value or Taxonomy elements.`,
 				})

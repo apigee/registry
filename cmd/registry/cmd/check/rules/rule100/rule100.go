@@ -41,10 +41,10 @@ var availabilitySingleWord = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return true
 	},
-	ApplyToApi: func(ctx context.Context, a *rpc.Api) []lint.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*rpc.Problem {
 		if arr := strings.SplitN(a.Availability, " ", 2); len(arr) > 1 {
-			return []lint.Problem{{
-				Severity:   lint.INFO,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_INFO,
 				Message:    `Availability is free-form, but we expect single words that describe availability.`,
 				Suggestion: `Use single words like: "NONE", "TESTING", "PREVIEW", "GENERAL", "DEPRECATED", "SHUTDOWN"`,
 			}}

@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -78,7 +79,7 @@ func TestTaxonomyList(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		labels   map[string]string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"good", map[string]string{
 			"apihub-list1": "good1",
@@ -87,10 +88,10 @@ func TestTaxonomyList(t *testing.T) {
 		{"bad1", map[string]string{
 			"apihub-list1": "good3",
 			"apihub-list2": "good3",
-		}, []lint.Problem{{
+		}, []*rpc.Problem{{
 			Message:    `Label value "good3" not present in Taxonomy "apihub-list1"`,
 			Suggestion: `Adjust label value or Taxonomy elements.`,
-			Severity:   lint.ERROR,
+			Severity:   rpc.Problem_ERROR,
 		}}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -99,7 +100,7 @@ func TestTaxonomyList(t *testing.T) {
 			}
 			if taxonomyLabels.OnlyIf(p, "Labels") {
 				got := taxonomyLabels.ApplyToField(ctx, p, "Labels", tt.labels)
-				if diff := cmp.Diff(got, tt.expected); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

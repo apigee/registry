@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -53,26 +54,26 @@ func TestRequiredArtifacts(t *testing.T) {
 	})
 	ctx = context.WithValue(ctx, lint.ContextKeyRegistryClient, registryClient)
 
-	bad1 := lint.Problem{
+	bad1 := &rpc.Problem{
 		Message:    `artifact "projects/check-test/locations/global/artifacts/bad1" not found in registry.`,
 		Suggestion: `Initialize API Hub.`,
-		Severity:   lint.ERROR,
+		Severity:   rpc.Problem_ERROR,
 	}
-	bad2 := lint.Problem{
+	bad2 := &rpc.Problem{
 		Message:    `artifact "projects/check-test/locations/global/artifacts/bad2" not found in registry.`,
 		Suggestion: `Initialize API Hub.`,
-		Severity:   lint.ERROR,
+		Severity:   rpc.Problem_ERROR,
 	}
 
 	for _, tt := range []struct {
 		name     string
 		required []string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"good one", []string{"good1"}, nil},
 		{"good two", []string{"good1", "good2"}, nil},
-		{"bad one", []string{"bad1", "good2"}, []lint.Problem{bad1}},
-		{"bad two", []string{"bad1", "bad2"}, []lint.Problem{bad1, bad2}},
+		{"bad one", []string{"bad1", "good2"}, []*rpc.Problem{bad1}},
+		{"bad two", []string{"bad1", "bad2"}, []*rpc.Problem{bad1, bad2}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			oldIds := requiredIDs
@@ -83,7 +84,7 @@ func TestRequiredArtifacts(t *testing.T) {
 			}
 			if requiredArtifacts.OnlyIf(p) {
 				got := requiredArtifacts.ApplyToProject(ctx, p)
-				if diff := cmp.Diff(got, tt.expected); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}
@@ -117,19 +118,19 @@ func TestRequiredTaxonomies(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		required []string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"good", []string{"good1"}, nil},
 		{"good2", []string{"good1", "good2"}, nil},
-		{"bad", []string{"bad1"}, []lint.Problem{{
+		{"bad", []string{"bad1"}, []*rpc.Problem{{
 			Message:    `TaxonomyList "projects/check-test/locations/global/artifacts/apihub-taxonomies" must include items: bad1.`,
 			Suggestion: `Initialize API Hub.`,
-			Severity:   lint.ERROR,
+			Severity:   rpc.Problem_ERROR,
 		}}},
-		{"bad2", []string{"bad1", "bad2"}, []lint.Problem{{
+		{"bad2", []string{"bad1", "bad2"}, []*rpc.Problem{{
 			Message:    `TaxonomyList "projects/check-test/locations/global/artifacts/apihub-taxonomies" must include items: bad1, bad2.`,
 			Suggestion: `Initialize API Hub.`,
-			Severity:   lint.ERROR,
+			Severity:   rpc.Problem_ERROR,
 		}}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -142,7 +143,7 @@ func TestRequiredTaxonomies(t *testing.T) {
 			}
 			if requiredArtifacts.OnlyIf(p) {
 				got := requiredArtifacts.ApplyToProject(ctx, p)
-				if diff := cmp.Diff(got, tt.expected); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

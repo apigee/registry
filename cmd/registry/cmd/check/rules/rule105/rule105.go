@@ -39,11 +39,11 @@ var sourceUriFormat = &lint.ApiSpecRule{
 	OnlyIf: func(a *rpc.ApiSpec) bool {
 		return a.SourceUri != ""
 	},
-	ApplyToApiSpec: func(ctx context.Context, a *rpc.ApiSpec) []lint.Problem {
+	ApplyToApiSpec: func(ctx context.Context, a *rpc.ApiSpec) []*rpc.Problem {
 		u, err := url.ParseRequestURI(a.SourceUri)
 		if err != nil || u.Host == "" {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    `source_uri must be an absolute URI.`,
 				Suggestion: `Ensure source_uri includes a host.`,
 			}}

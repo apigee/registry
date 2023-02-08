@@ -33,20 +33,20 @@ func TestAddRules(t *testing.T) {
 }
 
 func TestDisplayName(t *testing.T) {
-	bad := []lint.Problem{{
-		Severity:   lint.ERROR,
+	bad := []*rpc.Problem{{
+		Severity:   rpc.Problem_ERROR,
 		Message:    fmt.Sprintf("%s must contain only UTF-8 characters.", fieldName),
 		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
 
-	tooLong := []lint.Problem{{
-		Severity:   lint.ERROR,
+	tooLong := []*rpc.Problem{{
+		Severity:   rpc.Problem_ERROR,
 		Message:    fmt.Sprintf("%s exceeds limit of 65 characters.", fieldName),
 		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
 
 	tests := []struct {
 		name     string
 		in       string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"empty", "", nil},
 		{"invalid", string([]byte{0xff}), bad},
@@ -61,7 +61,7 @@ func TestDisplayName(t *testing.T) {
 			}
 			if displayName.OnlyIf(a, fieldName) {
 				got := displayName.ApplyToField(ctx, a, fieldName, test.in)
-				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
 			}

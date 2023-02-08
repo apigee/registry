@@ -36,7 +36,7 @@ func TestAnnotations(t *testing.T) {
 	tests := []struct {
 		name     string
 		in       map[string]string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"nil", nil, nil},
 		{"empty", map[string]string{}, nil},
@@ -54,11 +54,11 @@ func TestAnnotations(t *testing.T) {
 				"key": "value",
 				"*":   "*",
 			},
-			[]lint.Problem{
+			[]*rpc.Problem{
 				{
 					Message:    `Key "*" has illegal first character '*'.`,
 					Suggestion: "Fix key.",
-					Severity:   lint.ERROR,
+					Severity:   rpc.Problem_ERROR,
 				},
 			},
 		},
@@ -74,11 +74,11 @@ func TestAnnotations(t *testing.T) {
 			map[string]string{
 				"key2": strings.Repeat("x", totalSizeLimit-3),
 			},
-			[]lint.Problem{
+			[]*rpc.Problem{
 				{
 					Message:    `Maximum size of all annotations is 256k.`,
 					Suggestion: `Reduce size by 1 bytes.`,
-					Severity:   lint.ERROR,
+					Severity:   rpc.Problem_ERROR,
 				},
 			},
 		},
@@ -89,11 +89,11 @@ func TestAnnotations(t *testing.T) {
 				"key2": strings.Repeat("x", totalSizeLimit/3),
 				"key3": strings.Repeat("x", totalSizeLimit/3),
 			},
-			[]lint.Problem{
+			[]*rpc.Problem{
 				{
 					Message:    `Maximum size of all annotations is 256k.`,
 					Suggestion: `Reduce size by 11 bytes.`,
-					Severity:   lint.ERROR,
+					Severity:   rpc.Problem_ERROR,
 				},
 			},
 		},
@@ -106,7 +106,7 @@ func TestAnnotations(t *testing.T) {
 			}
 			if annotations.OnlyIf(a, fieldName) {
 				got := annotations.ApplyToField(ctx, a, fieldName, test.in)
-				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
 			}
@@ -119,36 +119,36 @@ func TestCheckAnnotation(t *testing.T) {
 		name     string
 		key      string
 		value    string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"good", "alphanum", "value1_2-", nil},
-		{"period", "key.", ".", []lint.Problem{
+		{"period", "key.", ".", []*rpc.Problem{
 			{
 				Message:    `Key "key." contains illegal character '.'.`,
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 		}},
-		{"uppercase", "keY", "valuE", []lint.Problem{
+		{"uppercase", "keY", "valuE", []*rpc.Problem{
 			{
 				Message:    `Key "keY" contains illegal character 'Y'.`,
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 		}},
 		{"long", strings.Repeat("y", 64), strings.Repeat("y", 64), nil},
-		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []lint.Problem{
+		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []*rpc.Problem{
 			{
 				Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 		}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := checkAnnotation(test.key, test.value)
-			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})
