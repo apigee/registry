@@ -36,7 +36,7 @@ func TestMimeTypeContents(t *testing.T) {
 		name     string
 		mimeType string
 		contents []byte
-		problems []lint.Problem
+		problems []*rpc.Problem
 	}{
 		{
 			"empty content",
@@ -60,29 +60,29 @@ func TestMimeTypeContents(t *testing.T) {
 			"wrong type",
 			"text/html",
 			[]byte("string"),
-			[]lint.Problem{{
+			[]*rpc.Problem{{
 				Message:    `Unexpected mime_type "text/html" for contents.`,
 				Suggestion: `Detected mime_type: "text/plain; charset=utf-8".`,
-				Severity:   lint.WARNING,
+				Severity:   rpc.Problem_WARN,
 			}},
 		},
 		{
 			"empty type",
 			"",
 			[]byte("string"),
-			[]lint.Problem{{
+			[]*rpc.Problem{{
 				Message:    `Empty mime_type.`,
 				Suggestion: `Detected mime_type: "text/plain; charset=utf-8".`,
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			}},
 		},
 		{
 			"bad type",
 			"bad/",
 			[]byte("string"),
-			[]lint.Problem{{
+			[]*rpc.Problem{{
 				Message:  `Unable to parse mime_type "bad/": mime: expected token after slash.`,
-				Severity: lint.ERROR,
+				Severity: rpc.Problem_ERROR,
 			}},
 		},
 		{
@@ -115,7 +115,7 @@ func TestMimeTypeContents(t *testing.T) {
 					for i := range test.problems {
 						test.problems[i].Location = resource.GetName() + "::MimeType"
 					}
-					if diff := cmp.Diff(test.problems, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+					if diff := cmp.Diff(test.problems, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 						t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 					}
 				})

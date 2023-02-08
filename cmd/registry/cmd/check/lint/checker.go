@@ -19,13 +19,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
+	"sync"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type contextKey int
@@ -47,6 +48,7 @@ type Resource interface {
 
 // Checker checks API files and returns a list of detected problems.
 type Checker struct {
+	sync.RWMutex
 	rules   RuleRegistry
 	configs Configs
 }
@@ -60,10 +62,10 @@ func New(rules RuleRegistry, configs Configs) *Checker {
 	return l
 }
 
-func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *Response, err error) {
-	response = &Response{
-		RunTime:  time.Now(),
-		Problems: make([]Problem, 0),
+func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *rpc.Response, err error) {
+	response = &rpc.Response{
+		CreateTime: timestamppb.Now(),
+		Problems:   make([]*rpc.Problem, 0),
 	}
 
 	// enable rules to access client
@@ -71,8 +73,8 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 	taskQueue, wait := core.WorkerPool(ctx, jobs)
 	defer func() {
 		wait()
-		if response.Error != nil { // from a panic
-			err = response.Error
+		if response.Error != "" { // from a panic
+			err = fmt.Errorf(response.Error)
 		}
 	}()
 
@@ -100,7 +102,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 
 type checkTask struct {
 	checker  *Checker
-	response *Response
+	response *rpc.Response
 	resource Resource
 }
 
@@ -109,14 +111,14 @@ func (t *checkTask) String() string {
 }
 
 func (t *checkTask) Run(ctx context.Context) error {
-	var problems []Problem
+	var problems []*rpc.Problem
 	var errMessages []string
 	for name, rule := range t.checker.rules {
 		if t.checker.configs.IsRuleEnabled(string(name), t.resource.GetName()) {
 			if probs, err := t.runAndRecoverFromPanics(ctx, rule, t.resource); err == nil {
 				for _, p := range probs {
-					if p.RuleID == "" {
-						p.RuleID = rule.GetName()
+					if p.RuleId == "" {
+						p.RuleId = string(rule.GetName())
 					}
 					if p.Location == "" {
 						p.Location = t.resource.GetName()
@@ -133,11 +135,18 @@ func (t *checkTask) Run(ctx context.Context) error {
 		err = errors.New(strings.Join(errMessages, "; "))
 	}
 
-	t.response.append(t.resource, problems, err)
+	// TODO: this is dumb
+	t.checker.Lock()
+	defer t.checker.Unlock()
+	t.response.Problems = append(t.response.Problems, problems...)
+	if err != nil {
+		t.response.Error = err.Error()
+	}
+
 	return nil
 }
 
-func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []Problem, err error) {
+func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []*rpc.Problem, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if rerr, ok := r.(error); ok {

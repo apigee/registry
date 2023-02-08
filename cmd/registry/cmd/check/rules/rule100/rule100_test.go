@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestAddRules(t *testing.T) {
@@ -30,15 +31,15 @@ func TestAddRules(t *testing.T) {
 }
 
 func Test_availabilitySingleWord(t *testing.T) {
-	prob := []lint.Problem{{
-		Severity:   lint.INFO,
+	prob := []*rpc.Problem{{
+		Severity:   rpc.Problem_INFO,
 		Message:    `Availability is free-form, but we expect single words that describe availability.`,
 		Suggestion: `Use single words like: "NONE", "TESTING", "PREVIEW", "GENERAL", "DEPRECATED", "SHUTDOWN"`,
 	}}
 
 	for _, tt := range []struct {
 		in       string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"", nil},
 		{"x", nil},
@@ -49,7 +50,7 @@ func Test_availabilitySingleWord(t *testing.T) {
 		}
 		if availabilitySingleWord.OnlyIf(api) {
 			got := availabilitySingleWord.ApplyToApi(context.Background(), api)
-			if diff := cmp.Diff(got, tt.expected); diff != "" {
+			if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 				t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 			}
 		}

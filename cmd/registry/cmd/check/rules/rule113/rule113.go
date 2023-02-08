@@ -31,6 +31,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/rpc"
 )
 
 const ruleNum = 113
@@ -54,20 +55,20 @@ var annotations = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []lint.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*rpc.Problem {
 		labels := value.(map[string]string)
 		if len(labels) == 0 {
 			return nil
 		}
 		totalSize := 0
-		var probs []lint.Problem
+		var probs []*rpc.Problem
 		for k, v := range labels {
 			probs = append(probs, checkAnnotation(k, v)...)
 			totalSize += len(k) + len(v)
 		}
 		if totalSize > totalSizeLimit {
-			probs = append(probs, lint.Problem{
-				Severity:   lint.ERROR,
+			probs = append(probs, &rpc.Problem{
+				Severity:   rpc.Problem_ERROR,
 				Message:    `Maximum size of all annotations is 256k.`,
 				Suggestion: fmt.Sprintf(`Reduce size by %d bytes.`, totalSize-totalSizeLimit),
 			})
@@ -77,24 +78,24 @@ var annotations = &lint.FieldRule{
 	},
 }
 
-func checkAnnotation(k string, v string) []lint.Problem {
-	var probs []lint.Problem
+func checkAnnotation(k string, v string) []*rpc.Problem {
+	var probs []*rpc.Problem
 	if r, _ := utf8.DecodeRuneInString(k); r == utf8.RuneError || !unicode.In(r, unicode.Ll, unicode.Lo) {
-		probs = append(probs, lint.Problem{
-			Severity:   lint.ERROR,
+		probs = append(probs, &rpc.Problem{
+			Severity:   rpc.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q has illegal first character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
 	} else if ok, r := validKeyRunes(k); !ok {
-		probs = append(probs, lint.Problem{
-			Severity:   lint.ERROR,
+		probs = append(probs, &rpc.Problem{
+			Severity:   rpc.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q contains illegal character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
 	}
 	if count := utf8.RuneCountInString(k); count > 64 {
-		probs = append(probs, lint.Problem{
-			Severity:   lint.ERROR,
+		probs = append(probs, &rpc.Problem{
+			Severity:   rpc.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, k),
 			Suggestion: `Fix key.`,
 		})

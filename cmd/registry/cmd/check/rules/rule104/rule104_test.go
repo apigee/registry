@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -51,21 +52,21 @@ func Test_primarySpecRef(t *testing.T) {
 	for _, tt := range []struct {
 		desc     string
 		in       string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"empty", "", nil},
-		{"unable to parse", "bad", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"unable to parse", "bad", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `primary_spec "bad" is not a valid ApiSpec name.`,
 			Suggestion: `Parse error: invalid spec name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/versions/([A-Za-z0-9-.]+)/specs/([A-Za-z0-9-.]+)$"`,
 		}}},
-		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `primary_spec "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad" is not an API sibling of this Version.`,
 			Suggestion: `Correct the primary_spec.`,
 		}}},
-		{"missing", "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/missing", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"missing", "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/missing", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `primary_spec "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/missing" not found in registry.`,
 			Suggestion: `Correct the primary_spec.`,
 		}}},
@@ -79,7 +80,7 @@ func Test_primarySpecRef(t *testing.T) {
 
 			if primarySpecRef.OnlyIf(a) {
 				got := primarySpecRef.ApplyToApiVersion(ctx, a)
-				if diff := cmp.Diff(got, tt.expected); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

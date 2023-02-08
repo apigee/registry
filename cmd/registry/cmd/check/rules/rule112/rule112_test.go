@@ -46,7 +46,7 @@ func TestLabels(t *testing.T) {
 	tests := []struct {
 		name     string
 		in       map[string]string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"nil", nil, nil},
 		{"empty", map[string]string{}, nil},
@@ -64,16 +64,16 @@ func TestLabels(t *testing.T) {
 				"key": "value",
 				"*":   "*",
 			},
-			[]lint.Problem{
+			[]*rpc.Problem{
 				{
 					Message:    `Key "*" has illegal first character '*'.`,
 					Suggestion: "Fix key.",
-					Severity:   lint.ERROR,
+					Severity:   rpc.Problem_ERROR,
 				},
 				{
 					Message:    `Value for key "*" contains illegal character '*'.`,
 					Suggestion: "Fix value.",
-					Severity:   lint.ERROR,
+					Severity:   rpc.Problem_ERROR,
 				},
 			},
 		},
@@ -85,11 +85,11 @@ func TestLabels(t *testing.T) {
 		{
 			"too many",
 			tooMany,
-			[]lint.Problem{
+			[]*rpc.Problem{
 				{
 					Message:    `Maximum number of labels is 64.`,
 					Suggestion: "Delete some entries.",
-					Severity:   lint.ERROR,
+					Severity:   rpc.Problem_ERROR,
 				},
 			},
 		},
@@ -102,7 +102,7 @@ func TestLabels(t *testing.T) {
 			}
 			if labels.OnlyIf(a, fieldName) {
 				got := labels.ApplyToField(ctx, a, fieldName, test.in)
-				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
 			}
@@ -115,51 +115,51 @@ func TestCheckLabel(t *testing.T) {
 		name     string
 		key      string
 		value    string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"good", "alphanum", "value1_2-", nil},
-		{"period", "key.", ".", []lint.Problem{
+		{"period", "key.", ".", []*rpc.Problem{
 			{
 				Message:    `Key "key." contains illegal character '.'.`,
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 			{
 				Message:    `Value for key "key." contains illegal character '.'.`,
 				Suggestion: "Fix value.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 		}},
-		{"uppercase", "keY", "valuE", []lint.Problem{
+		{"uppercase", "keY", "valuE", []*rpc.Problem{
 			{
 				Message:    `Key "keY" contains illegal character 'Y'.`,
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 			{
 				Message:    `Value for key "keY" contains illegal character 'E'.`,
 				Suggestion: "Fix value.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 		}},
 		{"long", strings.Repeat("y", 64), strings.Repeat("y", 64), nil},
-		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []lint.Problem{
+		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []*rpc.Problem{
 			{
 				Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
 				Suggestion: "Fix key.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 			{
 				Message:    fmt.Sprintf(`Value for key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
 				Suggestion: "Fix value.",
-				Severity:   lint.ERROR,
+				Severity:   rpc.Problem_ERROR,
 			},
 		}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := checkLabel(test.key, test.value)
-			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})

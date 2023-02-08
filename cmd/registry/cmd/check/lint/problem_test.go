@@ -16,17 +16,19 @@ package lint
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/apigee/registry/rpc"
 	"gopkg.in/yaml.v2"
 )
 
 func TestProblemJSON(t *testing.T) {
-	problem := &Problem{
+	problem := &rpc.Problem{
 		Message:  "foo bar",
 		Location: "test/location",
-		RuleID:   "core::0131",
+		RuleId:   "core::0131",
 	}
 	serialized, err := json.Marshal(problem)
 	if err != nil {
@@ -38,7 +40,7 @@ func TestProblemJSON(t *testing.T) {
 	}{
 		{"Message", `"message":"foo bar"`},
 		{"Location", `"location":"test/location"`},
-		{"RuleID", `"rule_id":"core::0131"`},
+		{"RuleId", `"rule_id":"core::0131"`},
 	}
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
@@ -50,11 +52,11 @@ func TestProblemJSON(t *testing.T) {
 }
 
 func TestProblemYAML(t *testing.T) {
-	problem := &Problem{
+	problem := &rpc.Problem{
 		Message:  "foo bar",
 		Location: "test/location",
-		RuleID:   "core::0131",
-		Severity: ERROR,
+		RuleId:   "core::0131",
+		Severity: rpc.Problem_ERROR,
 	}
 	serialized, err := yaml.Marshal(problem)
 	if err != nil {
@@ -66,8 +68,8 @@ func TestProblemYAML(t *testing.T) {
 	}{
 		{"Message", `message: foo bar`},
 		{"Location", `location: test/location`},
-		{"RuleID", `rule_id: core::0131`},
-		{"Severity", `ERROR`},
+		{"RuleId", `ruleid: core::0131`},
+		{"Severity", fmt.Sprintf(`severity: %d`, rpc.Problem_ERROR.Number())},
 	}
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {

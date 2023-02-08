@@ -39,7 +39,7 @@ var externalChannelUriFormat = &lint.ApiDeploymentRule{
 	OnlyIf: func(a *rpc.ApiDeployment) bool {
 		return a.EndpointUri != ""
 	},
-	ApplyToApiDeployment: func(ctx context.Context, a *rpc.ApiDeployment) []lint.Problem {
+	ApplyToApiDeployment: func(ctx context.Context, a *rpc.ApiDeployment) []*rpc.Problem {
 		return util.CheckURI("external_channel_uri", a.EndpointUri)
 	},
 }

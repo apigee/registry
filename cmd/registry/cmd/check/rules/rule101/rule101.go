@@ -42,11 +42,11 @@ var recommendedVersionRef = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return strings.TrimSpace(a.RecommendedVersion) != ""
 	},
-	ApplyToApi: func(ctx context.Context, a *rpc.Api) []lint.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*rpc.Problem {
 		versionName, err := names.ParseVersion(a.RecommendedVersion)
 		if err != nil {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_version %q is not a valid ApiVersion name.`, a.RecommendedVersion),
 				Suggestion: fmt.Sprintf(`Parse error: %s`, err),
 			}}
@@ -54,8 +54,8 @@ var recommendedVersionRef = &lint.ApiRule{
 
 		apiName, _ := names.ParseApi(a.Name) // name assumed to be valid
 		if versionName.Api() != apiName {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_version %q is not a child of this Api.`, a.RecommendedVersion),
 				Suggestion: `Correct the recommended_version.`,
 			}}
@@ -65,8 +65,8 @@ var recommendedVersionRef = &lint.ApiRule{
 		if _, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 			Name: a.RecommendedVersion,
 		}); err != nil {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_version %q not found in registry.`, a.RecommendedVersion),
 				Suggestion: `Correct the recommended_version.`,
 			}}
