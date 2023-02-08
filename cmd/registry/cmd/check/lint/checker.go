@@ -62,8 +62,8 @@ func New(rules RuleRegistry, configs Configs) *Checker {
 	return l
 }
 
-func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *rpc.Response, err error) {
-	response = &rpc.Response{
+func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *rpc.CheckReport, err error) {
+	response = &rpc.CheckReport{
 		CreateTime: timestamppb.Now(),
 		Problems:   make([]*rpc.Problem, 0),
 	}
@@ -102,7 +102,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 
 type checkTask struct {
 	checker  *Checker
-	response *rpc.Response
+	response *rpc.CheckReport
 	resource Resource
 }
 
