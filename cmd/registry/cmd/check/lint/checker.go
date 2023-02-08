@@ -123,6 +123,7 @@ func (t *checkTask) Run(ctx context.Context) error {
 					if p.Location == "" {
 						p.Location = t.resource.GetName()
 					}
+					p.RuleDocUri = getRuleURL(string(p.RuleId), ruleURLMappings)
 					problems = append(problems, p)
 				}
 			} else {
