@@ -47,9 +47,6 @@ message CheckReport {
 
 // Problem is a result of a rule check.
 message Problem {
-  // Identifier of the problem.
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
-
   // Message provides a short description of the problem.
 	string message = 2 [(google.api.field_behavior) = REQUIRED];
 

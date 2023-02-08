@@ -64,6 +64,8 @@ func New(rules RuleRegistry, configs Configs) *Checker {
 
 func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *rpc.CheckReport, err error) {
 	response = &rpc.CheckReport{
+		Id:         "check-report",
+		Kind:       "CheckReport",
 		CreateTime: timestamppb.Now(),
 		Problems:   make([]*rpc.Problem, 0),
 	}
@@ -136,7 +138,6 @@ func (t *checkTask) Run(ctx context.Context) error {
 		err = errors.New(strings.Join(errMessages, "; "))
 	}
 
-	// TODO: this is dumb
 	t.checker.Lock()
 	defer t.checker.Unlock()
 	t.response.Problems = append(t.response.Problems, problems...)
