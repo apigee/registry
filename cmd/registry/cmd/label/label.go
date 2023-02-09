@@ -73,7 +73,7 @@ func Command() *cobra.Command {
 					valuesToSet[pair[0]] = pair[1]
 				}
 			}
-			labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
+			labeling := &Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
 
 			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
 			if err != nil {
@@ -94,7 +94,7 @@ func matchAndHandleLabelCmd(
 	taskQueue chan<- core.Task,
 	name string,
 	filter string,
-	labeling *core.Labeling,
+	labeling *Labeling,
 ) error {
 	// First try to match collection names.
 	if api, err := names.ParseApiCollection(name); err == nil {
@@ -125,7 +125,7 @@ func labelAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	api names.Api,
 	filterFlag string,
-	labeling *core.Labeling,
+	labeling *Labeling,
 	taskQueue chan<- core.Task) error {
 	return visitor.ListAPIs(ctx, client, api, filterFlag, func(ctx context.Context, api *rpc.Api) error {
 		taskQueue <- &labelApiTask{
@@ -142,7 +142,7 @@ func labelVersions(
 	client *gapic.RegistryClient,
 	version names.Version,
 	filterFlag string,
-	labeling *core.Labeling,
+	labeling *Labeling,
 	taskQueue chan<- core.Task) error {
 	return visitor.ListVersions(ctx, client, version, filterFlag, func(ctx context.Context, version *rpc.ApiVersion) error {
 		taskQueue <- &labelVersionTask{
@@ -159,7 +159,7 @@ func labelSpecs(
 	client *gapic.RegistryClient,
 	spec names.Spec,
 	filterFlag string,
-	labeling *core.Labeling,
+	labeling *Labeling,
 	taskQueue chan<- core.Task) error {
 	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 		taskQueue <- &labelSpecTask{
@@ -176,7 +176,7 @@ func labelDeployments(
 	client *gapic.RegistryClient,
 	deployment names.Deployment,
 	filterFlag string,
-	labeling *core.Labeling,
+	labeling *Labeling,
 	taskQueue chan<- core.Task) error {
 	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(ctx context.Context, deployment *rpc.ApiDeployment) error {
 		taskQueue <- &labelDeploymentTask{
@@ -191,7 +191,7 @@ func labelDeployments(
 type labelApiTask struct {
 	client   connection.RegistryClient
 	api      *rpc.Api
-	labeling *core.Labeling
+	labeling *Labeling
 }
 
 func (task *labelApiTask) String() string {
@@ -218,7 +218,7 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 type labelVersionTask struct {
 	client   connection.RegistryClient
 	version  *rpc.ApiVersion
-	labeling *core.Labeling
+	labeling *Labeling
 }
 
 func (task *labelVersionTask) String() string {
@@ -245,7 +245,7 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 type labelSpecTask struct {
 	client   connection.RegistryClient
 	spec     *rpc.ApiSpec
-	labeling *core.Labeling
+	labeling *Labeling
 }
 
 func (task *labelSpecTask) String() string {
@@ -272,7 +272,7 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 type labelDeploymentTask struct {
 	client     connection.RegistryClient
 	deployment *rpc.ApiDeployment
-	labeling   *core.Labeling
+	labeling   *Labeling
 }
 
 func (task *labelDeploymentTask) String() string {
