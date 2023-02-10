@@ -21,6 +21,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -68,7 +69,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			parsed, err := names.ParseSpecRevision(args[0])

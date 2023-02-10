@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -54,7 +54,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			valuesToClear := make([]string, 0)
@@ -91,7 +91,7 @@ func Command() *cobra.Command {
 func matchAndHandleLabelCmd(
 	ctx context.Context,
 	client connection.RegistryClient,
-	taskQueue chan<- core.Task,
+	taskQueue chan<- tasks.Task,
 	name string,
 	filter string,
 	labeling *Labeling,
@@ -126,7 +126,7 @@ func labelAPIs(ctx context.Context,
 	api names.Api,
 	filterFlag string,
 	labeling *Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListAPIs(ctx, client, api, filterFlag, func(ctx context.Context, api *rpc.Api) error {
 		taskQueue <- &labelApiTask{
 			client:   client,
@@ -143,7 +143,7 @@ func labelVersions(
 	version names.Version,
 	filterFlag string,
 	labeling *Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListVersions(ctx, client, version, filterFlag, func(ctx context.Context, version *rpc.ApiVersion) error {
 		taskQueue <- &labelVersionTask{
 			client:   client,
@@ -160,7 +160,7 @@ func labelSpecs(
 	spec names.Spec,
 	filterFlag string,
 	labeling *Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 		taskQueue <- &labelSpecTask{
 			client:   client,
@@ -177,7 +177,7 @@ func labelDeployments(
 	deployment names.Deployment,
 	filterFlag string,
 	labeling *Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(ctx context.Context, deployment *rpc.ApiDeployment) error {
 		taskQueue <- &labelDeploymentTask{
 			client:     client,

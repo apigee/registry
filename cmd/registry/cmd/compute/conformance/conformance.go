@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/conformance"
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -118,7 +118,7 @@ func processStyleGuide(ctx context.Context, client connection.RegistryClient, st
 		return
 	}
 
-	taskQueue, wait := core.WorkerPool(ctx, jobs)
+	taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 	defer wait()
 
 	for _, spec := range specs {

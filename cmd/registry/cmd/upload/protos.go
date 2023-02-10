@@ -28,6 +28,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -79,7 +80,7 @@ func protosCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			for _, arg := range args {
@@ -109,7 +110,7 @@ func protosCommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(client connection.RegistryClient, parent, baseURI, start, root string, taskQueue chan<- core.Task) error {
+func scanDirectoryForProtos(client connection.RegistryClient, parent, baseURI, start, root string, taskQueue chan<- tasks.Task) error {
 	return filepath.Walk(start, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

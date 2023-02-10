@@ -24,6 +24,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -66,7 +67,7 @@ func csvCommand() *cobra.Command {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			file, err := os.Open(args[0])
