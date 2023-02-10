@@ -20,11 +20,11 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/compress"
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -63,7 +63,7 @@ func discoveryCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+			if err := visitor.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.

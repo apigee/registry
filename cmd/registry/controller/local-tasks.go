@@ -22,10 +22,10 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -120,7 +120,7 @@ func touchArtifact(ctx context.Context, artifactName, action string) error {
 	}
 
 	messageData, _ := proto.Marshal(&rpc.Receipt{Action: action})
-	return core.SetArtifact(ctx, client, &rpc.Artifact{
+	return visitor.SetArtifact(ctx, client, &rpc.Artifact{
 		Name:     artifactName,
 		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Receipt"),
 		Contents: messageData,

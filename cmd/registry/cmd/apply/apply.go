@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +52,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := core.VerifyLocation(ctx, client, project); err != nil {
+			if err := visitor.VerifyLocation(ctx, client, project); err != nil {
 				return fmt.Errorf("parent project %q does not exist: %s", project, err)
 			}
 			return patch.Apply(ctx, client, fileName, project, recursive, jobs)

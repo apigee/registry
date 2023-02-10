@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/compress"
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -104,7 +103,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.RegistryClie
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary+gzip"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, client, artifact)
+	err = visitor.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 	}
@@ -120,7 +119,7 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Registry
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
 		Contents: messageData,
 	}
-	err := core.SetArtifact(ctx, client, artifact)
+	err := visitor.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 	}

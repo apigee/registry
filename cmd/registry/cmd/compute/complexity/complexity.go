@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/compress"
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -182,5 +181,5 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, task.client, artifact)
+	return visitor.SetArtifact(ctx, task.client, artifact)
 }

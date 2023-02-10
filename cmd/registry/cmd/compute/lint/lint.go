@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -114,7 +113,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	data, err := visitor.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return err
 	}
@@ -160,5 +159,5 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, task.client, artifact)
+	return visitor.SetArtifact(ctx, task.client, artifact)
 }
