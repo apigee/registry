@@ -3,7 +3,6 @@ package scoring
 import (
 	"context"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -25,7 +24,7 @@ func (r *RegistryArtifactClient) GetArtifact(ctx context.Context, artifact names
 }
 
 func (r *RegistryArtifactClient) SetArtifact(ctx context.Context, artifact *rpc.Artifact) error {
-	return core.SetArtifact(ctx, r.RegistryClient, artifact)
+	return visitor.SetArtifact(ctx, r.RegistryClient, artifact)
 }
 
 func (r *RegistryArtifactClient) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler visitor.ArtifactHandler) error {

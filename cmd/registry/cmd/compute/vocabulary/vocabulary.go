@@ -163,7 +163,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
+	return visitor.SetArtifact(ctx, task.client, &rpc.Artifact{
 		Name:     task.specName + "/artifacts/vocabulary",
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,

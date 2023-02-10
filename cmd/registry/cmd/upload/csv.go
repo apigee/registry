@@ -28,6 +28,7 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -61,7 +62,7 @@ func csvCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error getting client (%s)", err)
 			}
-			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+			if err := visitor.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 

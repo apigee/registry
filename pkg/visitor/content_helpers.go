@@ -12,14 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package visitor
 
 import (
 	"context"
+	"path"
 
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+func SetArtifact(ctx context.Context,
+	client *gapic.RegistryClient,
+	artifact *rpc.Artifact) error {
+	request := &rpc.CreateArtifactRequest{}
+	request.Artifact = artifact
+	request.ArtifactId = path.Base(artifact.GetName())
+	request.Parent = path.Dir(path.Dir(artifact.GetName()))
+	// First try setting a new artifact value.
+	_, err := client.CreateArtifact(ctx, request)
+	if err == nil {
+		return nil
+	}
+	// If that failed because the artifact already exists, replace it.
+	code := status.Code(err)
+	if code == codes.AlreadyExists {
+		request := &rpc.ReplaceArtifactRequest{}
+		request.Artifact = artifact
+		_, err := client.ReplaceArtifact(ctx, request)
+		return err
+	}
+	return err
+}
 
 func GetBytesForSpec(ctx context.Context, client connection.RegistryClient, spec *rpc.ApiSpec) ([]byte, error) {
 	request := &rpc.GetApiSpecContentsRequest{Name: spec.GetName()}

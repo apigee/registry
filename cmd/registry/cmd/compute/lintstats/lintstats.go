@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
@@ -274,7 +273,7 @@ func storeLintStatsArtifact(ctx context.Context,
 		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.LintStats"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, client, artifact)
+	return visitor.SetArtifact(ctx, client, artifact)
 }
 
 func aggregateLintStats(ctx context.Context,

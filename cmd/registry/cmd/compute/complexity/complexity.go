@@ -181,5 +181,5 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, task.client, artifact)
+	return visitor.SetArtifact(ctx, task.client, artifact)
 }
