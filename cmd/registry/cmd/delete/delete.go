@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/visitor"
@@ -69,7 +69,7 @@ func Command() *cobra.Command {
 				return errors.New("no resources found")
 			}
 			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 			// Delete all of the resources that were found.
 			for _, task := range v.tasks {
@@ -89,10 +89,10 @@ type deletionVisitor struct {
 	registryClient connection.RegistryClient
 	adminClient    connection.AdminClient
 	force          bool
-	tasks          []core.Task
+	tasks          []tasks.Task
 }
 
-func (v *deletionVisitor) enqueue(task core.Task) {
+func (v *deletionVisitor) enqueue(task tasks.Task) {
 	v.tasks = append(v.tasks, task)
 }
 
