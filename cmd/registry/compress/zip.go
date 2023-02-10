@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package compress
 
 import (
 	"archive/zip"
@@ -124,7 +124,7 @@ func ZipArchiveOfPath(path, prefix string, recursive bool) (buf bytes.Buffer, er
 
 // ZipArchiveOfFiles stores a list of files in a zip archive.
 // The specified prefix is stripped from file names in the archive.
-func ZipArchiveOfFiles(files []string, prefix string, recursive bool) (buf bytes.Buffer, err error) {
+func ZipArchiveOfFiles(files []string, prefix string) (buf bytes.Buffer, err error) {
 	zipWriter := zip.NewWriter(&buf)
 	defer zipWriter.Close()
 

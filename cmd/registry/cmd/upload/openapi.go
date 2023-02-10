@@ -23,6 +23,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -237,7 +238,7 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 		return nil
 	}
 
-	gzippedContents, err := core.GZippedBytes(task.contents)
+	gzippedContents, err := compress.GZippedBytes(task.contents)
 	if err != nil {
 		return err
 	}

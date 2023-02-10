@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -105,7 +106,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	defer os.RemoveAll(root)
 
 	if types.IsZipArchive(task.Spec.GetMimeType()) {
-		_, err = core.UnzipArchiveToPath(data, root)
+		_, err = compress.UnzipArchiveToPath(data, root)
 	} else {
 		// Write the file to the temporary directory.
 		err = os.WriteFile(filepath.Join(root, name), data, 0644)

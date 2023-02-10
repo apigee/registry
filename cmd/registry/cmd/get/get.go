@@ -21,7 +21,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -194,7 +194,7 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			}
 			contents := message.GetContents()
 			if strings.Contains(message.GetMimeType(), "+gzip") {
-				contents, _ = core.GUnzippedBytes(contents)
+				contents, _ = compress.GUnzippedBytes(contents)
 			}
 			v.results = append(v.results, contents)
 			return nil
