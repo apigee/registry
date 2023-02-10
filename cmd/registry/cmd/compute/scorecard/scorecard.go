@@ -17,9 +17,9 @@ package scorecard
 import (
 	"context"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -54,7 +54,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 
 			inputPattern, err := patterns.ParseResourcePattern(args[0])

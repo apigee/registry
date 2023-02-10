@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/label"
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -55,7 +55,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			valuesToClear := make([]string, 0)
@@ -92,7 +92,7 @@ func Command() *cobra.Command {
 func matchAndHandleAnnotateCmd(
 	ctx context.Context,
 	client connection.RegistryClient,
-	taskQueue chan<- core.Task,
+	taskQueue chan<- tasks.Task,
 	name string,
 	filter string,
 	labeling *label.Labeling,
@@ -127,7 +127,7 @@ func annotateAPIs(ctx context.Context,
 	api names.Api,
 	filterFlag string,
 	labeling *label.Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListAPIs(ctx, client, api, filterFlag, func(ctx context.Context, api *rpc.Api) error {
 		taskQueue <- &annotateApiTask{
 			client:   client,
@@ -144,7 +144,7 @@ func annotateVersions(
 	version names.Version,
 	filterFlag string,
 	labeling *label.Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListVersions(ctx, client, version, filterFlag, func(ctx context.Context, version *rpc.ApiVersion) error {
 		taskQueue <- &annotateVersionTask{
 			client:   client,
@@ -161,7 +161,7 @@ func annotateSpecs(
 	spec names.Spec,
 	filterFlag string,
 	labeling *label.Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 		taskQueue <- &annotateSpecTask{
 			client:   client,
@@ -178,7 +178,7 @@ func annotateDeployments(
 	deployment names.Deployment,
 	filterFlag string,
 	labeling *label.Labeling,
-	taskQueue chan<- core.Task) error {
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(ctx context.Context, deployment *rpc.ApiDeployment) error {
 		taskQueue <- &annotateDeploymentTask{
 			client:     client,

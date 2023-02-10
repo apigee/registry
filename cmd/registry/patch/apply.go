@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"gopkg.in/yaml.v3"
@@ -67,11 +67,11 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, project 
 }
 
 type patchGroup struct {
-	apiTasks        []core.Task
-	versionTasks    []core.Task
-	specTasks       []core.Task
-	deploymentTasks []core.Task
-	artifactTasks   []core.Task
+	apiTasks        []tasks.Task
+	versionTasks    []tasks.Task
+	specTasks       []tasks.Task
+	deploymentTasks []tasks.Task
+	artifactTasks   []tasks.Task
 }
 
 func (p *patchGroup) add(task *applyBytesTask) {
@@ -138,15 +138,15 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 
 func (p *patchGroup) run(ctx context.Context, jobs int) error {
 	// Apply each resource type independently in order of ownership (parents first).
-	for _, tasks := range [][]core.Task{
+	for _, taskLists := range [][]tasks.Task{
 		p.apiTasks,
 		p.versionTasks,
 		p.specTasks,
 		p.deploymentTasks,
 		p.artifactTasks,
 	} {
-		taskQueue, wait := core.WorkerPool(ctx, jobs)
-		for _, task := range tasks {
+		taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+		for _, task := range taskLists {
 			taskQueue <- task
 		}
 		wait()

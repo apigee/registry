@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/compress"
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -75,7 +75,7 @@ func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, 
 }
 
 // ExportProject writes a project into a directory of YAML files.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- core.Task) error {
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, projectName.ProjectID)
 	if err := visitor.ListAPIs(ctx, client, projectName.Api(""), "", func(ctx context.Context, message *rpc.Api) error {
 		taskQueue <- &exportAPITask{
@@ -168,7 +168,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 }
 
 // ExportAPI writes an API into a directory of YAML files.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.Api, recursive bool, root string, taskQueue chan<- core.Task) error {
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.Api, recursive bool, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, apiName.ProjectID)
 	if err := visitor.ListAPIs(ctx, client, apiName, "", func(ctx context.Context, message *rpc.Api) error {
 		taskQueue <- &exportAPITask{
@@ -254,7 +254,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 }
 
 // ExportAPIVersion writes an API version into a directory of YAML files.
-func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, versionName names.Version, recursive bool, root string, taskQueue chan<- core.Task) error {
+func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, versionName names.Version, recursive bool, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, versionName.ProjectID)
 	if err := visitor.ListVersions(ctx, client, versionName, "", func(ctx context.Context, message *rpc.ApiVersion) error {
 		taskQueue <- &exportVersionTask{
@@ -300,7 +300,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 }
 
 // ExportAPISpec writes an API spec into a directory of YAML files.
-func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName names.Spec, recursive bool, root string, taskQueue chan<- core.Task) error {
+func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName names.Spec, recursive bool, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, specName.ProjectID)
 	if err := visitor.ListSpecs(ctx, client, specName, "", false, func(ctx context.Context, message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
@@ -326,7 +326,7 @@ func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName n
 }
 
 // ExportAPIDeployment writes an API deployment into a directory of YAML files.
-func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, recursive bool, root string, taskQueue chan<- core.Task) error {
+func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, recursive bool, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, deploymentName.ProjectID)
 	if err := visitor.ListDeployments(ctx, client, deploymentName, "", func(ctx context.Context, message *rpc.ApiDeployment) error {
 		taskQueue <- &exportDeploymentTask{
@@ -352,7 +352,7 @@ func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, depl
 }
 
 // ExportArtifact writes an artifact into a directory of YAML files.
-func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, artifactName names.Artifact, root string, taskQueue chan<- core.Task) error {
+func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, artifactName names.Artifact, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, artifactName.ProjectID())
 	return visitor.GetArtifact(ctx, client, artifactName, false, func(ctx context.Context, message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{

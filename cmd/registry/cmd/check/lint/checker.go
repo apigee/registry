@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -72,7 +72,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 
 	// enable rules to access client
 	ctx = context.WithValue(ctx, ContextKeyRegistryClient, client)
-	taskQueue, wait := core.WorkerPool(ctx, jobs)
+	taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 	defer func() {
 		wait()
 		if response.Error != "" { // from a panic
@@ -163,7 +163,7 @@ func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, reso
 }
 
 type listHandler struct {
-	taskQueue chan<- core.Task
+	taskQueue chan<- tasks.Task
 	newTask   func(r Resource) *checkTask
 }
 
