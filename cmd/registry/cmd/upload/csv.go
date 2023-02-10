@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -224,7 +225,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return err
 	}
 
-	compressed, err := core.GZippedBytes(contents)
+	compressed, err := compress.GZippedBytes(contents)
 	if err != nil {
 		return err
 	}

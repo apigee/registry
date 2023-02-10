@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -133,7 +134,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
 	contents := spec.GetContents()
 	if strings.Contains(spec.GetMimeType(), "+gzip") {
-		if contents, err = core.GUnzippedBytes(contents); err != nil {
+		if contents, err = compress.GUnzippedBytes(contents); err != nil {
 			return err
 		}
 	}

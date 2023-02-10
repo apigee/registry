@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
@@ -103,7 +103,7 @@ func TestProtos(t *testing.T) {
 			t.Errorf("Invalid mime type for %s: %s", test.spec, result.ContentType)
 		}
 		// Verify that the zip contains the expected number of files
-		m, err := core.UnzipArchiveToMap(result.Data)
+		m, err := compress.UnzipArchiveToMap(result.Data)
 		if err != nil {
 			t.Fatalf("unable to unzip spec %s", test.spec)
 		}

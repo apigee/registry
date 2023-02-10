@@ -19,7 +19,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
@@ -421,7 +421,7 @@ func TestGetValidResourcesWithFilter(t *testing.T) {
 
 func TestGetGZippedSpec(t *testing.T) {
 	payload := "hello"
-	contents, err := core.GZippedBytes([]byte(payload))
+	contents, err := compress.GZippedBytes([]byte(payload))
 	if err != nil {
 		t.Fatalf("Failed to create client: %+v", err)
 	}

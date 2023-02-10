@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -35,7 +35,7 @@ func NewLintFromZippedProtos(name string, b []byte) (*rpc.Lint, error) {
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(root)
 	// unzip the protos to the temp directory
-	_, err = core.UnzipArchiveToPath(b, root+"/protos")
+	_, err = compress.UnzipArchiveToPath(b, root+"/protos")
 	if err != nil {
 		return nil, err
 	}

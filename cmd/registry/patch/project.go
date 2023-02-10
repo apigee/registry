@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
@@ -497,7 +498,7 @@ func (task *exportSpecTask) Run(ctx context.Context) error {
 	}
 	data := contents.GetData()
 	if strings.Contains(contents.GetContentType(), "+gzip") {
-		data, _ = core.GUnzippedBytes(data)
+		data, _ = compress.GUnzippedBytes(data)
 	}
 	return os.WriteFile(filepath.Join(parentDir, task.message.Filename), data, 0644)
 }

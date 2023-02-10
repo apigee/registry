@@ -20,7 +20,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -157,11 +157,11 @@ func printDiff(spec1, spec2 *rpc.ApiSpec) error {
 	}
 	if strings.Contains(spec1.MimeType, "+zip") {
 		// read both zip archives into a map
-		map1, err := core.UnzipArchiveToMap(spec1.Contents)
+		map1, err := compress.UnzipArchiveToMap(spec1.Contents)
 		if err != nil {
 			return err
 		}
-		map2, err := core.UnzipArchiveToMap(spec2.Contents)
+		map2, err := compress.UnzipArchiveToMap(spec2.Contents)
 		if err != nil {
 			return err
 		}
@@ -199,14 +199,14 @@ func printDiff(spec1, spec2 *rpc.ApiSpec) error {
 		var err error
 		contents1 := spec1.Contents
 		if types.IsGZipCompressed(spec1.MimeType) {
-			contents1, err = core.GUnzippedBytes(contents1)
+			contents1, err = compress.GUnzippedBytes(contents1)
 			if err != nil {
 				return err
 			}
 		}
 		contents2 := spec2.Contents
 		if types.IsGZipCompressed(spec2.MimeType) {
-			contents2, err = core.GUnzippedBytes(contents2)
+			contents2, err = compress.GUnzippedBytes(contents2)
 			if err != nil {
 				return err
 			}

@@ -26,6 +26,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -325,7 +326,7 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	}
 
 	// Zip the listed files.
-	contents, err := core.ZipArchiveOfFiles(append(metadata, protos...), prefix, true)
+	contents, err := compress.ZipArchiveOfFiles(append(metadata, protos...), prefix)
 	if err != nil {
 		return nil, err
 	}

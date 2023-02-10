@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
@@ -93,7 +94,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.RegistryClie
 	relation := parts[1]
 	messageData, _ := proto.Marshal(output)
 	var err error
-	messageData, err = core.GZippedBytes(messageData)
+	messageData, err = compress.GZippedBytes(messageData)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to compress artifact")
 	}
