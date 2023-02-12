@@ -19,7 +19,7 @@ package storage
 import (
 	"context"
 
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/mattn/go-sqlite3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

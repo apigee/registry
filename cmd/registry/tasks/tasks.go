@@ -18,7 +18,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 )
 
 // Task is a generic interface for a runnable operation

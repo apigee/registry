@@ -19,7 +19,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"

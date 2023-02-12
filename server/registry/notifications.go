@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"

@@ -18,7 +18,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )

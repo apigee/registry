@@ -21,8 +21,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/apigee/registry/log"
-	"github.com/apigee/registry/log/interceptor"
+	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/log/interceptor"
 	"github.com/apigee/registry/server/registry"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"

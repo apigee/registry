@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
 )
 

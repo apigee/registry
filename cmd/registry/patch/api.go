@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"

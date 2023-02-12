@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
