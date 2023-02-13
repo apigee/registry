@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/pubsub/pstest"
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/genproto/googleapis/pubsub/v1"

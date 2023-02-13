@@ -19,8 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
