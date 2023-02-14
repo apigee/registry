@@ -90,7 +90,7 @@ var mimeTypeContents = &lint.FieldRule{
 		detectedType, _, _ := mime.ParseMediaType(detected)
 		if declaredType != detectedType {
 			return []*rpc.Problem{{
-				Severity:   rpc.Problem_WARN,
+				Severity:   rpc.Problem_WARNING,
 				Message:    fmt.Sprintf("Unexpected mime_type %q for contents.", declared),
 				Suggestion: fmt.Sprintf("Detected mime_type: %q.", detected),
 			}}

@@ -64,16 +64,21 @@ message Problem {
   // RuleDocUri provides a uri to the documented explaination of this rule.
   string rule_doc_uri = 6;
 
-  // Possible states for this guideline.
+  // Possible severities for the violation of a rule.
   enum Severity {
     // The default value, unused.
     SEVERITY_UNSPECIFIED = 0;
-    // This is a note.
-    INFO = 1;
-    // This is a strong recommendation.
-    WARN = 2;
-    // This is an issue and should be resolved.
-    ERROR = 3;
+    // Violation of the rule is an error that must be fixed.
+    ERROR = 1;
+    // Violation of the rule is a pattern that is wrong,
+    // and should be warned about.
+    WARNING = 2;
+    // Violation of the rule is not necessarily a bad pattern
+    // or error, but information the user should be aware of.
+    INFO = 3;
+    // Violation of the rule is a hint that is provided to
+    // the user to fix their spec's design.
+    HINT = 4;
   }
 
 	// Severity provides information on the criticality of the Problem.

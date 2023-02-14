@@ -63,7 +63,7 @@ func TestMimeTypeContents(t *testing.T) {
 			[]*rpc.Problem{{
 				Message:    `Unexpected mime_type "text/html" for contents.`,
 				Suggestion: `Detected mime_type: "text/plain; charset=utf-8".`,
-				Severity:   rpc.Problem_WARN,
+				Severity:   rpc.Problem_WARNING,
 			}},
 		},
 		{
