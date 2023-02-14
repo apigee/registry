@@ -17,6 +17,7 @@ package get
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/compress"
@@ -125,7 +126,7 @@ func TestGetValidResources(t *testing.T) {
 	}
 	// get names for each resource
 	for _, r := range resources {
-		t.Run(r, func(t *testing.T) {
+		t.Run(r+"+name", func(t *testing.T) {
 			cmd := Command()
 			args := []string{r, "-o", "name"}
 			cmd.SetArgs(args)
@@ -141,7 +142,7 @@ func TestGetValidResources(t *testing.T) {
 	}
 	// get yaml for each resource
 	for _, r := range resources {
-		t.Run(r, func(t *testing.T) {
+		t.Run(r+"+yaml", func(t *testing.T) {
 			cmd := Command()
 			args := []string{r, "-o", "yaml"}
 			cmd.SetArgs(args)
@@ -152,6 +153,23 @@ func TestGetValidResources(t *testing.T) {
 			}
 			if len(out.Bytes()) == 0 {
 				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
+	}
+	// get raw output for each resource
+	for _, r := range resources {
+		t.Run(r+"+raw", func(t *testing.T) {
+			cmd := Command()
+			args := []string{r, "-o", "raw"}
+			cmd.SetArgs(args)
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOut(out)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v returned error: %s", args, err)
+			}
+			var content []interface{}
+			if err := json.Unmarshal(out.Bytes(), &content); err != nil {
+				t.Errorf("Execute() with args %v failed to return a valid JSON array", args)
 			}
 		})
 	}
