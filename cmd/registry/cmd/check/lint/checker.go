@@ -19,14 +19,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
+	"sync"
 
-	"github.com/apigee/registry/cmd/registry/cmd/check/tree"
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type contextKey int
@@ -48,6 +48,7 @@ type Resource interface {
 
 // Checker checks API files and returns a list of detected problems.
 type Checker struct {
+	sync.RWMutex
 	rules   RuleRegistry
 	configs Configs
 }
@@ -61,35 +62,49 @@ func New(rules RuleRegistry, configs Configs) *Checker {
 	return l
 }
 
-func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *Response, err error) {
-	response = &Response{
-		RunTime:  time.Now(),
-		Problems: make([]Problem, 0),
+func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *rpc.CheckReport, err error) {
+	response = &rpc.CheckReport{
+		Id:         "check-report",
+		Kind:       "CheckReport",
+		CreateTime: timestamppb.Now(),
+		Problems:   make([]*rpc.Problem, 0),
 	}
 
 	// enable rules to access client
 	ctx = context.WithValue(ctx, ContextKeyRegistryClient, client)
-	taskQueue, wait := core.WorkerPool(ctx, jobs)
+	taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 	defer func() {
 		wait()
-		if response.Error != nil { // from a panic
-			err = response.Error
+		if response.Error != "" { // from a panic
+			err = fmt.Errorf(response.Error)
 		}
 	}()
 
-	handler := &listHandler{
+	taskEnqueuer := &listHandler{
 		taskQueue: taskQueue,
 		newTask: func(r Resource) *checkTask {
 			return &checkTask{l, response, r}
 		},
 	}
-	err = tree.ListSubresources(ctx, admin, client, root, filter, true, handler)
+	options := visitor.VisitorOptions{
+		RegistryClient:  client,
+		AdminClient:     admin,
+		Pattern:         root.String(),
+		Filter:          filter,
+		GetContents:     true,
+		ImplicitProject: &rpc.Project{Name: root.String()},
+	}
+	subtreeVisitor := &visitor.SubtreeVisitor{
+		Visitor: taskEnqueuer,
+		Options: options,
+	}
+	err = visitor.Visit(ctx, subtreeVisitor, options)
 	return response, err
 }
 
 type checkTask struct {
 	checker  *Checker
-	response *Response
+	response *rpc.CheckReport
 	resource Resource
 }
 
@@ -98,18 +113,19 @@ func (t *checkTask) String() string {
 }
 
 func (t *checkTask) Run(ctx context.Context) error {
-	var problems []Problem
+	var problems []*rpc.Problem
 	var errMessages []string
 	for name, rule := range t.checker.rules {
 		if t.checker.configs.IsRuleEnabled(string(name), t.resource.GetName()) {
 			if probs, err := t.runAndRecoverFromPanics(ctx, rule, t.resource); err == nil {
 				for _, p := range probs {
-					if p.RuleID == "" {
-						p.RuleID = rule.GetName()
+					if p.RuleId == "" {
+						p.RuleId = string(rule.GetName())
 					}
 					if p.Location == "" {
 						p.Location = t.resource.GetName()
 					}
+					p.RuleDocUri = getRuleURL(string(p.RuleId), ruleURLMappings)
 					problems = append(problems, p)
 				}
 			} else {
@@ -122,11 +138,17 @@ func (t *checkTask) Run(ctx context.Context) error {
 		err = errors.New(strings.Join(errMessages, "; "))
 	}
 
-	t.response.append(t.resource, problems, err)
+	t.checker.Lock()
+	defer t.checker.Unlock()
+	t.response.Problems = append(t.response.Problems, problems...)
+	if err != nil {
+		t.response.Error = err.Error()
+	}
+
 	return nil
 }
 
-func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []Problem, err error) {
+func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []*rpc.Problem, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if rerr, ok := r.(error); ok {
@@ -141,45 +163,53 @@ func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, reso
 }
 
 type listHandler struct {
-	taskQueue chan<- core.Task
+	taskQueue chan<- tasks.Task
 	newTask   func(r Resource) *checkTask
 }
 
-func (c *listHandler) queueTask(r Resource) error {
+func (c *listHandler) enqueueTask(r Resource) error {
 	c.taskQueue <- c.newTask(r)
 	return nil
 }
 
 func (c *listHandler) ProjectHandler() visitor.ProjectHandler {
 	return func(ctx context.Context, p *rpc.Project) error {
-		return c.queueTask(p)
+		return c.enqueueTask(p)
 	}
 }
 
 func (c *listHandler) ApiHandler() visitor.ApiHandler {
 	return func(ctx context.Context, a *rpc.Api) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 func (c *listHandler) DeploymentHandler() visitor.DeploymentHandler {
 	return func(ctx context.Context, a *rpc.ApiDeployment) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 func (c *listHandler) VersionHandler() visitor.VersionHandler {
 	return func(ctx context.Context, a *rpc.ApiVersion) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 
 func (c *listHandler) SpecHandler() visitor.SpecHandler {
 	return func(ctx context.Context, a *rpc.ApiSpec) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
 }
 
 func (c *listHandler) ArtifactHandler() visitor.ArtifactHandler {
 	return func(ctx context.Context, a *rpc.Artifact) error {
-		return c.queueTask(a)
+		return c.enqueueTask(a)
 	}
+}
+
+func (c *listHandler) DeploymentRevisionHandler() visitor.DeploymentHandler {
+	return c.DeploymentHandler()
+}
+
+func (c *listHandler) SpecRevisionHandler() visitor.SpecHandler {
+	return c.SpecHandler()
 }

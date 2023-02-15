@@ -19,9 +19,9 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/controller"
-	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/uuid"
@@ -107,7 +107,7 @@ func Command() *cobra.Command {
 			}
 
 			log.Debug(ctx, "Starting execution...")
-			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 			// Submit tasks to taskQueue
 			for i := 0; i < len(actions) && i < maxActions; i++ {

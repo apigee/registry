@@ -42,18 +42,18 @@ var apiSpecRevisionRef = &lint.ApiDeploymentRule{
 	OnlyIf: func(a *rpc.ApiDeployment) bool {
 		return strings.TrimSpace(a.ApiSpecRevision) != ""
 	},
-	ApplyToApiDeployment: func(ctx context.Context, a *rpc.ApiDeployment) []lint.Problem {
+	ApplyToApiDeployment: func(ctx context.Context, a *rpc.ApiDeployment) []*rpc.Problem {
 		specName, err := names.ParseSpecRevision(a.ApiSpecRevision)
 		if err != nil {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`api_spec_revision %q is not a valid ApiSpecRevision name.`, a.ApiSpecRevision),
 				Suggestion: fmt.Sprintf(`Parse error: %s`, err),
 			}}
 		}
 		if specName.RevisionID == "" {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`api_spec_revision %q is not a valid ApiSpecRevision name.`, a.ApiSpecRevision),
 				Suggestion: `A revision ID is required.`,
 			}}
@@ -61,8 +61,8 @@ var apiSpecRevisionRef = &lint.ApiDeploymentRule{
 
 		deploymentName, _ := names.ParseDeployment(a.Name) // name assumed to be valid
 		if specName.Api() != deploymentName.Api() {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`api_spec_revision %q is not an API sibling of this Deployment.`, a.ApiSpecRevision),
 				Suggestion: `Correct the api_spec_revision.`,
 			}}
@@ -72,8 +72,8 @@ var apiSpecRevisionRef = &lint.ApiDeploymentRule{
 		if _, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 			Name: a.ApiSpecRevision,
 		}); err != nil {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`api_spec_revision %q not found in registry.`, a.ApiSpecRevision),
 				Suggestion: `Correct the api_spec_revision.`,
 			}}

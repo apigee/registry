@@ -18,9 +18,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -50,15 +50,11 @@ func Command() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
-			defer wait()
 			// Create the visitor that will perform deletion.
 			v := &deletionVisitor{
 				registryClient: registryClient,
 				adminClient:    adminClient,
 				force:          force,
-				taskQueue:      taskQueue,
 			}
 			// Visit the selected resources.
 			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
@@ -69,8 +65,15 @@ func Command() *cobra.Command {
 			}); err != nil {
 				return err
 			}
-			if v.count == 0 {
+			if len(v.tasks) == 0 {
 				return errors.New("no resources found")
+			}
+			// Initialize task queue.
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			defer wait()
+			// Delete all of the resources that were found.
+			for _, task := range v.tasks {
+				taskQueue <- task
 			}
 			return nil
 		},
@@ -86,13 +89,11 @@ type deletionVisitor struct {
 	registryClient connection.RegistryClient
 	adminClient    connection.AdminClient
 	force          bool
-	count          int
-	taskQueue      chan<- core.Task
+	tasks          []tasks.Task
 }
 
-func (v *deletionVisitor) enqueue(task core.Task) {
-	v.count++
-	v.taskQueue <- task
+func (v *deletionVisitor) enqueue(task tasks.Task) {
+	v.tasks = append(v.tasks, task)
 }
 
 func (v *deletionVisitor) ProjectHandler() visitor.ProjectHandler {

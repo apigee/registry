@@ -18,8 +18,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/spf13/cobra"
 )
 

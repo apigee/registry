@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
@@ -120,7 +120,7 @@ func applyApiSpecPatch(
 		body, err := os.ReadFile(filepath.Join(filepath.Dir(filename), spec.Data.FileName))
 		if err == nil {
 			if strings.Contains(spec.Data.MimeType, "+gzip") {
-				body, err = core.GZippedBytes(body)
+				body, err = compress.GZippedBytes(body)
 				if err != nil {
 					return err
 				}
@@ -145,7 +145,7 @@ func applyApiSpecPatch(
 				return err
 			}
 			if strings.Contains(spec.Data.MimeType, "+gzip") {
-				body, err = core.GZippedBytes(body)
+				body, err = compress.GZippedBytes(body)
 				if err != nil {
 					return err
 				}
@@ -169,7 +169,7 @@ func applyApiSpecPatch(
 						return err
 					}
 				}
-				contents, err := core.ZipArchiveOfPath(path, "", recursive)
+				contents, err := compress.ZipArchiveOfPath(path, "", recursive)
 				if err != nil {
 					return err
 				}
@@ -180,7 +180,7 @@ func applyApiSpecPatch(
 					return err
 				}
 				if strings.Contains(spec.Data.MimeType, "+gzip") {
-					body, err = core.GZippedBytes(body)
+					body, err = compress.GZippedBytes(body)
 					if err != nil {
 						return err
 					}

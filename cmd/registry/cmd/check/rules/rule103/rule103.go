@@ -41,10 +41,10 @@ var stateSingleWord = &lint.ApiVersionRule{
 	OnlyIf: func(a *rpc.ApiVersion) bool {
 		return true
 	},
-	ApplyToApiVersion: func(ctx context.Context, a *rpc.ApiVersion) []lint.Problem {
+	ApplyToApiVersion: func(ctx context.Context, a *rpc.ApiVersion) []*rpc.Problem {
 		if arr := strings.SplitN(a.State, " ", 2); len(arr) > 1 {
-			return []lint.Problem{{
-				Severity:   lint.INFO,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_INFO,
 				Message:    `State is free-form, but we expect single words that describe API maturity.`,
 				Suggestion: `Use single words like: "CONCEPT", "DESIGN", "DEVELOPMENT", "STAGING", "PRODUCTION", "DEPRECATED", "RETIRED"`,
 			}}

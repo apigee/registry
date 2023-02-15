@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -62,7 +62,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			spec, err := names.ParseSpec(args[0])
@@ -113,7 +113,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	data, err := visitor.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return err
 	}
@@ -159,5 +159,5 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, task.client, artifact)
+	return visitor.SetArtifact(ctx, task.client, artifact)
 }

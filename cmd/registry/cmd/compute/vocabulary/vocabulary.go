@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -67,7 +67,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 
 			parsed, err := names.ParseSpecRevision(path)
@@ -163,7 +163,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
+	return visitor.SetArtifact(ctx, task.client, &rpc.Artifact{
 		Name:     task.specName + "/artifacts/vocabulary",
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,

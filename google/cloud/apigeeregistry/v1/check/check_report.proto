@@ -1,0 +1,87 @@
+// Copyright 2023 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.style;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.style";
+option java_multiple_files = true;
+option java_outer_classname = "CheckReportProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// CheckReport is the results of running the check command.
+message CheckReport {
+  // Identifier of the response.
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // A list of Problems found.
+  repeated Problem problems = 4;
+
+  // Populated if check wasn't able to complete due to an error.
+  string error = 5;
+}
+
+// Problem is a result of a rule check.
+message Problem {
+  // Message provides a short description of the problem.
+	string message = 2 [(google.api.field_behavior) = REQUIRED];
+
+	// Suggestion provides a suggested fix, if applicable.
+	string suggestion = 3;
+
+	// Location provides the location of the problem.
+	// If for a Resource, it is the Resource name.
+	// If for a field, this is the Resource name + "::" + field name.
+	string location = 4;
+
+	// RuleId provides the ID of the rule that this problem belongs to.
+	string rule_id = 5;
+
+  // RuleDocUri provides a uri to the documented explaination of this rule.
+  string rule_doc_uri = 6;
+
+  // Possible severities for the violation of a rule.
+  enum Severity {
+    // The default value, unused.
+    SEVERITY_UNSPECIFIED = 0;
+    // Violation of the rule is an error that must be fixed.
+    ERROR = 1;
+    // Violation of the rule is a pattern that is wrong,
+    // and should be warned about.
+    WARNING = 2;
+    // Violation of the rule is not necessarily a bad pattern
+    // or error, but information the user should be aware of.
+    INFO = 3;
+    // Violation of the rule is a hint that is provided to
+    // the user to fix their spec's design.
+    HINT = 4;
+  }
+
+	// Severity provides information on the criticality of the Problem.
+	Severity severity = 7;
+}
+

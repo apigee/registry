@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -67,7 +68,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			parsed, err := names.ParseSpecRevision(args[0])
@@ -133,7 +134,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
 	contents := spec.GetContents()
 	if strings.Contains(spec.GetMimeType(), "+gzip") {
-		if contents, err = core.GUnzippedBytes(contents); err != nil {
+		if contents, err = compress.GUnzippedBytes(contents); err != nil {
 			return err
 		}
 	}
@@ -180,5 +181,5 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, task.client, artifact)
+	return visitor.SetArtifact(ctx, task.client, artifact)
 }

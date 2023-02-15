@@ -17,9 +17,9 @@ package wipeout
 import (
 	"context"
 
-	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -30,20 +30,20 @@ func Wipeout(ctx context.Context, client connection.RegistryClient, projectID st
 	project := "projects/" + projectID + "/locations/global"
 	{
 		log.Debugf(ctx, "Deleting apis")
-		taskQueue, wait := core.WorkerPool(ctx, jobs)
+		taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 		wipeoutApis(ctx, client, taskQueue, project)
 		wait()
 	}
 	{
 		log.Debugf(ctx, "Deleting artifacts")
-		taskQueue, wait := core.WorkerPool(ctx, jobs)
+		taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 		wipeoutArtifacts(ctx, client, taskQueue, project)
 		wait()
 	}
 	log.Debugf(ctx, "Wipeout complete")
 }
 
-func wipeoutArtifacts(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
+func wipeoutArtifacts(ctx context.Context, client connection.RegistryClient, taskQueue chan<- tasks.Task, parent string) {
 	it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parent})
 	names := make([]string, 0)
 	for artifact, err := it.Next(); err == nil; artifact, err = it.Next() {
@@ -54,7 +54,7 @@ func wipeoutArtifacts(ctx context.Context, client connection.RegistryClient, tas
 	}
 }
 
-func wipeoutApis(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
+func wipeoutApis(ctx context.Context, client connection.RegistryClient, taskQueue chan<- tasks.Task, parent string) {
 	it := client.ListApis(ctx, &rpc.ListApisRequest{Parent: parent})
 	names := make([]string, 0)
 	for api, err := it.Next(); err == nil; api, err = it.Next() {

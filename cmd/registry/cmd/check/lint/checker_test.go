@@ -40,16 +40,16 @@ func TestChecker_run(t *testing.T) {
 	defaultConfigs := Configs{}
 
 	testRuleName := NewRuleName(111, "test-rule")
-	ruleProblems := []Problem{{
+	ruleProblems := []*rpc.Problem{{
 		Message:  "rule1_problem",
 		Location: "projects/checker-test",
-		RuleID:   testRuleName,
+		RuleId:   string(testRuleName),
 	}}
 
 	tests := []struct {
 		testName string
 		configs  Configs
-		problems []Problem
+		problems []*rpc.Problem
 	}{
 		{"Empty", Configs{}, ruleProblems},
 		{
@@ -80,7 +80,7 @@ func TestChecker_run(t *testing.T) {
 					DisabledRules: []string{string(testRuleName)},
 				},
 			),
-			[]Problem{},
+			[]*rpc.Problem{},
 		},
 	}
 
@@ -89,11 +89,11 @@ func TestChecker_run(t *testing.T) {
 			rules := NewRuleRegistry()
 			err := rules.Register(111, &ProjectRule{
 				Name: NewRuleName(111, "test-rule"),
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*rpc.Problem {
 					if c := RegistryClient(ctx); c == nil {
 						t.Errorf("RegistryClient missing in context: %v", ctx)
 					}
-					return []Problem{{
+					return []*rpc.Problem{{
 						Message: "rule1_problem",
 					}}
 				},
@@ -118,7 +118,7 @@ func TestChecker_run(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(test.problems, resp.Problems, cmpopts.IgnoreUnexported(Problem{})); diff != "" {
+			if diff := cmp.Diff(test.problems, resp.Problems, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})
@@ -136,7 +136,7 @@ func TestChecker_panic(t *testing.T) {
 			testName: "Panic",
 			rule: &ProjectRule{
 				Name: NewRuleName(testRuleNum, "panic"),
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*rpc.Problem {
 					panic("panic")
 				},
 			},
@@ -145,7 +145,7 @@ func TestChecker_panic(t *testing.T) {
 			testName: "PanicError",
 			rule: &ProjectRule{
 				Name: NewRuleName(testRuleNum, "panic"),
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*rpc.Problem {
 					panic(fmt.Errorf("panic"))
 				},
 			},

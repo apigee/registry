@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -51,21 +52,21 @@ func Test_recommendedDeploymentRef(t *testing.T) {
 	for _, tt := range []struct {
 		desc     string
 		in       string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"empty", "", nil},
-		{"unable to parse", "bad", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"unable to parse", "bad", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `recommended_deployment "bad" is not a valid ApiDeployment name.`,
 			Suggestion: `Parse error: invalid deployment name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/deployments/([A-Za-z0-9-.]+)$"`,
 		}}},
-		{"not a child", "projects/check-test/locations/global/apis/bad/deployments/bad", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"not a child", "projects/check-test/locations/global/apis/bad/deployments/bad", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `recommended_deployment "projects/check-test/locations/global/apis/bad/deployments/bad" is not a child of this Api.`,
 			Suggestion: `Correct the recommended_deployment.`,
 		}}},
-		{"missing", "projects/check-test/locations/global/apis/myapi/deployments/missing", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"missing", "projects/check-test/locations/global/apis/myapi/deployments/missing", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `recommended_deployment "projects/check-test/locations/global/apis/myapi/deployments/missing" not found in registry.`,
 			Suggestion: `Correct the recommended_deployment.`,
 		}}},
@@ -79,7 +80,7 @@ func Test_recommendedDeploymentRef(t *testing.T) {
 
 			if recommendedDeploymentRef.OnlyIf(a) {
 				got := recommendedDeploymentRef.ApplyToApi(ctx, a)
-				if diff := cmp.Diff(got, tt.expected); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

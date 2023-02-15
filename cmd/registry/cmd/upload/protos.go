@@ -26,10 +26,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -69,7 +71,7 @@ func protosCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+			if err := visitor.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
@@ -77,7 +79,7 @@ func protosCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			for _, arg := range args {
@@ -107,7 +109,7 @@ func protosCommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(client connection.RegistryClient, parent, baseURI, start, root string, taskQueue chan<- core.Task) error {
+func scanDirectoryForProtos(client connection.RegistryClient, parent, baseURI, start, root string, taskQueue chan<- tasks.Task) error {
 	return filepath.Walk(start, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -329,7 +331,7 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	}
 
 	// Zip the listed files.
-	contents, err := core.ZipArchiveOfFiles(append(metadata, protos...), prefix, true)
+	contents, err := compress.ZipArchiveOfFiles(append(metadata, protos...), prefix)
 	if err != nil {
 		return nil, err
 	}

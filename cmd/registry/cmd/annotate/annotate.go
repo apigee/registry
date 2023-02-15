@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/cmd/label"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -54,7 +55,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			valuesToClear := make([]string, 0)
@@ -73,7 +74,7 @@ func Command() *cobra.Command {
 					valuesToSet[pair[0]] = pair[1]
 				}
 			}
-			labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
+			labeling := &label.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
 
 			err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0], filter, labeling)
 			if err != nil {
@@ -91,10 +92,10 @@ func Command() *cobra.Command {
 func matchAndHandleAnnotateCmd(
 	ctx context.Context,
 	client connection.RegistryClient,
-	taskQueue chan<- core.Task,
+	taskQueue chan<- tasks.Task,
 	name string,
 	filter string,
-	labeling *core.Labeling,
+	labeling *label.Labeling,
 ) error {
 	// First try to match collection names.
 	if api, err := names.ParseApiCollection(name); err == nil {
@@ -125,8 +126,8 @@ func annotateAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	api names.Api,
 	filterFlag string,
-	labeling *core.Labeling,
-	taskQueue chan<- core.Task) error {
+	labeling *label.Labeling,
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListAPIs(ctx, client, api, filterFlag, func(ctx context.Context, api *rpc.Api) error {
 		taskQueue <- &annotateApiTask{
 			client:   client,
@@ -142,8 +143,8 @@ func annotateVersions(
 	client *gapic.RegistryClient,
 	version names.Version,
 	filterFlag string,
-	labeling *core.Labeling,
-	taskQueue chan<- core.Task) error {
+	labeling *label.Labeling,
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListVersions(ctx, client, version, filterFlag, func(ctx context.Context, version *rpc.ApiVersion) error {
 		taskQueue <- &annotateVersionTask{
 			client:   client,
@@ -159,8 +160,8 @@ func annotateSpecs(
 	client *gapic.RegistryClient,
 	spec names.Spec,
 	filterFlag string,
-	labeling *core.Labeling,
-	taskQueue chan<- core.Task) error {
+	labeling *label.Labeling,
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListSpecs(ctx, client, spec, filterFlag, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 		taskQueue <- &annotateSpecTask{
 			client:   client,
@@ -176,8 +177,8 @@ func annotateDeployments(
 	client *gapic.RegistryClient,
 	deployment names.Deployment,
 	filterFlag string,
-	labeling *core.Labeling,
-	taskQueue chan<- core.Task) error {
+	labeling *label.Labeling,
+	taskQueue chan<- tasks.Task) error {
 	return visitor.ListDeployments(ctx, client, deployment, filterFlag, func(ctx context.Context, deployment *rpc.ApiDeployment) error {
 		taskQueue <- &annotateDeploymentTask{
 			client:     client,
@@ -191,7 +192,7 @@ func annotateDeployments(
 type annotateApiTask struct {
 	client   connection.RegistryClient
 	api      *rpc.Api
-	labeling *core.Labeling
+	labeling *label.Labeling
 }
 
 func (task *annotateApiTask) String() string {
@@ -218,7 +219,7 @@ func (task *annotateApiTask) Run(ctx context.Context) error {
 type annotateVersionTask struct {
 	client   connection.RegistryClient
 	version  *rpc.ApiVersion
-	labeling *core.Labeling
+	labeling *label.Labeling
 }
 
 func (task *annotateVersionTask) String() string {
@@ -245,7 +246,7 @@ func (task *annotateVersionTask) Run(ctx context.Context) error {
 type annotateSpecTask struct {
 	client   connection.RegistryClient
 	spec     *rpc.ApiSpec
-	labeling *core.Labeling
+	labeling *label.Labeling
 }
 
 func (task *annotateSpecTask) String() string {
@@ -272,7 +273,7 @@ func (task *annotateSpecTask) Run(ctx context.Context) error {
 type annotateDeploymentTask struct {
 	client     connection.RegistryClient
 	deployment *rpc.ApiDeployment
-	labeling   *core.Labeling
+	labeling   *label.Labeling
 }
 
 func (task *annotateDeploymentTask) String() string {

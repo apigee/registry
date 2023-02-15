@@ -42,11 +42,11 @@ var recommendedDeploymentRef = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return strings.TrimSpace(a.RecommendedDeployment) != ""
 	},
-	ApplyToApi: func(ctx context.Context, a *rpc.Api) []lint.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*rpc.Problem {
 		deploymentName, err := names.ParseDeployment(a.RecommendedDeployment)
 		if err != nil {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_deployment %q is not a valid ApiDeployment name.`, a.RecommendedDeployment),
 				Suggestion: fmt.Sprintf(`Parse error: %s`, err),
 			}}
@@ -54,8 +54,8 @@ var recommendedDeploymentRef = &lint.ApiRule{
 
 		apiName, _ := names.ParseApi(a.Name) // name assumed to be valid
 		if deploymentName.Api() != apiName {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_deployment %q is not a child of this Api.`, a.RecommendedDeployment),
 				Suggestion: `Correct the recommended_deployment.`,
 			}}
@@ -65,8 +65,8 @@ var recommendedDeploymentRef = &lint.ApiRule{
 		if _, err := registryClient.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{
 			Name: a.RecommendedDeployment,
 		}); err != nil {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_deployment %q not found in registry.`, a.RecommendedDeployment),
 				Suggestion: `Correct the recommended_deployment.`,
 			}}

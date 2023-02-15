@@ -21,14 +21,16 @@ import (
 	"io"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/patch"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 func Command() *cobra.Command {
@@ -101,6 +103,9 @@ func (v *getVisitor) ProjectHandler() visitor.ProjectHandler {
 			v.results = append(v.results, message.Name)
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "raw":
+			v.results = append(v.results, message)
+			return nil
 		case "yaml":
 			project, err := patch.NewProject(ctx, v.registryClient, message)
 			if err != nil {
@@ -121,6 +126,9 @@ func (v *getVisitor) ApiHandler() visitor.ApiHandler {
 			v.results = append(v.results, message.Name)
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "raw":
+			v.results = append(v.results, message)
+			return nil
 		case "yaml":
 			api, err := patch.NewApi(ctx, v.registryClient, message, v.nested)
 			if err != nil {
@@ -141,6 +149,9 @@ func (v *getVisitor) VersionHandler() visitor.VersionHandler {
 			v.results = append(v.results, message.Name)
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "raw":
+			v.results = append(v.results, message)
+			return nil
 		case "yaml":
 			version, err := patch.NewApiVersion(ctx, v.registryClient, message, v.nested)
 			if err != nil {
@@ -161,6 +172,9 @@ func (v *getVisitor) DeploymentHandler() visitor.DeploymentHandler {
 			v.results = append(v.results, message.Name)
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "raw":
+			v.results = append(v.results, message)
+			return nil
 		case "yaml":
 			deployment, err := patch.NewApiDeployment(ctx, v.registryClient, message, v.nested)
 			if err != nil {
@@ -185,6 +199,9 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			v.results = append(v.results, message.Name)
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "raw":
+			v.results = append(v.results, message)
+			return nil
 		case "contents":
 			if len(v.results) > 0 {
 				return fmt.Errorf("contents can be gotten for at most one spec")
@@ -194,7 +211,7 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			}
 			contents := message.GetContents()
 			if strings.Contains(message.GetMimeType(), "+gzip") {
-				contents, _ = core.GUnzippedBytes(contents)
+				contents, _ = compress.GUnzippedBytes(contents)
 			}
 			v.results = append(v.results, contents)
 			return nil
@@ -222,6 +239,9 @@ func (v *getVisitor) ArtifactHandler() visitor.ArtifactHandler {
 			v.results = append(v.results, message.Name)
 			_, err := v.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "raw":
+			v.results = append(v.results, message)
+			return nil
 		case "contents":
 			if len(v.results) > 0 {
 				return fmt.Errorf("contents can be gotten for at most one artifact")
@@ -271,6 +291,29 @@ func (v *getVisitor) write() error {
 		}
 		_, err = v.writer.Write(bytes)
 		return err
+	}
+	if v.output == "raw" {
+		if _, err := v.writer.Write([]byte("[")); err != nil {
+			return err
+		}
+		for i, r := range v.results {
+			if i > 0 {
+				if _, err := v.writer.Write([]byte(",")); err != nil {
+					return err
+				}
+			}
+			b, err := protojson.Marshal(r.(proto.Message))
+			if err != nil {
+				return err
+			}
+			if _, err := v.writer.Write(b); err != nil {
+				return err
+			}
+		}
+		if _, err := v.writer.Write([]byte("]")); err != nil {
+			return err
+		}
+		return nil
 	}
 	if v.output == "contents" {
 		if len(v.results) == 1 {

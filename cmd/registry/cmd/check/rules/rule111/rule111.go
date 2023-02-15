@@ -49,7 +49,7 @@ var mimeTypeContents = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "MimeType"
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []lint.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*rpc.Problem {
 		var declared string
 		var contents []byte
 		switch t := resource.(type) {
@@ -72,8 +72,8 @@ var mimeTypeContents = &lint.FieldRule{
 		detected := http.DetectContentType(contents)
 
 		if strings.TrimSpace(declared) == "" {
-			return []lint.Problem{{
-				Severity:   lint.ERROR,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_ERROR,
 				Message:    "Empty mime_type.",
 				Suggestion: fmt.Sprintf("Detected mime_type: %q.", detected),
 			}}
@@ -81,16 +81,16 @@ var mimeTypeContents = &lint.FieldRule{
 
 		declaredType, _, err := mime.ParseMediaType(declared)
 		if err != nil {
-			return []lint.Problem{{
-				Severity: lint.ERROR,
+			return []*rpc.Problem{{
+				Severity: rpc.Problem_ERROR,
 				Message:  fmt.Sprintf("Unable to parse mime_type %q: %s.", declared, err),
 			}}
 		}
 
 		detectedType, _, _ := mime.ParseMediaType(detected)
 		if declaredType != detectedType {
-			return []lint.Problem{{
-				Severity:   lint.WARNING,
+			return []*rpc.Problem{{
+				Severity:   rpc.Problem_WARNING,
 				Message:    fmt.Sprintf("Unexpected mime_type %q for contents.", declared),
 				Suggestion: fmt.Sprintf("Detected mime_type: %q.", detected),
 			}}

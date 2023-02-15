@@ -23,11 +23,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -55,7 +57,7 @@ func openAPICommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+			if err := visitor.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
@@ -63,7 +65,7 @@ func openAPICommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			for _, arg := range args {
@@ -95,7 +97,7 @@ func openAPICommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClient, parent, baseURI, directory string, taskQueue chan<- core.Task) {
+func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClient, parent, baseURI, directory string, taskQueue chan<- tasks.Task) {
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -297,7 +299,7 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 		return nil
 	}
 
-	gzippedContents, err := core.GZippedBytes(task.contents)
+	gzippedContents, err := compress.GZippedBytes(task.contents)
 	if err != nil {
 		return err
 	}

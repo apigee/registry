@@ -23,11 +23,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/types"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -92,7 +93,7 @@ func (task *ComputeConformanceTask) String() string {
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing conformance report %s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId))
 
-	data, err := core.GetBytesForSpec(ctx, task.Client, task.Spec)
+	data, err := visitor.GetBytesForSpec(ctx, task.Client, task.Spec)
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	defer os.RemoveAll(root)
 
 	if types.IsZipArchive(task.Spec.GetMimeType()) {
-		_, err = core.UnzipArchiveToPath(data, root)
+		_, err = compress.UnzipArchiveToPath(data, root)
 	} else {
 		// Write the file to the temporary directory.
 		err = os.WriteFile(filepath.Join(root, name), data, 0644)
@@ -262,5 +263,5 @@ func (task *ComputeConformanceTask) storeConformanceReport(
 		MimeType: types.MimeTypeForKind("ConformanceReport"),
 		Contents: messageData,
 	}
-	return core.SetArtifact(ctx, task.Client, artifact)
+	return visitor.SetArtifact(ctx, task.Client, artifact)
 }

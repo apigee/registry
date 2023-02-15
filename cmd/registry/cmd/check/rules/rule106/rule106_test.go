@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -58,26 +59,26 @@ func Test_apiSpecRevisionRef(t *testing.T) {
 	for _, tt := range []struct {
 		desc     string
 		in       string
-		expected []lint.Problem
+		expected []*rpc.Problem
 	}{
 		{"empty", "", nil},
-		{"unable to parse", "bad", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"unable to parse", "bad", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `api_spec_revision "bad" is not a valid ApiSpecRevision name.`,
 			Suggestion: `Parse error: invalid spec revision name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/versions/([A-Za-z0-9-.]+)/specs/([A-Za-z0-9-.]+)(?:@([a-z0-9-]+))?$"`,
 		}}},
-		{"not a revision", name, []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"not a revision", name, []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `api_spec_revision "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/good" is not a valid ApiSpecRevision name.`,
 			Suggestion: `A revision ID is required.`,
 		}}},
-		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/spec@foo", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/spec@foo", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `api_spec_revision "projects/check-test/locations/global/apis/bad/versions/myversion/specs/spec@foo" is not an API sibling of this Deployment.`,
 			Suggestion: `Correct the api_spec_revision.`,
 		}}},
-		{"missing", name + "@missing", []lint.Problem{{
-			Severity:   lint.ERROR,
+		{"missing", name + "@missing", []*rpc.Problem{{
+			Severity:   rpc.Problem_ERROR,
 			Message:    `api_spec_revision "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/good@missing" not found in registry.`,
 			Suggestion: `Correct the api_spec_revision.`,
 		}}},
@@ -90,7 +91,7 @@ func Test_apiSpecRevisionRef(t *testing.T) {
 			}
 			if apiSpecRevisionRef.OnlyIf(a) {
 				got := apiSpecRevisionRef.ApplyToApiDeployment(ctx, a)
-				if diff := cmp.Diff(got, tt.expected); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

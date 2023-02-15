@@ -30,7 +30,7 @@ type Rule interface {
 
 	// Apply accepts a resource and checks it,
 	// returning a slice of Problems it finds.
-	Apply(ctx context.Context, resource Resource) []Problem
+	Apply(ctx context.Context, resource Resource) []*rpc.Problem
 }
 
 type ProjectRule struct {
@@ -41,7 +41,7 @@ type ProjectRule struct {
 
 	// ApplyToProject accepts a Project and checks it,
 	// returning a slice of Problems it finds.
-	ApplyToProject func(ctx context.Context, p *rpc.Project) []Problem
+	ApplyToProject func(ctx context.Context, p *rpc.Project) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -50,7 +50,7 @@ func (r *ProjectRule) GetName() RuleName {
 }
 
 // Apply calls ApplyToProject if the Resource is a Project.
-func (r *ProjectRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *ProjectRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	if p, ok := res.(*rpc.Project); ok {
 		if r.OnlyIf == nil || r.OnlyIf(p) {
 			problems = r.ApplyToProject(ctx, p)
@@ -68,7 +68,7 @@ type ArtifactRule struct {
 
 	// ApplyToArtifact accepts an Artifact and checks it,
 	// returning a slice of Problems it finds.
-	ApplyToArtifact func(ctx context.Context, p *rpc.Artifact) []Problem
+	ApplyToArtifact func(ctx context.Context, p *rpc.Artifact) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -77,7 +77,7 @@ func (r *ArtifactRule) GetName() RuleName {
 }
 
 // Apply calls ApplyToArtifact if the Resource is an Artifact.
-func (r *ArtifactRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *ArtifactRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	if a, ok := res.(*rpc.Artifact); ok {
 		if r.OnlyIf == nil || r.OnlyIf(a) {
 			problems = r.ApplyToArtifact(ctx, a)
@@ -94,7 +94,7 @@ type ApiRule struct {
 
 	// ApplyToApi accepts an Api and checks it,
 	// returning a slice of Problems it finds.
-	ApplyToApi func(ctx context.Context, p *rpc.Api) []Problem
+	ApplyToApi func(ctx context.Context, p *rpc.Api) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -103,7 +103,7 @@ func (r *ApiRule) GetName() RuleName {
 }
 
 // Apply calls ApplyToApi if the Resource is an Api.
-func (r *ApiRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *ApiRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	if a, ok := res.(*rpc.Api); ok {
 		if r.OnlyIf == nil || r.OnlyIf(a) {
 			problems = r.ApplyToApi(ctx, a)
@@ -120,7 +120,7 @@ type ApiDeploymentRule struct {
 
 	// ApplyToApiDeployment accepts an ApiDeployment and checks it,
 	// returning a slice of Problems it finds.
-	ApplyToApiDeployment func(ctx context.Context, p *rpc.ApiDeployment) []Problem
+	ApplyToApiDeployment func(ctx context.Context, p *rpc.ApiDeployment) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -129,7 +129,7 @@ func (r *ApiDeploymentRule) GetName() RuleName {
 }
 
 // Apply calls ApplyToApiDeployment if the Resource is an ApiDeployment.
-func (r *ApiDeploymentRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *ApiDeploymentRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	if a, ok := res.(*rpc.ApiDeployment); ok {
 		if r.OnlyIf == nil || r.OnlyIf(a) {
 			problems = r.ApplyToApiDeployment(ctx, a)
@@ -146,7 +146,7 @@ type ApiVersionRule struct {
 
 	// ApplyToApiVersion accepts a Version and checks it,
 	// returning a slice of Problems it finds.
-	ApplyToApiVersion func(ctx context.Context, p *rpc.ApiVersion) []Problem
+	ApplyToApiVersion func(ctx context.Context, p *rpc.ApiVersion) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -155,7 +155,7 @@ func (r *ApiVersionRule) GetName() RuleName {
 }
 
 // Apply calls ApplyToVersion if the Resource is an ApiVersion.
-func (r *ApiVersionRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *ApiVersionRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	if a, ok := res.(*rpc.ApiVersion); ok {
 		if r.OnlyIf == nil || r.OnlyIf(a) {
 			problems = r.ApplyToApiVersion(ctx, a)
@@ -172,7 +172,7 @@ type ApiSpecRule struct {
 
 	// ApiSpecRule accepts an ApiSpec and checks it,
 	// returning a slice of Problems it finds.
-	ApplyToApiSpec func(ctx context.Context, p *rpc.ApiSpec) []Problem
+	ApplyToApiSpec func(ctx context.Context, p *rpc.ApiSpec) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -181,7 +181,7 @@ func (r *ApiSpecRule) GetName() RuleName {
 }
 
 // Apply calls ApplyToApiSpec if the Resource is an ApiSpec.
-func (r *ApiSpecRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *ApiSpecRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	if a, ok := res.(*rpc.ApiSpec); ok {
 		if r.OnlyIf == nil || r.OnlyIf(a) {
 			problems = r.ApplyToApiSpec(ctx, a)
@@ -199,7 +199,7 @@ type FieldRule struct {
 
 	// ApplyToField accepts a Field name and value and checks it, returning a slice of
 	// Problems it finds.
-	ApplyToField func(ctx context.Context, resource Resource, field string, value interface{}) []Problem
+	ApplyToField func(ctx context.Context, resource Resource, field string, value interface{}) []*rpc.Problem
 }
 
 // GetName returns the name of the rule.
@@ -211,7 +211,7 @@ func (r *FieldRule) GetName() RuleName {
 //
 // If an `OnlyIf` function is provided on the rule, it is run against each
 // field, and if it returns false, the `ApplyToField` function is not called.
-func (r *FieldRule) Apply(ctx context.Context, res Resource) (problems []Problem) {
+func (r *FieldRule) Apply(ctx context.Context, res Resource) (problems []*rpc.Problem) {
 	t := reflect.TypeOf(res)
 	v := reflect.ValueOf(res)
 	in := reflect.Indirect(v)

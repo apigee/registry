@@ -18,8 +18,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
+	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -52,7 +52,7 @@ func Command() *cobra.Command {
 				return err
 			}
 			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 			// Create the visitor that will perform exports.
 			v := &exportVisitor{
@@ -91,7 +91,7 @@ type exportVisitor struct {
 	recursive      bool
 	root           string
 	count          int
-	taskQueue      chan<- core.Task
+	taskQueue      chan<- tasks.Task
 }
 
 func (h *exportVisitor) ProjectHandler() visitor.ProjectHandler {
