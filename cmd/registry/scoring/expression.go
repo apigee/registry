@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/scoring/extensions"
-	"github.com/apigee/registry/cmd/registry/types"
+	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/cel-go/cel"
 	metrics "github.com/google/gnostic/metrics"
