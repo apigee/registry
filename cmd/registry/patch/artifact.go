@@ -23,11 +23,11 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/pkg/names"
+	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

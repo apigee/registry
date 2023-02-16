@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
