@@ -57,7 +57,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -73,7 +73,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -125,7 +125,7 @@ func TestCalculateScoreCard(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -141,7 +141,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -157,7 +157,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -265,7 +265,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -301,7 +301,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -317,7 +317,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -369,7 +369,7 @@ func TestCalculateScoreCard(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -405,7 +405,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -421,7 +421,7 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -517,7 +517,7 @@ func TestCalculateScoreCard(t *testing.T) {
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			}
 
@@ -537,7 +537,7 @@ func TestCalculateScoreCard(t *testing.T) {
 			//fetch score artifact and check the value
 			scoreCardArtifact, err := getArtifact(
 				ctx, artifactClient,
-				"projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", true)
+				"projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality", true)
 			if err != nil {
 				t.Errorf("failed to get the result scoreCardArtifact from registry")
 			}
@@ -572,7 +572,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -588,7 +588,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -604,7 +604,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -641,7 +641,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -686,7 +686,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -722,7 +722,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -738,7 +738,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -755,7 +755,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -800,7 +800,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -836,7 +836,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -852,7 +852,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -869,7 +869,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -914,7 +914,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -930,7 +930,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
 					Contents: protoMarshal(&rpc.ScoreCard{
 						Id:             "scorecard-quality",
@@ -966,7 +966,7 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lang-reuse",
@@ -983,7 +983,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -1069,7 +1069,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
 
 			//fetch the ScoreCard artifact
-			scoreCardArtifact, err := getArtifact(ctx, artifactClient, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", false)
+			scoreCardArtifact, err := getArtifact(ctx, artifactClient, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality", false)
 			if err != nil {
 				t.Errorf("failed to fetch the scoreCardArtifact from setup: %s", err)
 			}
@@ -1119,7 +1119,7 @@ func TestProcessScorePatternsError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -1154,7 +1154,7 @@ func TestProcessScorePatternsError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: protoMarshal(&rpc.Score{
 						Id:             "score-lint-error",
@@ -1215,7 +1215,7 @@ func TestProcessScorePatternsError(t *testing.T) {
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			}
 

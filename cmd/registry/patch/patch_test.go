@@ -604,7 +604,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "no-ref-siblings",
-												Spec:       "projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi.yaml",
+												Spec:       "projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi",
 												File:       "openapi.yaml",
 												Suggestion: "",
 												Location: &rpc.LintLocation{

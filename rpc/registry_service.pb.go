@@ -1591,7 +1591,7 @@ type DeleteApiSpecRevisionRequest struct {
 	// with a revision ID explicitly included.
 	//
 	// Example:
-	// projects/sample/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
+	// projects/sample/locations/global/apis/petstore/versions/1.0.0/specs/openapi@c7cfa2a8
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 

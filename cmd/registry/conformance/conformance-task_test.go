@@ -26,7 +26,7 @@ import (
 )
 
 const project = "demo"
-const specName = "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
+const specName = "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"
 const revisionId = "abcdef"
 const styleguideId = "openapi-test"
 

@@ -181,15 +181,15 @@ func TestControllerErrors(t *testing.T) {
 
 			seed := []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 			}

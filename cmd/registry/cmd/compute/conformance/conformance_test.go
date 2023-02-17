@@ -69,7 +69,7 @@ func TestConformance(t *testing.T) {
 		{
 			desc:            "normal case",
 			conformancePath: filepath.Join("..", "testdata", "styleguide.yaml"),
-			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest",
+			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest",
 				Kind:       "ConformanceReport",
@@ -89,7 +89,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "norefsiblings",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "No $ref siblings",
 												Description: "An object exposing a $ref property cannot be further extended with additional properties.",
 												DocUri:      "https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings",
@@ -112,7 +112,7 @@ func TestConformance(t *testing.T) {
 		{
 			desc:            "default case",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-default.yaml"),
-			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-default",
+			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-default",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-default",
 				Kind:       "ConformanceReport",
@@ -129,7 +129,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "norefsiblings",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "No $ref siblings",
 												Description: "An object exposing a $ref property cannot be further extended with additional properties.",
 											},
@@ -154,7 +154,7 @@ func TestConformance(t *testing.T) {
 		{
 			desc:            "multiple severity",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-severity.yaml"),
-			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-severity",
+			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-multiple-severity",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-severity",
 				Kind:       "ConformanceReport",
@@ -174,13 +174,13 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "operationtags",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Operation tags",
 												Description: "Operation should have non-empty tags array.",
 											},
 											{
 												RuleId:      "operationtagdefined",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Operation tag defined",
 												Description: "Operation tags should be defined in global tags.",
 											},
@@ -192,13 +192,13 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "openapitags",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "OpenAPI tags",
 												Description: "OpenAPI object should have non-empty tags array.",
 											},
 											{
 												RuleId:      "openapitagsalphabetical",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "OpenAPI tags alphabetical",
 												Description: "OpenAPI object should have alphabetical tags. This will be sorted by the name property.",
 											},
@@ -218,7 +218,7 @@ func TestConformance(t *testing.T) {
 		{
 			desc:            "multiple state",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-state.yaml"),
-			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-state",
+			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-multiple-state",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-state",
 				Kind:       "ConformanceReport",
@@ -237,7 +237,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "operationtags",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Operation tags",
 												Description: "Operation should have non-empty tags array.",
 											},
@@ -249,7 +249,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "openapitags",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "OpenAPI tags",
 												Description: "OpenAPI object should have non-empty tags array.",
 											},
@@ -272,7 +272,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "norefsiblings",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "No $ref siblings",
 												Description: "An object exposing a $ref property cannot be further extended with additional properties.",
 											},
@@ -294,7 +294,7 @@ func TestConformance(t *testing.T) {
 		{
 			desc:            "multiple linter",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-linter.yaml"),
-			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-linter",
+			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-multiple-linter",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-linter",
 				Kind:       "ConformanceReport",
@@ -313,13 +313,13 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "operationdescription",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Operation description",
 												Description: "Operation should have non-empty description.",
 											},
 											{
 												RuleId:      "infodescription",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Info description",
 												Description: "OpenAPI object info description must be present and non-empty string.",
 											},
@@ -330,7 +330,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "descriptiontags",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Description tags",
 												Description: "Ensures that description fields in the OpenAPI spec contain no tags (such as HTML tags).",
 											},
@@ -341,7 +341,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "tagdescription",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "Tag description",
 												Description: "Tags alone are not very descriptive. Give folks a bit more information to work with.",
 											},
@@ -364,7 +364,7 @@ func TestConformance(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:      "norefsiblings",
-												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 												DisplayName: "No $ref siblings",
 												Description: "An object exposing a $ref property cannot be further extended with additional properties.",
 											},
@@ -451,10 +451,11 @@ func TestConformance(t *testing.T) {
 
 			req := &rpc.CreateApiSpecRequest{
 				Parent:    v1.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),
+					Filename: "openapi.yaml",
 				},
 			}
 

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -166,20 +166,20 @@ func TestScore(t *testing.T) {
 			desc: "all spec scores",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-report",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-report",
 					MimeType: conformanceReportType,
 					Contents: protoMarshal(conformanceReport),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-report",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/conformance-report",
 					MimeType: conformanceReportType,
 					Contents: protoMarshal(conformanceReport),
 				},
@@ -190,19 +190,19 @@ func TestScore(t *testing.T) {
 				},
 			},
 			want: []string{
-				"projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@([a-z0-9-]+)/artifacts/score-lint-error",
-				"projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml@([a-z0-9-]+)/artifacts/score-lint-error",
+				"projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi@([a-z0-9-]+)/artifacts/score-lint-error",
+				"projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi@([a-z0-9-]+)/artifacts/score-lint-error",
 			},
 		},
 		{
 			desc: "only openapi scores with single definition",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-report",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-report",
 					MimeType: conformanceReportType,
 					Contents: protoMarshal(conformanceReport),
 				},
@@ -222,18 +222,18 @@ func TestScore(t *testing.T) {
 				},
 			},
 			want: []string{
-				"projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@([a-z0-9-]+)/artifacts/score-lint-error-openapi",
+				"projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi@([a-z0-9-]+)/artifacts/score-lint-error-openapi",
 			},
 		},
 		{
 			desc: "only proto scores with single definition",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-report",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-report",
 					MimeType: conformanceReportType,
 					Contents: protoMarshal(conformanceReport),
 				},
@@ -260,11 +260,11 @@ func TestScore(t *testing.T) {
 			desc: "proto and openapi scores with both definitions",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-report",
+					Name:     "projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-report",
 					MimeType: conformanceReportType,
 					Contents: protoMarshal(conformanceReport),
 				},
@@ -290,7 +290,7 @@ func TestScore(t *testing.T) {
 				},
 			},
 			want: []string{
-				"projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@([a-z0-9-]+)/artifacts/score-lint-error-openapi",
+				"projects/score-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi@([a-z0-9-]+)/artifacts/score-lint-error-openapi",
 				"projects/score-test/locations/global/apis/petstore/versions/1.0.1/specs/proto.yaml@([a-z0-9-]+)/artifacts/score-lint-error-proto",
 			},
 		},

@@ -154,7 +154,7 @@ func TestCRUD(t *testing.T) {
 		check(t, "error reading spec", err)
 		req := &rpc.CreateApiSpecRequest{
 			Parent:    "projects/test/locations/global/apis/sample/versions/1.0.0",
-			ApiSpecId: "openapi.yaml",
+			ApiSpecId: "openapi",
 			ApiSpec: &rpc.ApiSpec{
 				MimeType:    "application/x.openapi+gzip;version=3.0.0",
 				Contents:    buf.Bytes(),
@@ -197,7 +197,7 @@ func TestCRUD(t *testing.T) {
 	var revision string
 	{
 		req := &rpc.GetApiSpecRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi",
 		}
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
@@ -217,7 +217,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the created spec.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi",
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -234,7 +234,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the created revision.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi@" + revision,
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -252,7 +252,7 @@ func TestCRUD(t *testing.T) {
 	revisionTag := "prod"
 	{
 		req := &rpc.TagApiSpecRevisionRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi@" + revision,
 			Tag:  revisionTag,
 		}
 		_, err := registryClient.TagApiSpecRevision(ctx, req)
@@ -261,7 +261,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the tagged revision.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revisionTag,
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi@" + revisionTag,
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -278,7 +278,7 @@ func TestCRUD(t *testing.T) {
 	testArtifacts(ctx, registryClient, t, "projects/test/locations/global")
 	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample")
 	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0")
-	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml")
+	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi")
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{

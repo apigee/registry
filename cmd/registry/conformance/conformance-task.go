@@ -102,7 +102,11 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	name := filepath.Base(task.Spec.GetName())
+	filename := task.Spec.GetFilename()
+	if filename == "" {
+		return fmt.Errorf("%s does not specify a filename", task.Spec.GetName())
+	}
+	name := filepath.Base(filename)
 	defer os.RemoveAll(root)
 
 	if types.IsZipArchive(task.Spec.GetMimeType()) {

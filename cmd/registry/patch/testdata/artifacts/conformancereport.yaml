@@ -12,7 +12,7 @@ data:
             - severity: ERROR
               ruleReports:
                 - ruleId: no-ref-siblings
-                  spec: projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi.yaml
+                  spec: projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi
                   file: openapi.yaml
                   suggestion: ""
                   location:

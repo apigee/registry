@@ -189,31 +189,31 @@ func TestTimestampArtifacts(t *testing.T) {
 			desc: "partially existing artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType:           gzipOpenAPIv3,
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 2)),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 				},
 			},
 		},
@@ -221,38 +221,38 @@ func TestTimestampArtifacts(t *testing.T) {
 			desc: "outdated artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType:           gzipOpenAPIv3,
 					RevisionUpdateTime: timestamppb.New(time.Now()),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 3)),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 				},
 			},
 		},
@@ -260,45 +260,45 @@ func TestTimestampArtifacts(t *testing.T) {
 			desc: "not recent enough artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType:           gzipOpenAPIv3,
 					RevisionUpdateTime: timestamppb.New(time.Now()),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType:           gzipOpenAPIv3,
 					RevisionUpdateTime: timestamppb.New(time.Now()),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					MimeType:           gzipOpenAPIv3,
 					RevisionUpdateTime: timestamppb.New(time.Now()),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 				},
 			},
 		},
@@ -351,15 +351,15 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// test api 1
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
@@ -368,15 +368,15 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				// test api 2
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
@@ -385,7 +385,7 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				// Update underlying spec to make artifact outdated
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * 4)),
 				},
 			},
@@ -401,15 +401,15 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// test api 1
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
@@ -418,15 +418,15 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				// test api 2
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
@@ -494,50 +494,50 @@ func TestTimestampDerivedArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// version 1.0.0
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/summary",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 2)),
 				},
 				// version 1.0.1
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/summary",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 2)),
 				},
 				// version 1.1.0
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/summary",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 2)),
 				},
 				// Make some artifacts outdated from the above setup
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 4)),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 4)),
 				},
 			},
@@ -545,16 +545,16 @@ func TestTimestampDerivedArtifacts(t *testing.T) {
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/summary",
 				},
 			},
 		},
@@ -563,41 +563,41 @@ func TestTimestampDerivedArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// version 1.0.0
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/summary",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 				// version 1.0.1
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/summary",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 				// version 1.1.0
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity",
 					UpdateTime: timestamppb.Now(),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/summary",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 			},
@@ -605,23 +605,23 @@ func TestTimestampDerivedArtifacts(t *testing.T) {
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/summary",
 				},
 			},
 		},
@@ -674,29 +674,29 @@ func TestRefreshArtifacts(t *testing.T) {
 			desc: "non-existing artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-receipt",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/score-receipt",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/score-receipt",
 					RequiresReceipt:   true,
 				},
 			},
@@ -705,22 +705,22 @@ func TestRefreshArtifacts(t *testing.T) {
 			desc: "existing valid artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-receipt",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/score-receipt",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/score-receipt",
 				},
 			},
 			want: nil,
@@ -729,44 +729,44 @@ func TestRefreshArtifacts(t *testing.T) {
 			desc: "existing invalid artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * -5)),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * -5)),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * -5)),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-receipt",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * -3)),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/score-receipt",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * -3)),
 				},
 				&rpc.Artifact{
-					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					Name:       "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/score-receipt",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * -3)),
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-receipt",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/score-receipt",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/score-receipt",
 					RequiresReceipt:   true,
 				},
 			},
@@ -775,25 +775,25 @@ func TestRefreshArtifacts(t *testing.T) {
 			desc: "existing valid artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * -2)),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * -2)),
 				},
 				&rpc.ApiSpec{
-					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:               "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					RevisionUpdateTime: timestamppb.New(time.Now().Add(time.Second * -2)),
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-receipt",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/score-receipt",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/score-receipt",
 				},
 			},
 			want: nil,
