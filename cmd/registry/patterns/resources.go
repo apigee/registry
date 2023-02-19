@@ -28,7 +28,7 @@ const ResourceUpdateThreshold = time.Second * 2
 
 // This interface is used to describe generic resource names
 // Example:
-// projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
+// projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi
 // projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-
 type ResourceName interface {
 	Artifact() string

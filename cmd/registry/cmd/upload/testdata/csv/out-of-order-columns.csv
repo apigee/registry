@@ -1,2 +1,2 @@
 filepath,spec_id,version_id,api_id
-testdata/csv/cloudtasks/v2/openapi.yaml,openapi.yaml,v2,cloudtasks
+testdata/csv/cloudtasks/v2/openapi.yaml,openapi,v2,cloudtasks

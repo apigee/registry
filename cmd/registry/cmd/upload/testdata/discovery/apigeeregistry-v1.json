@@ -1141,7 +1141,7 @@
                               "location": "path",
                               "required": true,
                               "pattern": "^projects/[^/]+/locations/[^/]+/apis/[^/]+/versions/[^/]+/specs/[^/]+$",
-                              "description": "Required. The name of the spec revision to be deleted, with a revision ID explicitly included. Example: `projects/sample/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8`",
+                              "description": "Required. The name of the spec revision to be deleted, with a revision ID explicitly included. Example: `projects/sample/locations/global/apis/petstore/versions/1.0.0/specs/openapi@c7cfa2a8`",
                               "type": "string"
                             }
                           },

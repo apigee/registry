@@ -73,9 +73,9 @@ func TestResolve(t *testing.T) {
 			dryRun:       false,
 			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want: []string{
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity",
 			},
 		},
 		{
@@ -84,9 +84,9 @@ func TestResolve(t *testing.T) {
 			dryRun:       false,
 			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want: []string{
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/test-receipt-artifact",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/test-receipt-artifact",
 			},
 		},
 		{
@@ -183,7 +183,7 @@ func TestResolve(t *testing.T) {
 
 			req := &rpc.CreateApiSpecRequest{
 				Parent:    v1.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),
@@ -191,7 +191,7 @@ func TestResolve(t *testing.T) {
 			}
 			s, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v1.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),
@@ -217,7 +217,7 @@ func TestResolve(t *testing.T) {
 
 			req = &rpc.CreateApiSpecRequest{
 				Parent:    v2.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),
@@ -225,7 +225,7 @@ func TestResolve(t *testing.T) {
 			}
 			s, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v2.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),
@@ -238,7 +238,7 @@ func TestResolve(t *testing.T) {
 
 			req = &rpc.CreateApiSpecRequest{
 				Parent:    v3.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),
@@ -246,7 +246,7 @@ func TestResolve(t *testing.T) {
 			}
 			s, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v3.Name,
-				ApiSpecId: "openapi.yaml",
+				ApiSpecId: "openapi",
 				ApiSpec: &rpc.ApiSpec{
 					MimeType: "application/x.openapi+gzip;version=3.0.0",
 					Contents: buf.Bytes(),

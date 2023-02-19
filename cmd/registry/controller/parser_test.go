@@ -44,22 +44,22 @@ func TestGenerateCommand(t *testing.T) {
 		{
 			desc:         "spec reference",
 			action:       "compute lint $resource.spec --linter=gnostic",
-			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-			want:         "compute lint projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
+			want:         "compute lint projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi --linter=gnostic",
 		},
 		{
 			desc:         "multiple args",
 			action:       "compute score $resource.spec/artifacts/complexity $resource.spec/artifacts/vocabulary",
-			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score",
 			want: fmt.Sprintf("compute score %s %s",
-				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/vocabulary"),
+				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
+				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/vocabulary"),
 		},
 		{
 			desc:         "extended reference",
 			action:       "compute score $resource.spec/artifacts/complexity",
-			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			want:         "compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+			want:         "compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 		},
 	}
 
@@ -85,17 +85,17 @@ func TestGenerateCommandError(t *testing.T) {
 		{
 			desc:         "incorrect reference",
 			action:       "compute lintstats $resource.apispec",
-			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc:         "incorrect format",
 			action:       "compute lintstats $resourceversion",
-			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc:         "invalid reference",
 			action:       "compute lintstats $resource.artifact",
-			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 	}
 
@@ -227,7 +227,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 		{
 			desc: "no target resource name",
 			generatedResource: &rpc.GeneratedResource{
-				Pattern: "apis/-/versions/-/specs/-", // Correct pattern: apis/-/versions/-/specs/openapi.yaml
+				Pattern: "apis/-/versions/-/specs/-", // Correct pattern: apis/-/versions/-/specs/openapi
 				Dependencies: []*rpc.Dependency{
 					{
 						Pattern: "$resource.spec",

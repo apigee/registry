@@ -1736,8 +1736,8 @@ func TestGenerateCombinedPattern(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc: "spec pattern collection input",
@@ -1752,8 +1752,8 @@ func TestGenerateCombinedPattern(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/petstore/versions/-/specs/-",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc: "specific api match collection input",
@@ -1768,7 +1768,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/test/versions/-/specs/-",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 			wantErr:      true,
 		},
 		{
@@ -1776,8 +1776,8 @@ func TestGenerateCombinedPattern(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/1.0.0/specs/-",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc: "specific version match collection input",
@@ -1792,31 +1792,31 @@ func TestGenerateCombinedPattern(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/2.0.0/specs/-",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 			wantErr:      true,
 		},
 		{
 			desc: "specific spec match spec input",
 			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/openapi.yaml",
+				Pattern: "apis/-/versions/-/specs/openapi",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc: "specific spec match collection input",
 			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/openapi.yaml",
+				Pattern: "apis/-/versions/-/specs/openapi",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
-			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/-/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/-/specs/openapi",
 		},
 		{
 			desc: "specific spec no match",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/swagger.yaml",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 			wantErr:      true,
 		},
 		{
@@ -1824,7 +1824,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
 			},
-			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 			wantErr:      true,
 		},
 		{
