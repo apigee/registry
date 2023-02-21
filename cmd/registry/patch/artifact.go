@@ -150,13 +150,13 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 	}, nil
 }
 
-func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string) error {
+func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string, filename string) error {
 	var artifact models.Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
 	}
-	return applyArtifactPatch(ctx, client, &artifact, project)
+	return applyArtifactPatch(ctx, client, &artifact, project, filename)
 }
 
 func artifactName(parent string, metadata models.Metadata) (names.Artifact, error) {
@@ -166,7 +166,7 @@ func artifactName(parent string, metadata models.Metadata) (names.Artifact, erro
 	return names.ParseArtifact(parent + "/artifacts/" + metadata.Name)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string, filename string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.

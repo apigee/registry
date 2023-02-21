@@ -194,7 +194,7 @@ func applyApiSpecPatch(
 		return fmt.Errorf("UpdateApiSpec: %s", err)
 	}
 	for _, artifactPatch := range spec.Data.Artifacts {
-		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String(), filename)
 		if err != nil {
 			return err
 		}

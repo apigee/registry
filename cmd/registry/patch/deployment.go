@@ -84,13 +84,13 @@ func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	}, nil
 }
 
-func applyApiDeploymentPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string) error {
+func applyApiDeploymentPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string, filename string) error {
 	var deployment models.ApiDeployment
 	err := yaml.Unmarshal(bytes, &deployment)
 	if err != nil {
 		return err
 	}
-	return applyApiDeploymentPatch(ctx, client, &deployment, project)
+	return applyApiDeploymentPatch(ctx, client, &deployment, project, filename)
 }
 
 func deploymentName(parent string, metadata models.Metadata) (names.Deployment, error) {
@@ -108,7 +108,8 @@ func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
 	deployment *models.ApiDeployment,
-	parent string) error {
+	parent string,
+	filename string) error {
 	name, err := deploymentName(parent, deployment.Metadata)
 	if err != nil {
 		return err
@@ -136,7 +137,7 @@ func applyApiDeploymentPatch(
 		return fmt.Errorf("UpdateApiDeployment: %s", err)
 	}
 	for _, artifactPatch := range deployment.Data.Artifacts {
-		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String(), filename)
 		if err != nil {
 			return err
 		}
