@@ -57,6 +57,7 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check PATTERN",
 		Short: "Check entities in the API Registry",
+		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
