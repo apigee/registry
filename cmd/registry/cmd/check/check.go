@@ -15,7 +15,9 @@
 package check
 
 import (
+	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
@@ -48,22 +50,16 @@ var (
 	enable     []string
 	disable    []string
 	configFile string
+	listRules  bool
 )
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "check [pattern]",
+		Use:   "check PATTERN",
 		Short: "Check entities in the API Registry",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
-			if err != nil {
-				return err
-			}
-
-			name := strings.TrimSuffix(c.FQName(args[0]), "/locations/global")
-			root, err := names.Parse(name)
 			if err != nil {
 				return err
 			}
@@ -89,6 +85,30 @@ func Command() *cobra.Command {
 				EnabledRules:  enable,
 				DisabledRules: disable,
 			})
+
+			if listRules {
+				var names []string
+				for _, r := range globalRules {
+					if configs.IsRuleEnabled(string(r.GetName()), "") {
+						names = append(names, string(r.GetName()))
+					}
+				}
+				sort.Strings(names)
+				for _, n := range names {
+					fmt.Println(" - name: " + n)
+				}
+				return nil
+			}
+
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return err
+			}
+			name := strings.TrimSuffix(c.FQName(args[0]), "/locations/global")
+			root, err := names.Parse(name)
+			if err != nil {
+				return err
+			}
+
 			linter := lint.New(globalRules, configs)
 			response, err := linter.Check(ctx, adminClient, client, root, filter, jobs)
 			if err != nil {
@@ -110,6 +130,7 @@ func Command() *cobra.Command {
 	cmd.Flags().StringVar(&configFile, "config", "", "rule config")
 	cmd.Flags().StringArrayVar(&enable, "enable", nil, "enable rules")
 	cmd.Flags().StringArrayVar(&disable, "disable", nil, "disable rules")
+	cmd.Flags().BoolVar(&listRules, "list-rules", false, "print enabled rules and exit")
 
 	return cmd
 }
