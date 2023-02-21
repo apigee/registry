@@ -207,14 +207,14 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 	log.FromContext(ctx).Infof("Applying %s", task.resource())
 	switch header.Kind {
 	case "API":
-		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Version":
-		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Spec":
 		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Deployment":
-		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	default: // for everything else, try an artifact type
-		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	}
 }

@@ -189,7 +189,7 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 	return apiName.Deployment(deploymentID).String()
 }
 
-func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string, filename string) error {
 	var api models.Api
 	err := yaml.Unmarshal(bytes, &api)
 	if err != nil {
@@ -218,19 +218,19 @@ func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, b
 		return fmt.Errorf("UpdateApi: %s", err)
 	}
 	for _, versionPatch := range api.Data.ApiVersions {
-		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String())
+		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String(), filename)
 		if err != nil {
 			return err
 		}
 	}
 	for _, deploymentPatch := range api.Data.ApiDeployments {
-		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String())
+		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String(), filename)
 		if err != nil {
 			return err
 		}
 	}
 	for _, artifactPatch := range api.Data.Artifacts {
-		err = applyArtifactPatch(ctx, client, artifactPatch, apiName.String())
+		err = applyArtifactPatch(ctx, client, artifactPatch, apiName.String(), filename)
 		if err != nil {
 			return err
 		}

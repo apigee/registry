@@ -83,13 +83,14 @@ func applyApiVersionPatchBytes(
 	ctx context.Context,
 	client connection.RegistryClient,
 	bytes []byte,
-	project string) error {
+	project string,
+	filename string) error {
 	var version models.ApiVersion
 	err := yaml.Unmarshal(bytes, &version)
 	if err != nil {
 		return err
 	}
-	return applyApiVersionPatch(ctx, client, &version, project)
+	return applyApiVersionPatch(ctx, client, &version, project, filename)
 }
 
 func versionName(parent string, metadata models.Metadata) (names.Version, error) {
@@ -107,7 +108,8 @@ func applyApiVersionPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
 	version *models.ApiVersion,
-	parent string) error {
+	parent string,
+	filename string) error {
 	name, err := versionName(parent, version.Metadata)
 	if err != nil {
 		return err
@@ -129,13 +131,13 @@ func applyApiVersionPatch(
 		return fmt.Errorf("UpdateApiVersion: %s", err)
 	}
 	for _, specPatch := range version.Data.ApiSpecs {
-		err := applyApiSpecPatch(ctx, client, specPatch, name.String(), "")
+		err := applyApiSpecPatch(ctx, client, specPatch, name.String(), filename)
 		if err != nil {
 			return err
 		}
 	}
 	for _, artifactPatch := range version.Data.Artifacts {
-		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String(), filename)
 		if err != nil {
 			return err
 		}

@@ -200,7 +200,7 @@ func TestApiPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiPatchBytes(ctx, registryClient, b, root)
+			err = applyApiPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -303,7 +303,7 @@ func TestVersionPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiVersionPatchBytes(ctx, registryClient, b, root)
+			err = applyApiVersionPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -512,7 +512,7 @@ func TestDeploymentPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiDeploymentPatchBytes(ctx, registryClient, b, root)
+			err = applyApiDeploymentPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -1056,7 +1056,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -1154,7 +1154,7 @@ func TestYamlArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -1247,7 +1247,7 @@ func TestInvalidArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err == nil {
 				t.Fatalf("expected error, received none")
 			}
