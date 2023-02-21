@@ -166,22 +166,22 @@ func TestFullResourceNameFromParent(t *testing.T) {
 		},
 		{
 			desc:            "spec pattern",
-			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml",
+			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi",
 			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0",
-			want:            generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			want:            generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
 		},
 		{
 			desc:            "specrev pattern",
-			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml@rev",
+			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi@rev",
 			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0",
-			want:            generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@rev"),
+			want:            generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi@rev"),
 		},
 		{
 			desc:            "artifact pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/complexity",
-			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 			want: ArtifactName{
-				Name: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+				Name: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity"),
 			},
 		},
 	}
@@ -208,12 +208,12 @@ func TestFullResourceNameFromParentError(t *testing.T) {
 		{
 			desc:            "incorrect keywords",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/apispecs/-",
-			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc:            "incorrect pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/specs/-",
-			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 	}
 
@@ -237,37 +237,37 @@ func TestGetReferenceEntityValue(t *testing.T) {
 		{
 			desc:            "api group",
 			resourcePattern: "$resource.api/versions/-/specs/-",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
 			want:            "projects/demo/locations/global/apis/petstore",
 		},
 		{
 			desc:            "version group",
 			resourcePattern: "$resource.version/specs/-",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
 			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0",
 		},
 		{
 			desc:            "spec group",
 			resourcePattern: "$resource.spec",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
-			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 		{
 			desc:            "spec revision group",
 			resourcePattern: "$resource.spec",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@rev"),
-			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@rev",
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi@rev"),
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi@rev",
 		},
 		{
 			desc:            "artifact group",
 			resourcePattern: "$resource.artifact",
-			referred:        ArtifactName{Name: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
-			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+			referred:        ArtifactName{Name: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic")},
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 		},
 		{
 			desc:            "no group",
 			resourcePattern: "apis/-/versions/-/specs/-",
-			referred:        ArtifactName{Name: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
+			referred:        ArtifactName{Name: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic")},
 			want:            "default",
 		},
 	}
@@ -294,17 +294,17 @@ func TestGetReferenceEntityValueError(t *testing.T) {
 		{
 			desc:            "typo",
 			resourcePattern: "$resource.apis/versions/-/specs/-",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
 		},
 		{
 			desc:            "incorrect reference",
 			resourcePattern: "$resource.name/versions/-/specs/-",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
 		},
 		{
 			desc:            "incorrect resourceKW",
 			resourcePattern: "$resources.api/versions/-/specs/-",
-			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"),
 		},
 	}
 

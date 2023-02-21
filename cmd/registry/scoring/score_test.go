@@ -140,7 +140,7 @@ func TestCalculateScore(t *testing.T) {
 			desc: "nonexistent score ScoreArtifact",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -200,7 +200,7 @@ func TestCalculateScore(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -218,7 +218,7 @@ func TestCalculateScore(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: []byte{},
 				},
@@ -292,13 +292,13 @@ func TestCalculateScore(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: []byte{},
 				},
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -334,7 +334,7 @@ func TestCalculateScore(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: []byte{},
 				},
@@ -365,7 +365,7 @@ func TestCalculateScore(t *testing.T) {
 				},
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -427,7 +427,7 @@ func TestCalculateScore(t *testing.T) {
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			}
 
@@ -447,7 +447,7 @@ func TestCalculateScore(t *testing.T) {
 			//fetch score artifact and check the value
 			scoreArtifact, err := getArtifact(
 				ctx, artifactClient,
-				"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", true)
+				"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error", true)
 			if err != nil {
 				t.Errorf("failed to get the result scoreArtifact from registry")
 			}
@@ -490,7 +490,7 @@ func TestProcessScoreFormula(t *testing.T) {
 
 	seed := []seeder.RegistryResource{
 		&rpc.Artifact{
-			Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+			Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 			Contents: protoMarshal(&rpc.Lint{
 				Name: "openapi.yaml",
@@ -521,7 +521,7 @@ func TestProcessScoreFormula(t *testing.T) {
 	}
 	resource := patterns.SpecResource{
 		Spec: &rpc.ApiSpec{
-			Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 	}
 
@@ -553,7 +553,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "invalid reference",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			formula: &rpc.ScoreFormula{
@@ -564,7 +564,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -572,7 +572,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "invalid extended pattern",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			formula: &rpc.ScoreFormula{
@@ -583,7 +583,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -591,7 +591,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "missing artifact",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			formula: &rpc.ScoreFormula{
@@ -602,7 +602,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -610,7 +610,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "unsupported artifact type",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-definition",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-definition",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.ScoreDefinition",
 					Contents: protoMarshal(&rpc.ScoreDefinition{
 						Id:             "dummy-score-definition",
@@ -623,7 +623,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			formula: &rpc.ScoreFormula{},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -631,7 +631,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "invalid expression",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -656,7 +656,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -664,7 +664,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "missing expression",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -688,7 +688,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -756,7 +756,7 @@ func TestProcessRollUpFormula(t *testing.T) {
 	seed := []seeder.RegistryResource{
 		// lint artifact
 		&rpc.Artifact{
-			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 			Contents: protoMarshal(&rpc.Lint{
 				Name: "openapi.yaml",
@@ -777,7 +777,7 @@ func TestProcessRollUpFormula(t *testing.T) {
 		},
 		// complexity artifact
 		&rpc.Artifact{
-			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 			MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 			Contents: protoMarshal(&metrics.Complexity{
 				GetCount:    1,
@@ -814,7 +814,7 @@ func TestProcessRollUpFormula(t *testing.T) {
 	}
 	resource := patterns.SpecResource{
 		Spec: &rpc.ApiSpec{
-			Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 		},
 	}
 
@@ -845,7 +845,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			desc: "missing score_formulas",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			formula: &rpc.RollUpFormula{
@@ -853,7 +853,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -861,7 +861,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			desc: "missing rollup_expression",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			formula: &rpc.RollUpFormula{
@@ -884,7 +884,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -893,7 +893,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -914,7 +914,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -945,7 +945,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -954,7 +954,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
@@ -975,7 +975,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -1006,7 +1006,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},
@@ -1014,7 +1014,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			desc: "invalid reference_id",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			formula: &rpc.RollUpFormula{
@@ -1038,7 +1038,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 		},

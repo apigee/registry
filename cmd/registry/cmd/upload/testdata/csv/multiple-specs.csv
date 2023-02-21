@@ -1,5 +1,5 @@
 api_id,version_id,spec_id,filepath
-cloudtasks,v2beta2,openapi.yaml,testdata/csv/cloudtasks/v2beta2/openapi.yaml
-cloudtasks,v2,openapi.yaml,testdata/csv/cloudtasks/v2/openapi.yaml
-datastore,v1beta1,openapi.yaml,testdata/csv/datastore/v1beta1/openapi.yaml
-datastore,v1,openapi.yaml,testdata/csv/datastore/v1/openapi.yaml
+cloudtasks,v2beta2,openapi,testdata/csv/cloudtasks/v2beta2/openapi.yaml
+cloudtasks,v2,openapi,testdata/csv/cloudtasks/v2/openapi.yaml
+datastore,v1beta1,openapi,testdata/csv/datastore/v1beta1/openapi.yaml
+datastore,v1,openapi,testdata/csv/datastore/v1/openapi.yaml
