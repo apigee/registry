@@ -96,7 +96,9 @@ func Command() *cobra.Command {
 				}
 				sort.Strings(names)
 				for _, n := range names {
-					fmt.Println(" - name: " + n)
+					if _, err := cmd.OutOrStdout().Write([]byte(fmt.Sprintf(" - name: %s\n", n))); err != nil {
+						return err
+					}
 				}
 				return nil
 			}
