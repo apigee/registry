@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -31,15 +32,15 @@ func TestAddRules(t *testing.T) {
 }
 
 func Test_availabilitySingleWord(t *testing.T) {
-	prob := []*rpc.Problem{{
-		Severity:   rpc.Problem_INFO,
+	prob := []*check.Problem{{
+		Severity:   check.Problem_INFO,
 		Message:    `State is free-form, but we expect single words that describe API maturity.`,
 		Suggestion: `Use single words like: "CONCEPT", "DESIGN", "DEVELOPMENT", "STAGING", "PRODUCTION", "DEPRECATED", "RETIRED"`,
 	}}
 
 	for _, tt := range []struct {
 		in       string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"", nil},
 		{"x", nil},
@@ -50,7 +51,7 @@ func Test_availabilitySingleWord(t *testing.T) {
 		}
 		if stateSingleWord.OnlyIf(version) {
 			got := stateSingleWord.ApplyToApiVersion(context.Background(), version)
-			if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+			if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 				t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 			}
 		}

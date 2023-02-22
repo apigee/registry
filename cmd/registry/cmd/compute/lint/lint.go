@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/tasks"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
@@ -118,7 +119,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		return err
 	}
 	var relation string
-	var lint *rpc.Lint
+	var lint *style.Lint
 	if types.IsOpenAPIv2(spec.GetMimeType()) || types.IsOpenAPIv3(spec.GetMimeType()) {
 		// the default openapi linter is gnostic
 		if task.linter == "" {

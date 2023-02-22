@@ -18,6 +18,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -43,23 +45,23 @@ const scoreDefinitionType = "application/octet-stream;type=google.cloud.apigeere
 const conformanceReportType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.ConformanceReport"
 
 var (
-	conformanceReport = &rpc.ConformanceReport{
+	conformanceReport = &style.ConformanceReport{
 		Id:         "conformance-report",
 		Kind:       "ConformanceReport",
 		Styleguide: "projects/score-test/locations/global/artifacts/styleguide",
-		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			{State: rpc.Guideline_STATE_UNSPECIFIED},
-			{State: rpc.Guideline_PROPOSED},
+		GuidelineReportGroups: []*style.GuidelineReportGroup{
+			{State: style.Guideline_STATE_UNSPECIFIED},
+			{State: style.Guideline_PROPOSED},
 			{
-				State: rpc.Guideline_ACTIVE,
-				GuidelineReports: []*rpc.GuidelineReport{
+				State: style.Guideline_ACTIVE,
+				GuidelineReports: []*style.GuidelineReport{
 					{
 						GuidelineId: "sample-guideline",
-						RuleReportGroups: []*rpc.RuleReportGroup{
-							{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+						RuleReportGroups: []*style.RuleReportGroup{
+							{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 							{
-								Severity: rpc.Rule_ERROR,
-								RuleReports: []*rpc.RuleReport{
+								Severity: style.Rule_ERROR,
+								RuleReports: []*style.RuleReport{
 									{
 										RuleId: "openapi-tags",
 									},
@@ -72,62 +74,62 @@ var (
 		},
 	}
 
-	scoreAll = &rpc.ScoreDefinition{
+	scoreAll = &scoring.ScoreDefinition{
 		Id:   "lint-error",
 		Kind: "ScoreDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &scoring.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 		},
-		Formula: &rpc.ScoreDefinition_ScoreFormula{
-			ScoreFormula: &rpc.ScoreFormula{
-				Artifact:        &rpc.ResourcePattern{Pattern: "$resource.spec/artifacts/conformance-report"},
+		Formula: &scoring.ScoreDefinition_ScoreFormula{
+			ScoreFormula: &scoring.ScoreFormula{
+				Artifact:        &scoring.ResourcePattern{Pattern: "$resource.spec/artifacts/conformance-report"},
 				ScoreExpression: "sum(guidelineReportGroups[2].guidelineReports.map(r, size(r.ruleReportGroups[1].ruleReports)))",
 			},
 		},
-		Type: &rpc.ScoreDefinition_Integer{
-			Integer: &rpc.IntegerType{
+		Type: &scoring.ScoreDefinition_Integer{
+			Integer: &scoring.IntegerType{
 				MinValue: 0,
 				MaxValue: 10,
 			},
 		},
 	}
 
-	scoreOpenAPI = &rpc.ScoreDefinition{
+	scoreOpenAPI = &scoring.ScoreDefinition{
 		Id:   "lint-error-openapi",
 		Kind: "ScoreDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &scoring.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 			Filter:  "mime_type.contains('openapi')",
 		},
-		Formula: &rpc.ScoreDefinition_ScoreFormula{
-			ScoreFormula: &rpc.ScoreFormula{
-				Artifact:        &rpc.ResourcePattern{Pattern: "$resource.spec/artifacts/conformance-report"},
+		Formula: &scoring.ScoreDefinition_ScoreFormula{
+			ScoreFormula: &scoring.ScoreFormula{
+				Artifact:        &scoring.ResourcePattern{Pattern: "$resource.spec/artifacts/conformance-report"},
 				ScoreExpression: "sum(guidelineReportGroups[2].guidelineReports.map(r, size(r.ruleReportGroups[1].ruleReports)))",
 			},
 		},
-		Type: &rpc.ScoreDefinition_Integer{
-			Integer: &rpc.IntegerType{
+		Type: &scoring.ScoreDefinition_Integer{
+			Integer: &scoring.IntegerType{
 				MinValue: 0,
 				MaxValue: 10,
 			},
 		},
 	}
 
-	scoreProto = &rpc.ScoreDefinition{
+	scoreProto = &scoring.ScoreDefinition{
 		Id:   "lint-error-proto",
 		Kind: "ScoreDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &scoring.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 			Filter:  "mime_type.contains('protobuf')",
 		},
-		Formula: &rpc.ScoreDefinition_ScoreFormula{
-			ScoreFormula: &rpc.ScoreFormula{
-				Artifact:        &rpc.ResourcePattern{Pattern: "$resource.spec/artifacts/conformance-report"},
+		Formula: &scoring.ScoreDefinition_ScoreFormula{
+			ScoreFormula: &scoring.ScoreFormula{
+				Artifact:        &scoring.ResourcePattern{Pattern: "$resource.spec/artifacts/conformance-report"},
 				ScoreExpression: "sum(guidelineReportGroups[2].guidelineReports.map(r, size(r.ruleReportGroups[1].ruleReports)))",
 			},
 		},
-		Type: &rpc.ScoreDefinition_Integer{
-			Integer: &rpc.IntegerType{
+		Type: &scoring.ScoreDefinition_Integer{
+			Integer: &scoring.IntegerType{
 				MinValue: 0,
 				MaxValue: 10,
 			},

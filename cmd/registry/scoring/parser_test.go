@@ -18,49 +18,49 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/scoring"
 )
 
 func TestValidateScoreDefinition(t *testing.T) {
 	tests := []struct {
 		desc            string
 		parent          string
-		scoreDefinition *rpc.ScoreDefinition
+		scoreDefinition *scoring.ScoreDefinition
 		wantNumErr      int
 	}{
 		// No errors
 		{
 			desc:   "score formula",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -73,24 +73,24 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "rollup formula",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_RollupFormula{
-					RollupFormula: &rpc.RollUpFormula{
-						ScoreFormulas: []*rpc.ScoreFormula{
+				Formula: &scoring.ScoreDefinition_RollupFormula{
+					RollupFormula: &scoring.RollUpFormula{
+						ScoreFormulas: []*scoring.ScoreFormula{
 							{
-								Artifact: &rpc.ResourcePattern{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(errors)",
 								ReferenceId:     "lint_errors",
 							},
 							{
-								Artifact: &rpc.ResourcePattern{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(warnings)",
@@ -100,21 +100,21 @@ func TestValidateScoreDefinition(t *testing.T) {
 						RollupExpression: "lint_errors+lint_warnings",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -127,22 +127,22 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "no thresholds",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
 					},
@@ -152,22 +152,22 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "only max limit",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MaxValue: 100,
 					},
 				},
@@ -177,22 +177,22 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "target pattern error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
 					},
@@ -203,22 +203,22 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "score formula error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.artifact/conformance-report", //error
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
 					},
@@ -229,24 +229,24 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "rollup formula error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_RollupFormula{
-					RollupFormula: &rpc.RollUpFormula{
-						ScoreFormulas: []*rpc.ScoreFormula{
+				Formula: &scoring.ScoreDefinition_RollupFormula{
+					RollupFormula: &scoring.RollUpFormula{
+						ScoreFormulas: []*scoring.ScoreFormula{
 							{
-								Artifact: &rpc.ResourcePattern{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(errors)",
 								ReferenceId:     "lint_errors",
 							},
 							{
-								Artifact: &rpc.ResourcePattern{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.artifact/conformance-report", //error
 								},
 								ScoreExpression: "count(warnings)",
@@ -256,8 +256,8 @@ func TestValidateScoreDefinition(t *testing.T) {
 						RollupExpression: "lint_errors+lint_warnings",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
 					},
@@ -268,33 +268,33 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "percent threshold error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Percent{
-					Percent: &rpc.PercentType{
-						Thresholds: []*rpc.NumberThreshold{
+				Type: &scoring.ScoreDefinition_Percent{
+					Percent: &scoring.PercentType{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{ //error
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{ //error
 									Min: 60,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -308,35 +308,35 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "integer threshold error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{ //error
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{ //error
 									Min: 62,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -350,33 +350,33 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "integer threshold no limits",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
-						Thresholds: []*rpc.NumberThreshold{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -390,25 +390,25 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "boolean threshold error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/audit-report",
 						},
 						ScoreExpression: "isApproved",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Boolean{
-					Boolean: &rpc.BooleanType{
-						Thresholds: []*rpc.BooleanThreshold{ //error
+				Type: &scoring.ScoreDefinition_Boolean{
+					Boolean: &scoring.BooleanType{
+						Thresholds: []*scoring.BooleanThreshold{ //error
 							{
-								Severity: rpc.Severity_ALERT,
+								Severity: scoring.Severity_ALERT,
 								Value:    false,
 							},
 						},
@@ -421,22 +421,22 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "target pattern and score formula error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.specs/artifacts/conformance-report", //error
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
 					},
@@ -448,28 +448,28 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "target pattern and threshold error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{ //error
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{ //error
 									Min: 60,
 									Max: 100,
 								},
@@ -483,28 +483,28 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "score formula and threshold error",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.specs/artifacts/conformance-report", //error
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{ //error
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{ //error
 									Min: 60,
 									Max: 100,
 								},
@@ -518,28 +518,28 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "error in each component",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.specs/artifacts/conformance-report", //error
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{ //error
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{ //error
 									Min: 60,
 									Max: 100,
 								},
@@ -555,32 +555,32 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "missing target resource",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_OK,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_OK,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 59,
 								},
 							},
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 60,
 									Max: 100,
 								},
@@ -594,24 +594,24 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "missing rollup_formula.rollup_expression",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_RollupFormula{
-					RollupFormula: &rpc.RollUpFormula{
-						ScoreFormulas: []*rpc.ScoreFormula{
+				Formula: &scoring.ScoreDefinition_RollupFormula{
+					RollupFormula: &scoring.RollUpFormula{
+						ScoreFormulas: []*scoring.ScoreFormula{
 							{
-								Artifact: &rpc.ResourcePattern{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(errors)",
 								ReferenceId:     "lint_errors",
 							},
 							{
-								Artifact: &rpc.ResourcePattern{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(warnings)",
@@ -620,21 +620,21 @@ func TestValidateScoreDefinition(t *testing.T) {
 						},
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -648,32 +648,32 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "missing rollup_formula.score_formulas",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_RollupFormula{
-					RollupFormula: &rpc.RollUpFormula{
+				Formula: &scoring.ScoreDefinition_RollupFormula{
+					RollupFormula: &scoring.RollUpFormula{
 						RollupExpression: "lint_errors+lint_warnings",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 60,
 								},
@@ -687,27 +687,27 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "missing formula",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_OK,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_OK,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 59,
 								},
 							},
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 60,
 									Max: 100,
 								},
@@ -721,15 +721,15 @@ func TestValidateScoreDefinition(t *testing.T) {
 		{
 			desc:   "missing type",
 			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
+			scoreDefinition: &scoring.ScoreDefinition{
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -798,18 +798,18 @@ func TestValidateReferencesInPattern(t *testing.T) {
 func TestValidateScoreFormula(t *testing.T) {
 	tests := []struct {
 		desc          string
-		targetPattern *rpc.ResourcePattern
-		scoreFormula  *rpc.ScoreFormula
+		targetPattern *scoring.ResourcePattern
+		scoreFormula  *scoring.ScoreFormula
 		wantNumErr    int
 	}{
 		// No errors
 		{
 			desc: "score formula",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/conformance-report",
 				},
 				ScoreExpression: "count(errors)",
@@ -818,11 +818,11 @@ func TestValidateScoreFormula(t *testing.T) {
 		// Single errors
 		{
 			desc: "$resource error",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.specs/artifacts/conformance-report", //error
 				},
 				ScoreExpression: "count(errors)",
@@ -831,11 +831,11 @@ func TestValidateScoreFormula(t *testing.T) {
 		},
 		{
 			desc: "missing artifact name",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/-", //error
 				},
 				ScoreExpression: "count(errors)",
@@ -844,11 +844,11 @@ func TestValidateScoreFormula(t *testing.T) {
 		},
 		{
 			desc: "invalid reference_id",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/conformance-report",
 				},
 				ScoreExpression: "count(errors)",
@@ -859,11 +859,11 @@ func TestValidateScoreFormula(t *testing.T) {
 		// Combination errors
 		{
 			desc: "invalid pattern and missing name",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.specs/-/artifacts/-", //error
 				},
 				ScoreExpression: "count(errors)",
@@ -872,11 +872,11 @@ func TestValidateScoreFormula(t *testing.T) {
 		},
 		{
 			desc: "no reference and missing name",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-/artifacts/-", //error
 				},
 				ScoreExpression: "count(errors)",
@@ -885,11 +885,11 @@ func TestValidateScoreFormula(t *testing.T) {
 		},
 		{
 			desc: "invalid reference and missing name",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-", //error
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/-",
 				},
 				ScoreExpression: "count(errors)",
@@ -899,21 +899,21 @@ func TestValidateScoreFormula(t *testing.T) {
 		// missing components
 		{
 			desc: "missing artifact",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
+			scoreFormula: &scoring.ScoreFormula{
 				ScoreExpression: "count(errors)",
 			},
 			wantNumErr: 1,
 		},
 		{
 			desc: "missing score expression",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			scoreFormula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/conformance-report",
 				},
 			},
@@ -936,7 +936,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 		desc       string
 		minValue   int32
 		maxValue   int32
-		thresholds []*rpc.NumberThreshold
+		thresholds []*scoring.NumberThreshold
 		wantNumErr int
 	}{
 		// no errors
@@ -944,24 +944,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "percentage thresholds",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 100,
 					},
@@ -972,24 +972,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "integer thresholds",
 			minValue: -50,
 			maxValue: 50,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: -50,
 						Max: -20,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: -19,
 						Max: 10,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 11,
 						Max: 50,
 					},
@@ -1000,24 +1000,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "descending score thresholds",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 100,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 30,
 					},
@@ -1028,38 +1028,38 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "distributed severity",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 10,
 					},
 				},
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 91,
 						Max: 100,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 11,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 71,
 						Max: 90,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 70,
 					},
@@ -1071,9 +1071,9 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing range",
 			minValue: -50,
 			maxValue: 50,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
+					Severity: scoring.Severity_ALERT,
 				},
 			},
 			wantNumErr: 2,
@@ -1082,17 +1082,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "range.min greater than range.max",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Max: 0,
 						Min: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 51,
 						Max: 100,
 					},
@@ -1104,24 +1104,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "out of minValue bound",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: -1,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 100,
 					},
@@ -1133,24 +1133,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "out of maxValue bound",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 101,
 					},
@@ -1162,24 +1162,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing coverage for minValue",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 5,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 100,
 					},
@@ -1191,24 +1191,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing coverage for maxValue",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 90,
 					},
@@ -1220,24 +1220,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing coverage in between",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 29,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 31,
 						Max: 59,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 61,
 						Max: 100,
 					},
@@ -1249,24 +1249,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "overlap",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 30,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 60,
 						Max: 100,
 					},
@@ -1279,17 +1279,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "out of min and max limits",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: -1,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 51,
 						Max: 101,
 					},
@@ -1301,17 +1301,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "out of limits and overlap",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: -1,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 50,
 						Max: 101,
 					},
@@ -1323,17 +1323,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "out of limits and missing coverage",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: -1,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 52,
 						Max: 101,
 					},
@@ -1345,17 +1345,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing limits coverage",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 2,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 51,
 						Max: 99,
 					},
@@ -1367,17 +1367,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing limits coverage and overlap",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 2,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 50,
 						Max: 99,
 					},
@@ -1389,17 +1389,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing limits coverage and missing coverage",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 2,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 52,
 						Max: 99,
 					},
@@ -1411,17 +1411,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "missing min coverage and out of max limit",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 2,
 						Max: 50,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 51,
 						Max: 101,
 					},
@@ -1433,24 +1433,24 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "overlap and missing coverage",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 30,
 					},
 				},
 				{
-					Severity: rpc.Severity_WARNING,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_WARNING,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 30,
 						Max: 60,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 62,
 						Max: 100,
 					},
@@ -1462,17 +1462,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 			desc:     "nested thresholds",
 			minValue: 0,
 			maxValue: 100,
-			thresholds: []*rpc.NumberThreshold{
+			thresholds: []*scoring.NumberThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_ALERT,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 0,
 						Max: 100,
 					},
 				},
 				{
-					Severity: rpc.Severity_OK,
-					Range: &rpc.NumberThreshold_NumberRange{
+					Severity: scoring.Severity_OK,
+					Range: &scoring.NumberThreshold_NumberRange{
 						Min: 20,
 						Max: 50,
 					},
@@ -1494,32 +1494,32 @@ func TestValidateNumberThresholds(t *testing.T) {
 func TestValidateBooleanThresholds(t *testing.T) {
 	tests := []struct {
 		desc       string
-		thresholds []*rpc.BooleanThreshold
+		thresholds []*scoring.BooleanThreshold
 		wantNumErr int
 	}{
 		// no errors
 		{
 			desc: "normal case",
-			thresholds: []*rpc.BooleanThreshold{
+			thresholds: []*scoring.BooleanThreshold{
 				{
-					Severity: rpc.Severity_ALERT,
+					Severity: scoring.Severity_ALERT,
 					Value:    false,
 				},
 				{
-					Severity: rpc.Severity_OK,
+					Severity: scoring.Severity_OK,
 					Value:    true,
 				},
 			},
 		},
 		{
 			desc: "same severity",
-			thresholds: []*rpc.BooleanThreshold{
+			thresholds: []*scoring.BooleanThreshold{
 				{
-					Severity: rpc.Severity_OK,
+					Severity: scoring.Severity_OK,
 					Value:    false,
 				},
 				{
-					Severity: rpc.Severity_OK,
+					Severity: scoring.Severity_OK,
 					Value:    true,
 				},
 			},
@@ -1527,9 +1527,9 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		// single errors
 		{
 			desc: "missing false",
-			thresholds: []*rpc.BooleanThreshold{
+			thresholds: []*scoring.BooleanThreshold{
 				{
-					Severity: rpc.Severity_OK,
+					Severity: scoring.Severity_OK,
 					Value:    true,
 				},
 			},
@@ -1537,9 +1537,9 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		},
 		{
 			desc: "missing true",
-			thresholds: []*rpc.BooleanThreshold{
+			thresholds: []*scoring.BooleanThreshold{
 				{
-					Severity: rpc.Severity_WARNING,
+					Severity: scoring.Severity_WARNING,
 					Value:    false,
 				},
 			},
@@ -1547,17 +1547,17 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		},
 		{
 			desc: "duplicate entries",
-			thresholds: []*rpc.BooleanThreshold{
+			thresholds: []*scoring.BooleanThreshold{
 				{
-					Severity: rpc.Severity_OK,
+					Severity: scoring.Severity_OK,
 					Value:    true,
 				},
 				{
-					Severity: rpc.Severity_WARNING,
+					Severity: scoring.Severity_WARNING,
 					Value:    true,
 				},
 				{
-					Severity: rpc.Severity_ALERT,
+					Severity: scoring.Severity_ALERT,
 					Value:    false,
 				},
 			},
@@ -1566,13 +1566,13 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		// combination errors
 		{
 			desc: "missing and duplicate entries",
-			thresholds: []*rpc.BooleanThreshold{
+			thresholds: []*scoring.BooleanThreshold{
 				{
-					Severity: rpc.Severity_OK,
+					Severity: scoring.Severity_OK,
 					Value:    true,
 				},
 				{
-					Severity: rpc.Severity_WARNING,
+					Severity: scoring.Severity_WARNING,
 					Value:    true,
 				},
 			},
@@ -1593,17 +1593,17 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 	tests := []struct {
 		desc                string
 		parent              string
-		scoreCardDefinition *rpc.ScoreCardDefinition
+		scoreCardDefinition *scoring.ScoreCardDefinition
 		wantNumErr          int
 	}{
 		// No errors
 		{
 			desc:   "simple scorecard definition",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 					Filter:  "name.contains('openapi.yaml')",
 				},
@@ -1619,10 +1619,10 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		{
 			desc:   "invalid target_resource pattern",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
 				ScorePatterns: []string{
@@ -1637,10 +1637,10 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		{
 			desc:   "missing score_patterns",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				// error
@@ -1650,10 +1650,10 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		{
 			desc:   "invalid target_resource and missing score_patterns",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
 				},
 				//error
@@ -1663,10 +1663,10 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		{
 			desc:   "invalid score_pattern $resource",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1681,10 +1681,10 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		{
 			desc:   "invalid score_pattern no artifactID",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1696,10 +1696,10 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		{
 			desc:   "multiple invalid score_pattern",
 			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
+			scoreCardDefinition: &scoring.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
 				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1726,14 +1726,14 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 func TestGenerateCombinedPattern(t *testing.T) {
 	tests := []struct {
 		desc          string
-		targetPattern *rpc.ResourcePattern
+		targetPattern *scoring.ResourcePattern
 		inputPattern  string
 		wantPattern   string
 		wantErr       bool
 	}{
 		{
 			desc: "spec pattern spec input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1741,7 +1741,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "spec pattern collection input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
@@ -1749,7 +1749,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific api match spec input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/petstore/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1757,7 +1757,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific api match collection input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/petstore/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
@@ -1765,7 +1765,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific api no match spec input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/test/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1773,7 +1773,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific version match spec input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/1.0.0/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1781,7 +1781,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific version match collection input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/1.0.0/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
@@ -1789,7 +1789,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific version no match",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/2.0.0/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1797,7 +1797,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific spec match spec input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/openapi",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1805,7 +1805,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific spec match collection input",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/openapi",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
@@ -1813,7 +1813,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "specific spec no match",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/swagger.yaml",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1821,7 +1821,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "artifact pattern error",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -1829,7 +1829,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 		},
 		{
 			desc: "target and resource mismatch",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
@@ -1862,14 +1862,14 @@ func TestGenerateCombinedPattern(t *testing.T) {
 func TestGenerateCombinedPatternFilters(t *testing.T) {
 	tests := []struct {
 		desc          string
-		targetPattern *rpc.ResourcePattern
+		targetPattern *scoring.ResourcePattern
 		inputPattern  string
 		inputFilter   string
 		wantFilter    string
 	}{
 		{
 			desc: "input filter only",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
 			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
@@ -1878,7 +1878,7 @@ func TestGenerateCombinedPatternFilters(t *testing.T) {
 		},
 		{
 			desc: "target filter only",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 				Filter:  "mime_type.contains('openapi')",
 			},
@@ -1888,7 +1888,7 @@ func TestGenerateCombinedPatternFilters(t *testing.T) {
 		},
 		{
 			desc: "target and input filter identical",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 				Filter:  "mime_type.contains('openapi')",
 			},
@@ -1898,7 +1898,7 @@ func TestGenerateCombinedPatternFilters(t *testing.T) {
 		},
 		{
 			desc: "target and input filter empty",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 				Filter:  "",
 			},
@@ -1908,7 +1908,7 @@ func TestGenerateCombinedPatternFilters(t *testing.T) {
 		},
 		{
 			desc: "target and input filter different",
-			targetPattern: &rpc.ResourcePattern{
+			targetPattern: &scoring.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 				Filter:  "mime_type.contains('openapi')",
 			},

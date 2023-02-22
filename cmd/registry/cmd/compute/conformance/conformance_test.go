@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -63,30 +64,30 @@ func TestConformance(t *testing.T) {
 		desc            string
 		conformancePath string
 		getPattern      string
-		wantProto       *rpc.ConformanceReport
+		wantProto       *style.ConformanceReport
 	}{
 		//Tests the normal use case with one guideline defined with state: ACTIVE and one Rule defined with severity:ERROR
 		{
 			desc:            "normal case",
 			conformancePath: filepath.Join("..", "testdata", "styleguide.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest",
-			wantProto: &rpc.ConformanceReport{
+			wantProto: &style.ConformanceReport{
 				Id:         "conformance-openapitest",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest",
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
-					{State: rpc.Guideline_PROPOSED},
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
+					{State: style.Guideline_STATE_UNSPECIFIED},
+					{State: style.Guideline_PROPOSED},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_ACTIVE,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*style.RuleReportGroup{
+									{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "norefsiblings",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -96,15 +97,15 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_WARNING},
+									{Severity: style.Rule_INFO},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: style.Guideline_DEPRECATED},
+					{State: style.Guideline_DISABLED},
 				},
 			},
 		},
@@ -113,20 +114,20 @@ func TestConformance(t *testing.T) {
 			desc:            "default case",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-default.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-default",
-			wantProto: &rpc.ConformanceReport{
+			wantProto: &style.ConformanceReport{
 				Id:         "conformance-openapitest-default",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-default",
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
 					{
-						State: rpc.Guideline_STATE_UNSPECIFIED,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_STATE_UNSPECIFIED,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
+								RuleReportGroups: []*style.RuleReportGroup{
 									{
-										Severity: rpc.Rule_SEVERITY_UNSPECIFIED,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_SEVERITY_UNSPECIFIED,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "norefsiblings",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -135,18 +136,18 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_ERROR},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_ERROR},
+									{Severity: style.Rule_WARNING},
+									{Severity: style.Rule_INFO},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_PROPOSED},
-					{State: rpc.Guideline_ACTIVE},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: style.Guideline_PROPOSED},
+					{State: style.Guideline_ACTIVE},
+					{State: style.Guideline_DEPRECATED},
+					{State: style.Guideline_DISABLED},
 				},
 			},
 		},
@@ -155,23 +156,23 @@ func TestConformance(t *testing.T) {
 			desc:            "multiple severity",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-severity.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-multiple-severity",
-			wantProto: &rpc.ConformanceReport{
+			wantProto: &style.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-severity",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-multiple-severity",
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
-					{State: rpc.Guideline_PROPOSED},
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
+					{State: style.Guideline_STATE_UNSPECIFIED},
+					{State: style.Guideline_PROPOSED},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_ACTIVE,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "tagproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*style.RuleReportGroup{
+									{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "operationtags",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -186,10 +187,10 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
+									{Severity: style.Rule_WARNING},
 									{
-										Severity: rpc.Rule_INFO,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_INFO,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "openapitags",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -204,13 +205,13 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: style.Guideline_DEPRECATED},
+					{State: style.Guideline_DISABLED},
 				},
 			},
 		},
@@ -219,22 +220,22 @@ func TestConformance(t *testing.T) {
 			desc:            "multiple state",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-state.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-multiple-state",
-			wantProto: &rpc.ConformanceReport{
+			wantProto: &style.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-state",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-multiple-state",
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
+					{State: style.Guideline_STATE_UNSPECIFIED},
 					{
-						State: rpc.Guideline_PROPOSED,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_PROPOSED,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "tagproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*style.RuleReportGroup{
+									{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "operationtags",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -243,10 +244,10 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
+									{Severity: style.Rule_WARNING},
 									{
-										Severity: rpc.Rule_INFO,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_INFO,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "openapitags",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -255,21 +256,21 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_ACTIVE,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*style.RuleReportGroup{
+									{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "norefsiblings",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -278,15 +279,15 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_WARNING},
+									{Severity: style.Rule_INFO},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: style.Guideline_DEPRECATED},
+					{State: style.Guideline_DISABLED},
 				},
 			},
 		},
@@ -295,22 +296,22 @@ func TestConformance(t *testing.T) {
 			desc:            "multiple linter",
 			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-linter.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-openapitest-multiple-linter",
-			wantProto: &rpc.ConformanceReport{
+			wantProto: &style.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-linter",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-multiple-linter",
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
+					{State: style.Guideline_STATE_UNSPECIFIED},
 					{
-						State: rpc.Guideline_PROPOSED,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_PROPOSED,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "descriptionproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*style.RuleReportGroup{
+									{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "operationdescription",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -326,8 +327,8 @@ func TestConformance(t *testing.T) {
 										},
 									},
 									{
-										Severity: rpc.Rule_WARNING,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_WARNING,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "descriptiontags",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -337,8 +338,8 @@ func TestConformance(t *testing.T) {
 										},
 									},
 									{
-										Severity: rpc.Rule_INFO,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_INFO,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "tagdescription",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -347,21 +348,21 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_ACTIVE,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*style.RuleReportGroup{
+									{Severity: style.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:      "norefsiblings",
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -370,15 +371,15 @@ func TestConformance(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: style.Rule_WARNING},
+									{Severity: style.Rule_INFO},
+									{Severity: style.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: style.Guideline_DEPRECATED},
+					{State: style.Guideline_DISABLED},
 				},
 			},
 		},
@@ -499,13 +500,13 @@ func TestConformance(t *testing.T) {
 				}
 			}
 
-			gotProto := &rpc.ConformanceReport{}
+			gotProto := &style.ConformanceReport{}
 			if err := proto.Unmarshal(contents.GetData(), gotProto); err != nil {
 				t.Fatalf("Failed to unmarshal artifact: %s", err)
 			}
 
 			opts := cmp.Options{
-				protocmp.IgnoreFields(&rpc.RuleReport{}, "file", "suggestion", "location"),
+				protocmp.IgnoreFields(&style.RuleReport{}, "file", "suggestion", "location"),
 				protocmp.Transform(),
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),
 			}

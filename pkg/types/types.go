@@ -19,7 +19,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/controller"
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	metrics "github.com/google/gnostic/metrics"
 	"google.golang.org/protobuf/proto"
 )
@@ -147,20 +150,20 @@ type messageFactory func() proto.Message
 
 // artifactMessageTypes is the single source of truth for protobuf types that the registry tool supports in artifact YAML files.
 var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
-	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(rpc.ApiSpecExtensionList) },
-	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(rpc.DisplaySettings) },
-	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":            func() proto.Message { return new(rpc.Lifecycle) },
-	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(rpc.ReferenceList) },
-	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(rpc.TaxonomyList) },
-	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(rpc.Manifest) },
-	"google.cloud.apigeeregistry.v1.controller.Receipt":          func() proto.Message { return new(rpc.Receipt) },
-	"google.cloud.apigeeregistry.v1.scoring.Score":               func() proto.Message { return new(rpc.Score) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":     func() proto.Message { return new(rpc.ScoreDefinition) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":           func() proto.Message { return new(rpc.ScoreCard) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition": func() proto.Message { return new(rpc.ScoreCardDefinition) },
-	"google.cloud.apigeeregistry.v1.style.StyleGuide":            func() proto.Message { return new(rpc.StyleGuide) },
-	"google.cloud.apigeeregistry.v1.style.ConformanceReport":     func() proto.Message { return new(rpc.ConformanceReport) },
-	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(rpc.Lint) },
+	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(apihub.ApiSpecExtensionList) },
+	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(apihub.DisplaySettings) },
+	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":            func() proto.Message { return new(apihub.Lifecycle) },
+	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(apihub.ReferenceList) },
+	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(apihub.TaxonomyList) },
+	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(controller.Manifest) },
+	"google.cloud.apigeeregistry.v1.controller.Receipt":          func() proto.Message { return new(controller.Receipt) },
+	"google.cloud.apigeeregistry.v1.scoring.Score":               func() proto.Message { return new(scoring.Score) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":     func() proto.Message { return new(scoring.ScoreDefinition) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":           func() proto.Message { return new(scoring.ScoreCard) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition": func() proto.Message { return new(scoring.ScoreCardDefinition) },
+	"google.cloud.apigeeregistry.v1.style.StyleGuide":            func() proto.Message { return new(style.StyleGuide) },
+	"google.cloud.apigeeregistry.v1.style.ConformanceReport":     func() proto.Message { return new(style.ConformanceReport) },
+	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(style.Lint) },
 	"gnostic.metrics.Complexity":                                 func() proto.Message { return new(metrics.Complexity) },
 	"gnostic.metrics.Vocabulary":                                 func() proto.Message { return new(metrics.Vocabulary) },
 }

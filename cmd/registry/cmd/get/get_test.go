@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/compress"
+	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/types"
@@ -39,7 +40,7 @@ func TestMain(m *testing.M) {
 
 func TestGetValidResources(t *testing.T) {
 	// Seed a registry with a list of leaf-level artifacts.
-	displaySettingsBytes, err := proto.Marshal(&rpc.DisplaySettings{Organization: "Sample"})
+	displaySettingsBytes, err := proto.Marshal(&apihub.DisplaySettings{Organization: "Sample"})
 	if err != nil {
 		t.Fatalf("Failed to prepare test data: %+v", err)
 	}

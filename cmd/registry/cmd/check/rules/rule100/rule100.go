@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -41,10 +42,10 @@ var availabilitySingleWord = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return true
 	},
-	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*rpc.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*check.Problem {
 		if arr := strings.SplitN(a.Availability, " ", 2); len(arr) > 1 {
-			return []*rpc.Problem{{
-				Severity:   rpc.Problem_INFO,
+			return []*check.Problem{{
+				Severity:   check.Problem_INFO,
 				Message:    `Availability is free-form, but we expect single words that describe availability.`,
 				Suggestion: `Use single words like: "NONE", "TESTING", "PREVIEW", "GENERAL", "DEPRECATED", "SHUTDOWN"`,
 			}}

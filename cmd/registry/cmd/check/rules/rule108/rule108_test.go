@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -31,15 +32,15 @@ func TestAddRules(t *testing.T) {
 }
 
 func Test_externalChannelURIFormat(t *testing.T) {
-	prob := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	prob := []*check.Problem{{
+		Severity:   check.Problem_ERROR,
 		Message:    `external_channel_uri must be an absolute URI.`,
 		Suggestion: `Ensure external_channel_uri includes a host.`,
 	}}
 
 	for _, tt := range []struct {
 		in       string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"", nil},
 		{"x", prob},
@@ -51,7 +52,7 @@ func Test_externalChannelURIFormat(t *testing.T) {
 			}
 			if externalChannelUriFormat.OnlyIf(a) {
 				got := externalChannelUriFormat.ApplyToApiDeployment(context.Background(), a)
-				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

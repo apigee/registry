@@ -21,6 +21,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/application/controller"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
@@ -44,21 +46,21 @@ func TestMain(m *testing.M) {
 const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
 
 var sortActions = cmpopts.SortSlices(func(a, b *Action) bool { return a.Command < b.Command })
-var styleguide = &rpc.StyleGuide{
+var styleguide = &style.StyleGuide{
 	Id:        "registry-styleguide",
 	MimeTypes: []string{gzipOpenAPIv3},
-	Guidelines: []*rpc.Guideline{
+	Guidelines: []*style.Guideline{
 		{
 			Id: "Operation",
-			Rules: []*rpc.Rule{
+			Rules: []*style.Rule{
 				{
 					Id:             "OperationIdValidInURL",
 					Linter:         "spectral",
 					LinterRulename: "operation-operationId-valid-in-url",
-					Severity:       rpc.Rule_WARNING,
+					Severity:       style.Rule_WARNING,
 				},
 			},
-			State: rpc.Guideline_ACTIVE,
+			State: style.Guideline_ACTIVE,
 		},
 	},
 }
@@ -152,12 +154,12 @@ func TestArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 								Filter:  "mime_type.contains('openapi')",
@@ -250,13 +252,13 @@ func TestAggregateArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/artifacts/vocabulary",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.api/versions/-/specs/-",
 							},
@@ -391,12 +393,12 @@ func TestDerivedArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/summary",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec/artifacts/lint-gnostic",
 							},
@@ -487,13 +489,13 @@ func TestReceiptArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/custom-artifact",
 						Receipt: true,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 							},
@@ -596,13 +598,13 @@ func TestReceiptAggArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "artifacts/search-index",
 						Receipt: true,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "apis/-/versions/-/specs/-",
 							},
@@ -763,13 +765,13 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-registry-styleguide",
 						Receipt: true,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 							},
@@ -886,12 +888,12 @@ func TestMaxActions(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 							},

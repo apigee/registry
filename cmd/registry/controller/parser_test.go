@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/controller"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -112,13 +112,13 @@ func TestGenerateCommandError(t *testing.T) {
 func TestValidateGeneratedResourceEntry(t *testing.T) {
 	tests := []struct {
 		desc              string
-		generatedResource *rpc.GeneratedResource
+		generatedResource *controller.GeneratedResource
 	}{
 		{
 			desc: "single entity reference",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/complexity",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -128,9 +128,9 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 		},
 		{
 			desc: "multiple entity reference",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/compliance",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.version",
 					},
@@ -143,9 +143,9 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 		},
 		{
 			desc: "present/absent entity reference",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/conformance",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -158,9 +158,9 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 		},
 		{
 			desc: "present/absent entity and multiple reference",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/version-summary",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.api/versions/-",
 					},
@@ -176,7 +176,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 		},
 		{
 			desc: "refresh field with missing dependencies",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score-receipt",
 				Receipt: true,
 				Refresh: &durationpb.Duration{
@@ -187,7 +187,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 		},
 		{
 			desc: "refresh field (in nanoseconds)",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score-receipt",
 				Receipt: true,
 				Refresh: &durationpb.Duration{
@@ -210,13 +210,13 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 func TestValidateGeneratedResourceEntryError(t *testing.T) {
 	tests := []struct {
 		desc              string
-		generatedResource *rpc.GeneratedResource
+		generatedResource *controller.GeneratedResource
 	}{
 		{
 			desc: "invalid target pattern",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/complexity", // Correct pattern: apis/-/versions/-/specs/-/artifacts/complexity
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -226,9 +226,9 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 		},
 		{
 			desc: "no target resource name",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-", // Correct pattern: apis/-/versions/-/specs/openapi
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 						Filter:  "mime_type.contains('openapi')",
@@ -239,9 +239,9 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 		},
 		{
 			desc: "invalid reference in deps",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/version-summary",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.version",
 					},
@@ -254,9 +254,9 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 		},
 		{
 			desc: "invalid reference in action",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/version-summary",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.api/versions/-",
 					},
@@ -272,7 +272,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 		},
 		{
 			desc: "refresh field equal to 0",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score-receipt",
 				Receipt: true,
 				Refresh: &durationpb.Duration{
@@ -283,7 +283,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 		},
 		{
 			desc: "missing dependencies and refresh",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score-receipt",
 				Receipt: true,
 				Action:  "registry generate summary $resource.version",

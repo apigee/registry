@@ -19,8 +19,11 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/scoring/extensions"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/controller"
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/types"
-	"github.com/apigee/registry/rpc"
 	"github.com/google/cel-go/cel"
 	metrics "github.com/google/gnostic/metrics"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -68,17 +71,17 @@ func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
 	case "gnostic.metrics.Vocabulary":
 		return unmarshalAndMap(contents, &metrics.Vocabulary{})
 	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
-		return unmarshalAndMap(contents, &rpc.ConformanceReport{})
+		return unmarshalAndMap(contents, &style.ConformanceReport{})
 	case "google.cloud.apigeeregistry.v1.style.Lint":
-		return unmarshalAndMap(contents, &rpc.Lint{})
+		return unmarshalAndMap(contents, &style.Lint{})
 	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
-		return unmarshalAndMap(contents, &rpc.ReferenceList{})
+		return unmarshalAndMap(contents, &apihub.ReferenceList{})
 	case "google.cloud.apigeeregistry.v1.controller.Receipt":
-		return unmarshalAndMap(contents, &rpc.Receipt{})
+		return unmarshalAndMap(contents, &controller.Receipt{})
 	case "google.cloud.apigeeregistry.v1.scoring.Score":
-		return unmarshalAndMap(contents, &rpc.Score{})
+		return unmarshalAndMap(contents, &scoring.Score{})
 	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
-		return unmarshalAndMap(contents, &rpc.ScoreCard{})
+		return unmarshalAndMap(contents, &scoring.ScoreCard{})
 	// TODO: Add support for JSON artifacts
 	default:
 		return nil, fmt.Errorf("unsupported artifact type: %s", messageType)

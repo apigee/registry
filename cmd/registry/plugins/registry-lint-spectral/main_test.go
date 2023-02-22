@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,8 +43,8 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
 		linter           *spectralLinterRunner
 		runLinter        runLinter
-		request          *rpc.LinterRequest
-		expectedResponse *rpc.LinterResponse
+		request          *style.LinterRequest
+		expectedResponse *style.LinterResponse
 		expectedError    error
 	}{
 		{
@@ -67,26 +67,26 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 					},
 				}, nil
 			},
-			&rpc.LinterRequest{
+			&style.LinterRequest{
 				SpecDirectory: specDirectory,
 			},
-			&rpc.LinterResponse{
-				Lint: &rpc.Lint{
+			&style.LinterResponse{
+				Lint: &style.Lint{
 					Name: "registry-lint-spectral",
-					Files: []*rpc.LintFile{
+					Files: []*style.LintFile{
 						{
 							FilePath: specDirectory,
-							Problems: []*rpc.LintProblem{
+							Problems: []*style.LintProblem{
 								{
 									Message:    "test",
 									RuleId:     "test",
 									RuleDocUri: "https://meta.stoplight.io/docs/spectral/docs/reference/openapi-rules.md#test",
-									Location: &rpc.LintLocation{
-										StartPosition: &rpc.LintPosition{
+									Location: &style.LintLocation{
+										StartPosition: &style.LintPosition{
 											LineNumber:   1,
 											ColumnNumber: 1,
 										},
-										EndPosition: &rpc.LintPosition{
+										EndPosition: &style.LintPosition{
 											LineNumber:   3,
 											ColumnNumber: 10,
 										},
@@ -104,7 +104,7 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 			func(specPath, configPath string) ([]*spectralLintResult, error) {
 				return nil, errors.New("test")
 			},
-			&rpc.LinterRequest{
+			&style.LinterRequest{
 				SpecDirectory: specDirectory,
 			},
 			nil,

@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
@@ -42,7 +43,7 @@ var internalMimeTypeContents = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "MimeType"
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*rpc.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		var declared string
 		var contents []byte
 		switch t := resource.(type) {
@@ -63,8 +64,8 @@ var internalMimeTypeContents = &lint.FieldRule{
 		if strings.HasPrefix(typeParam, "google.cloud.apigeeregistry.") || strings.HasPrefix(typeParam, "gnostic.metrics.") {
 			message, err := types.MessageForMimeType(declared)
 			if err != nil {
-				return []*rpc.Problem{{
-					Severity:   rpc.Problem_ERROR,
+				return []*check.Problem{{
+					Severity:   check.Problem_ERROR,
 					Message:    fmt.Sprintf("Unknown internal mime_type: %q.", declared),
 					Suggestion: "Fix mime_type.",
 				}}
@@ -73,8 +74,8 @@ var internalMimeTypeContents = &lint.FieldRule{
 			// does not validate contents, just proves type compatibility
 			err = proto.Unmarshal(contents, message)
 			if err != nil {
-				return []*rpc.Problem{{
-					Severity:   rpc.Problem_ERROR,
+				return []*check.Problem{{
+					Severity:   check.Problem_ERROR,
 					Message:    fmt.Sprintf("Error loading contents into proto type %q: %v.", declared, err),
 					Suggestion: "Fix mime_type or contents.",
 				}}

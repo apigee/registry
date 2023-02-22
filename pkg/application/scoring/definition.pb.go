@@ -21,7 +21,7 @@
 // (-- api-linter: core::0215::versioned-packages=disabled
 //     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
 
-package rpc
+package scoring
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -65,14 +65,12 @@ type ScoreDefinition struct {
 	// A score can be a single score_value or a rollup of multiple score_values.
 	//
 	// Types that are assignable to Formula:
-	//
 	//	*ScoreDefinition_ScoreFormula
 	//	*ScoreDefinition_RollupFormula
 	Formula isScoreDefinition_Formula `protobuf_oneof:"formula"`
 	// Represents the type and characteristics of the score.
 	//
 	// Types that are assignable to Type:
-	//
 	//	*ScoreDefinition_Percent
 	//	*ScoreDefinition_Integer
 	//	*ScoreDefinition_Boolean
@@ -263,9 +261,8 @@ type ResourcePattern struct {
 	// A pattern that specifies a resource.
 	// This can specify one particular resource or a group of resources.
 	// Format:
-	//
-	//	apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
-	//	apis/-/versions/-/specs/-/artifacts/-
+	//   apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
+	//   apis/-/versions/-/specs/-/artifacts/-
 	Pattern string `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"`
 	// A filter expression that limits the resources that match the pattern.
 	Filter string `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
@@ -457,36 +454,34 @@ type PercentType struct {
 	// Represents the thresholds for severity of this type of score.
 	// Examples of thresholds:
 	// For scores where low value is of concern.
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.ALERT,
-	//	    range: NumberRange{ min: 0, max: 30},
-	//	  },
-	//	  {
-	//	    severity: Severity.WARNING,
-	//	    range: NumberRange{ min: 31, max: 70},
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    range: NumberRange{ min: 71, max: 100},
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.ALERT,
+	//     range: NumberRange{ min: 0, max: 30},
+	//   },
+	//   {
+	//     severity: Severity.WARNING,
+	//     range: NumberRange{ min: 31, max: 70},
+	//   },
+	//   { severity: Severity.OK,
+	//     range: NumberRange{ min: 71, max: 100},
+	//   },
+	// }
 	//
 	// For scores where high value is of concern.
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.ALERT,
-	//	    range: NumberRange{ min: 61, max: 100},
-	//	  },
-	//	  {
-	//	    severity: Severity.WARNING,
-	//	    range: NumberRange{ min: 31, max: 60},
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    range: NumberRange{ min: 0, max: 30},
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.ALERT,
+	//     range: NumberRange{ min: 61, max: 100},
+	//   },
+	//   {
+	//     severity: Severity.WARNING,
+	//     range: NumberRange{ min: 31, max: 60},
+	//   },
+	//   { severity: Severity.OK,
+	//     range: NumberRange{ min: 0, max: 30},
+	//   },
+	// }
 	Thresholds []*NumberThreshold `protobuf:"bytes,1,rep,name=thresholds,proto3" json:"thresholds,omitempty"`
 }
 
@@ -613,28 +608,26 @@ type BooleanType struct {
 	DisplayFalse string `protobuf:"bytes,2,opt,name=display_false,json=displayFalse,proto3" json:"display_false,omitempty"`
 	// Represents the thresholds for severity of this type of score.
 	// Examples:
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.ALERT,
-	//	    value: false,
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    value: true,
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.ALERT,
+	//     value: false,
+	//   },
+	//   { severity: Severity.OK,
+	//     value: true,
+	//   },
+	// }
 	//
 	// For scores where false value is not an alert but a warning.
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.WARNING,
-	//	    value: false,
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    value: true,
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.WARNING,
+	//     value: false,
+	//   },
+	//   { severity: Severity.OK,
+	//     value: true,
+	//   },
+	// }
 	Thresholds []*BooleanThreshold `protobuf:"bytes,3,rep,name=thresholds,proto3" json:"thresholds,omitempty"`
 }
 
@@ -1123,14 +1116,15 @@ var file_google_cloud_apigeeregistry_v1_scoring_definition_proto_rawDesc = []byt
 	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x2a, 0x0a, 0x0e, 0x73, 0x63, 0x6f, 0x72, 0x65, 0x5f, 0x70,
 	0x61, 0x74, 0x74, 0x65, 0x72, 0x6e, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x09, 0x42, 0x03, 0xe0,
 	0x41, 0x02, 0x52, 0x0d, 0x73, 0x63, 0x6f, 0x72, 0x65, 0x50, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6e,
-	0x73, 0x42, 0x6a, 0x0a, 0x2a, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
-	0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x72, 0x65, 0x67, 0x69,
-	0x73, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x73, 0x63, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x42,
-	0x16, 0x53, 0x63, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69,
-	0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x22, 0x67, 0x69, 0x74, 0x68, 0x75,
-	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x2f, 0x72, 0x65, 0x67,
-	0x69, 0x73, 0x74, 0x72, 0x79, 0x2f, 0x72, 0x70, 0x63, 0x3b, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x42, 0x82, 0x01, 0x0a, 0x2a, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
+	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x72, 0x65, 0x67,
+	0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x73, 0x63, 0x6f, 0x72, 0x69, 0x6e, 0x67,
+	0x42, 0x16, 0x53, 0x63, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
+	0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3a, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x2f, 0x72, 0x65,
+	0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x70, 0x6c, 0x69,
+	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x63, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x3b, 0x73,
+	0x63, 0x6f, 0x72, 0x69, 0x6e, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

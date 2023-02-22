@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -46,7 +47,7 @@ func TestLabels(t *testing.T) {
 	tests := []struct {
 		name     string
 		in       map[string]string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"nil", nil, nil},
 		{"empty", map[string]string{}, nil},
@@ -64,16 +65,16 @@ func TestLabels(t *testing.T) {
 				"key": "value",
 				"*":   "*",
 			},
-			[]*rpc.Problem{
+			[]*check.Problem{
 				{
 					Message:    `Key "*" has illegal first character '*'.`,
 					Suggestion: "Fix key.",
-					Severity:   rpc.Problem_ERROR,
+					Severity:   check.Problem_ERROR,
 				},
 				{
 					Message:    `Value for key "*" contains illegal character '*'.`,
 					Suggestion: "Fix value.",
-					Severity:   rpc.Problem_ERROR,
+					Severity:   check.Problem_ERROR,
 				},
 			},
 		},
@@ -85,11 +86,11 @@ func TestLabels(t *testing.T) {
 		{
 			"too many",
 			tooMany,
-			[]*rpc.Problem{
+			[]*check.Problem{
 				{
 					Message:    `Maximum number of labels is 64.`,
 					Suggestion: "Delete some entries.",
-					Severity:   rpc.Problem_ERROR,
+					Severity:   check.Problem_ERROR,
 				},
 			},
 		},
@@ -102,7 +103,7 @@ func TestLabels(t *testing.T) {
 			}
 			if labels.OnlyIf(a, fieldName) {
 				got := labels.ApplyToField(ctx, a, fieldName, test.in)
-				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
 			}
@@ -115,51 +116,51 @@ func TestCheckLabel(t *testing.T) {
 		name     string
 		key      string
 		value    string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"good", "alphanum", "value1_2-", nil},
-		{"period", "key.", ".", []*rpc.Problem{
+		{"period", "key.", ".", []*check.Problem{
 			{
 				Message:    `Key "key." contains illegal character '.'.`,
 				Suggestion: "Fix key.",
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			},
 			{
 				Message:    `Value for key "key." contains illegal character '.'.`,
 				Suggestion: "Fix value.",
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			},
 		}},
-		{"uppercase", "keY", "valuE", []*rpc.Problem{
+		{"uppercase", "keY", "valuE", []*check.Problem{
 			{
 				Message:    `Key "keY" contains illegal character 'Y'.`,
 				Suggestion: "Fix key.",
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			},
 			{
 				Message:    `Value for key "keY" contains illegal character 'E'.`,
 				Suggestion: "Fix value.",
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			},
 		}},
 		{"long", strings.Repeat("y", 64), strings.Repeat("y", 64), nil},
-		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []*rpc.Problem{
+		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []*check.Problem{
 			{
 				Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
 				Suggestion: "Fix key.",
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			},
 			{
 				Message:    fmt.Sprintf(`Value for key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
 				Suggestion: "Fix value.",
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			},
 		}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := checkLabel(test.key, test.value)
-			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 )
@@ -42,11 +43,11 @@ var primarySpecRef = &lint.ApiVersionRule{
 	OnlyIf: func(a *rpc.ApiVersion) bool {
 		return strings.TrimSpace(a.PrimarySpec) != ""
 	},
-	ApplyToApiVersion: func(ctx context.Context, a *rpc.ApiVersion) []*rpc.Problem {
+	ApplyToApiVersion: func(ctx context.Context, a *rpc.ApiVersion) []*check.Problem {
 		specName, err := names.ParseSpec(a.PrimarySpec)
 		if err != nil {
-			return []*rpc.Problem{{
-				Severity:   rpc.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`primary_spec %q is not a valid ApiSpec name.`, a.PrimarySpec),
 				Suggestion: fmt.Sprintf(`Parse error: %s`, err),
 			}}
@@ -54,8 +55,8 @@ var primarySpecRef = &lint.ApiVersionRule{
 
 		versionName, _ := names.ParseVersion(a.Name) // name assumed to be valid
 		if specName.Api() != versionName.Api() {
-			return []*rpc.Problem{{
-				Severity:   rpc.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`primary_spec %q is not an API sibling of this Version.`, a.PrimarySpec),
 				Suggestion: `Correct the primary_spec.`,
 			}}
@@ -65,8 +66,8 @@ var primarySpecRef = &lint.ApiVersionRule{
 		if _, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 			Name: a.PrimarySpec,
 		}); err != nil {
-			return []*rpc.Problem{{
-				Severity:   rpc.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`primary_spec %q not found in registry.`, a.PrimarySpec),
 				Suggestion: `Correct the primary_spec.`,
 			}}

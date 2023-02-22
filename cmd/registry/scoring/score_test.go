@@ -19,6 +19,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -29,35 +31,35 @@ import (
 )
 
 var (
-	integerDefinition = &rpc.ScoreDefinition{
+	integerDefinition = &scoring.ScoreDefinition{
 		Id:             "lint-error",
 		Kind:           "ScoreDefinition",
 		DisplayName:    "Lint Error",
 		Description:    "Number of errors found by linter",
 		Uri:            "http://some/test/uri",
 		UriDisplayName: "Test URI",
-		Type: &rpc.ScoreDefinition_Integer{
-			Integer: &rpc.IntegerType{
+		Type: &scoring.ScoreDefinition_Integer{
+			Integer: &scoring.IntegerType{
 				MinValue: 0,
 				MaxValue: 10,
-				Thresholds: []*rpc.NumberThreshold{
+				Thresholds: []*scoring.NumberThreshold{
 					{
-						Severity: rpc.Severity_OK,
-						Range: &rpc.NumberThreshold_NumberRange{
+						Severity: scoring.Severity_OK,
+						Range: &scoring.NumberThreshold_NumberRange{
 							Min: 0,
 							Max: 3,
 						},
 					},
 					{
-						Severity: rpc.Severity_WARNING,
-						Range: &rpc.NumberThreshold_NumberRange{
+						Severity: scoring.Severity_WARNING,
+						Range: &scoring.NumberThreshold_NumberRange{
 							Min: 4,
 							Max: 6,
 						},
 					},
 					{
-						Severity: rpc.Severity_ALERT,
-						Range: &rpc.NumberThreshold_NumberRange{
+						Severity: scoring.Severity_ALERT,
+						Range: &scoring.NumberThreshold_NumberRange{
 							Min: 6,
 							Max: 10,
 						},
@@ -67,33 +69,33 @@ var (
 		},
 	}
 
-	percentDefinition = &rpc.ScoreDefinition{
+	percentDefinition = &scoring.ScoreDefinition{
 		Id:             "lint-error-percent",
 		Kind:           "ScoreDefinition",
 		DisplayName:    "Lint Error Percentage",
 		Description:    "Percentage errors found by linter",
 		Uri:            "http://some/test/uri",
 		UriDisplayName: "Test URI",
-		Type: &rpc.ScoreDefinition_Percent{
-			Percent: &rpc.PercentType{
-				Thresholds: []*rpc.NumberThreshold{
+		Type: &scoring.ScoreDefinition_Percent{
+			Percent: &scoring.PercentType{
+				Thresholds: []*scoring.NumberThreshold{
 					{
-						Severity: rpc.Severity_OK,
-						Range: &rpc.NumberThreshold_NumberRange{
+						Severity: scoring.Severity_OK,
+						Range: &scoring.NumberThreshold_NumberRange{
 							Min: 0,
 							Max: 30,
 						},
 					},
 					{
-						Severity: rpc.Severity_WARNING,
-						Range: &rpc.NumberThreshold_NumberRange{
+						Severity: scoring.Severity_WARNING,
+						Range: &scoring.NumberThreshold_NumberRange{
 							Min: 31,
 							Max: 60,
 						},
 					},
 					{
-						Severity: rpc.Severity_ALERT,
-						Range: &rpc.NumberThreshold_NumberRange{
+						Severity: scoring.Severity_ALERT,
+						Range: &scoring.NumberThreshold_NumberRange{
 							Min: 61,
 							Max: 100,
 						},
@@ -103,24 +105,24 @@ var (
 		},
 	}
 
-	booleanDefinition = &rpc.ScoreDefinition{
+	booleanDefinition = &scoring.ScoreDefinition{
 		Id:             "lint-approval",
 		Kind:           "ScoreDefinition",
 		DisplayName:    "Lint Approval",
 		Description:    "Approval by linter",
 		Uri:            "http://some/test/uri",
 		UriDisplayName: "Test URI",
-		Type: &rpc.ScoreDefinition_Boolean{
-			Boolean: &rpc.BooleanType{
+		Type: &scoring.ScoreDefinition_Boolean{
+			Boolean: &scoring.BooleanType{
 				DisplayTrue:  "Approved",
 				DisplayFalse: "Denied",
-				Thresholds: []*rpc.BooleanThreshold{
+				Thresholds: []*scoring.BooleanThreshold{
 					{
-						Severity: rpc.Severity_WARNING,
+						Severity: scoring.Severity_WARNING,
 						Value:    false,
 					},
 					{
-						Severity: rpc.Severity_OK,
+						Severity: scoring.Severity_OK,
 						Value:    true,
 					},
 				},
@@ -133,8 +135,8 @@ func TestCalculateScore(t *testing.T) {
 	tests := []struct {
 		desc            string
 		seed            []seeder.RegistryResource
-		definitionProto *rpc.ScoreDefinition
-		wantScore       *rpc.Score
+		definitionProto *scoring.ScoreDefinition
+		wantScore       *scoring.Score
 	}{
 		{
 			desc: "nonexistent score ScoreArtifact",
@@ -142,12 +144,12 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -159,21 +161,21 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/artifacts/lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id: "lint-error",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
-						Formula: &rpc.ScoreDefinition_ScoreFormula{
-							ScoreFormula: &rpc.ScoreFormula{
-								Artifact: &rpc.ResourcePattern{
+						Formula: &scoring.ScoreDefinition_ScoreFormula{
+							ScoreFormula: &scoring.ScoreFormula{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/lint-spectral",
 								},
 								ScoreExpression: "size(files[0].problems)",
 							},
 						},
-						Type: &rpc.ScoreDefinition_Integer{
-							Integer: &rpc.IntegerType{
+						Type: &scoring.ScoreDefinition_Integer{
+							Integer: &scoring.IntegerType{
 								MinValue: 0,
 								MaxValue: 10,
 							},
@@ -181,13 +183,13 @@ func TestCalculateScore(t *testing.T) {
 					}),
 				},
 			},
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_SEVERITY_UNSPECIFIED,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -202,12 +204,12 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -226,21 +228,21 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/artifacts/lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id: "lint-error",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
-						Formula: &rpc.ScoreDefinition_ScoreFormula{
-							ScoreFormula: &rpc.ScoreFormula{
-								Artifact: &rpc.ResourcePattern{
+						Formula: &scoring.ScoreDefinition_ScoreFormula{
+							ScoreFormula: &scoring.ScoreFormula{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/lint-spectral",
 								},
 								ScoreExpression: "size(files[0].problems)",
 							},
 						},
-						Type: &rpc.ScoreDefinition_Integer{
-							Integer: &rpc.IntegerType{
+						Type: &scoring.ScoreDefinition_Integer{
+							Integer: &scoring.IntegerType{
 								MinValue: 0,
 								MaxValue: 10,
 							},
@@ -248,13 +250,13 @@ func TestCalculateScore(t *testing.T) {
 					}),
 				},
 			},
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_SEVERITY_UNSPECIFIED,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -269,21 +271,21 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/artifacts/lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id: "lint-error",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
-						Formula: &rpc.ScoreDefinition_ScoreFormula{
-							ScoreFormula: &rpc.ScoreFormula{
-								Artifact: &rpc.ResourcePattern{
+						Formula: &scoring.ScoreDefinition_ScoreFormula{
+							ScoreFormula: &scoring.ScoreFormula{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/lint-spectral",
 								},
 								ScoreExpression: "size(files[0].problems)",
 							},
 						},
-						Type: &rpc.ScoreDefinition_Integer{
-							Integer: &rpc.IntegerType{
+						Type: &scoring.ScoreDefinition_Integer{
+							Integer: &scoring.IntegerType{
 								MinValue: 0,
 								MaxValue: 10,
 							},
@@ -300,12 +302,12 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -315,13 +317,13 @@ func TestCalculateScore(t *testing.T) {
 					}),
 				},
 			},
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_SEVERITY_UNSPECIFIED,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -342,21 +344,21 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/artifacts/lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id: "lint-error",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
-						Formula: &rpc.ScoreDefinition_ScoreFormula{
-							ScoreFormula: &rpc.ScoreFormula{
-								Artifact: &rpc.ResourcePattern{
+						Formula: &scoring.ScoreDefinition_ScoreFormula{
+							ScoreFormula: &scoring.ScoreFormula{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/lint-spectral",
 								},
 								ScoreExpression: "size(files[0].problems)",
 							},
 						},
-						Type: &rpc.ScoreDefinition_Integer{
-							Integer: &rpc.IntegerType{
+						Type: &scoring.ScoreDefinition_Integer{
+							Integer: &scoring.IntegerType{
 								MinValue: 0,
 								MaxValue: 10,
 							},
@@ -367,12 +369,12 @@ func TestCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -382,13 +384,13 @@ func TestCalculateScore(t *testing.T) {
 					}),
 				},
 			},
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_SEVERITY_UNSPECIFIED,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -452,7 +454,7 @@ func TestCalculateScore(t *testing.T) {
 				t.Errorf("failed to get the result scoreArtifact from registry")
 			}
 
-			gotScore := &rpc.Score{}
+			gotScore := &scoring.Score{}
 			err = proto.Unmarshal(scoreArtifact.GetContents(), gotScore)
 			if err != nil {
 				t.Errorf("failed unmarshalling score artifact from registry: %s", err)
@@ -492,12 +494,12 @@ func TestProcessScoreFormula(t *testing.T) {
 		&rpc.Artifact{
 			Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-			Contents: protoMarshal(&rpc.Lint{
+			Contents: protoMarshal(&style.Lint{
 				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+				Files: []*style.LintFile{
 					{
 						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						Problems: []*style.LintProblem{
 							{
 								Message: "lint-error",
 							},
@@ -513,8 +515,8 @@ func TestProcessScoreFormula(t *testing.T) {
 	}
 
 	// arguments
-	formula := &rpc.ScoreFormula{
-		Artifact: &rpc.ResourcePattern{
+	formula := &scoring.ScoreFormula{
+		Artifact: &scoring.ResourcePattern{
 			Pattern: "$resource.spec/artifacts/lint-spectral",
 		},
 		ScoreExpression: "size(files[0].problems)",
@@ -546,7 +548,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 		desc     string
 		seed     []seeder.RegistryResource
 		setup    func(context.Context, connection.RegistryClient, connection.AdminClient)
-		formula  *rpc.ScoreFormula
+		formula  *scoring.ScoreFormula
 		resource patterns.ResourceInstance
 	}{
 		{
@@ -556,8 +558,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
-			formula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			formula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.specs/artifacts/lint-spectral", //error
 				},
 				ScoreExpression: "size(files[0].problems)",
@@ -575,8 +577,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
-			formula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			formula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifact/lint-spectral", // error
 				},
 				ScoreExpression: "size(files[0].problems)",
@@ -594,8 +596,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
-			formula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			formula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/lint-spectral",
 				},
 				ScoreExpression: "size(files[0].problems)",
@@ -612,15 +614,15 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-definition",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id:             "dummy-score-definition",
-						TargetResource: &rpc.ResourcePattern{},
+						TargetResource: &scoring.ResourcePattern{},
 						Formula:        nil,
 						Type:           nil,
 					}),
 				},
 			},
-			formula: &rpc.ScoreFormula{},
+			formula: &scoring.ScoreFormula{},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
 					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
@@ -633,12 +635,12 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -648,8 +650,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 					}),
 				},
 			},
-			formula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			formula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/lint-spectral",
 				},
 				ScoreExpression: "size(files[0].problem)", // invalid expression
@@ -666,12 +668,12 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -681,8 +683,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 					}),
 				},
 			},
-			formula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			formula: &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/lint-spectral",
 				},
 			},
@@ -758,12 +760,12 @@ func TestProcessRollUpFormula(t *testing.T) {
 		&rpc.Artifact{
 			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-			Contents: protoMarshal(&rpc.Lint{
+			Contents: protoMarshal(&style.Lint{
 				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+				Files: []*style.LintFile{
 					{
 						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						Problems: []*style.LintProblem{
 							{
 								Message: "lint-error",
 							},
@@ -793,17 +795,17 @@ func TestProcessRollUpFormula(t *testing.T) {
 	}
 
 	// arguments
-	formula := &rpc.RollUpFormula{
-		ScoreFormulas: []*rpc.ScoreFormula{
+	formula := &scoring.RollUpFormula{
+		ScoreFormulas: []*scoring.ScoreFormula{
 			{
-				Artifact: &rpc.ResourcePattern{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/lint-spectral",
 				},
 				ScoreExpression: "size(files[0].problems)",
 				ReferenceId:     "numErrors",
 			},
 			{
-				Artifact: &rpc.ResourcePattern{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/complexity",
 				},
 				ScoreExpression: "getCount + postCount + putCount + deleteCount",
@@ -838,7 +840,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		seed     []seeder.RegistryResource
-		formula  *rpc.RollUpFormula
+		formula  *scoring.RollUpFormula
 		resource patterns.ResourceInstance
 	}{
 		{
@@ -848,7 +850,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
-			formula: &rpc.RollUpFormula{
+			formula: &scoring.RollUpFormula{
 				RollupExpression: "double(numErrors)/numOperations",
 			},
 			resource: patterns.SpecResource{
@@ -864,17 +866,17 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
-			formula: &rpc.RollUpFormula{
-				ScoreFormulas: []*rpc.ScoreFormula{
+			formula: &scoring.RollUpFormula{
+				ScoreFormulas: []*scoring.ScoreFormula{
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/lint-spectral",
 						},
 						ScoreExpression: "size(files[0].problems)",
 						ReferenceId:     "numErrors",
 					},
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/complexity",
 						},
 						ScoreExpression: "getCount + postCount + putCount + deleteCount",
@@ -895,12 +897,12 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -924,17 +926,17 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 					}),
 				},
 			},
-			formula: &rpc.RollUpFormula{
-				ScoreFormulas: []*rpc.ScoreFormula{
+			formula: &scoring.RollUpFormula{
+				ScoreFormulas: []*scoring.ScoreFormula{
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/lint-spectral",
 						},
 						ScoreExpression: "size(files.problems)", // invalid field reference
 						ReferenceId:     "numErrors",
 					},
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/complexity",
 						},
 						ScoreExpression: "getCount + postCount + putCount + deleteCount",
@@ -956,12 +958,12 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -985,17 +987,17 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 					}),
 				},
 			},
-			formula: &rpc.RollUpFormula{
-				ScoreFormulas: []*rpc.ScoreFormula{
+			formula: &scoring.RollUpFormula{
+				ScoreFormulas: []*scoring.ScoreFormula{
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/lint-spectral",
 						},
 						ScoreExpression: "size(files[0].problems)",
 						ReferenceId:     "numErrors",
 					},
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/complexity",
 						},
 						ScoreExpression: "getCount + postCount + putCount + deleteCount",
@@ -1017,17 +1019,17 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
-			formula: &rpc.RollUpFormula{
-				ScoreFormulas: []*rpc.ScoreFormula{
+			formula: &scoring.RollUpFormula{
+				ScoreFormulas: []*scoring.ScoreFormula{
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/lint-spectral",
 						},
 						ScoreExpression: "size(files[0].problems)",
 						ReferenceId:     "num-errors",
 					},
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/complexity",
 						},
 						ScoreExpression: "getCount + postCount + putCount + deleteCount",
@@ -1084,15 +1086,15 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 func TestProcessScoreType(t *testing.T) {
 	tests := []struct {
 		desc       string
-		definition *rpc.ScoreDefinition
+		definition *scoring.ScoreDefinition
 		scoreValue interface{}
-		wantScore  *rpc.Score
+		wantScore  *scoring.Score
 	}{
 		{
 			desc:       "happy path integer",
 			definition: integerDefinition,
 			scoreValue: int64(1),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DisplayName:    "Lint Error",
@@ -1100,9 +1102,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_OK,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_OK,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -1114,7 +1116,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "happy path integer with float value",
 			definition: integerDefinition,
 			scoreValue: float64(1),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DisplayName:    "Lint Error",
@@ -1122,9 +1124,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_OK,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_OK,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -1136,7 +1138,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "greater than max integer",
 			definition: integerDefinition,
 			scoreValue: int64(11),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DisplayName:    "Lint Error",
@@ -1144,9 +1146,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_ALERT,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_ALERT,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    11,
 						MinValue: 0,
 						MaxValue: 10,
@@ -1158,7 +1160,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "less than min integer",
 			definition: integerDefinition,
 			scoreValue: int64(-1),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DisplayName:    "Lint Error",
@@ -1166,9 +1168,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_ALERT,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_ALERT,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    -1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -1180,7 +1182,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "happy path percent",
 			definition: percentDefinition,
 			scoreValue: float64(50),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error-percent",
 				Kind:           "Score",
 				DisplayName:    "Lint Error Percentage",
@@ -1188,9 +1190,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error-percent",
-				Severity:       rpc.Severity_WARNING,
-				Value: &rpc.Score_PercentValue{
-					PercentValue: &rpc.PercentValue{
+				Severity:       scoring.Severity_WARNING,
+				Value: &scoring.Score_PercentValue{
+					PercentValue: &scoring.PercentValue{
 						Value: 50,
 					},
 				},
@@ -1200,7 +1202,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "happy path percent with integer value",
 			definition: percentDefinition,
 			scoreValue: int64(50),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error-percent",
 				Kind:           "Score",
 				DisplayName:    "Lint Error Percentage",
@@ -1208,9 +1210,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error-percent",
-				Severity:       rpc.Severity_WARNING,
-				Value: &rpc.Score_PercentValue{
-					PercentValue: &rpc.PercentValue{
+				Severity:       scoring.Severity_WARNING,
+				Value: &scoring.Score_PercentValue{
+					PercentValue: &scoring.PercentValue{
 						Value: 50,
 					},
 				},
@@ -1220,7 +1222,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "greater than max percent",
 			definition: percentDefinition,
 			scoreValue: int64(101),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error-percent",
 				Kind:           "Score",
 				DisplayName:    "Lint Error Percentage",
@@ -1228,9 +1230,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error-percent",
-				Severity:       rpc.Severity_ALERT,
-				Value: &rpc.Score_PercentValue{
-					PercentValue: &rpc.PercentValue{
+				Severity:       scoring.Severity_ALERT,
+				Value: &scoring.Score_PercentValue{
+					PercentValue: &scoring.PercentValue{
 						Value: 101,
 					},
 				},
@@ -1240,7 +1242,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "less than min percent",
 			definition: percentDefinition,
 			scoreValue: int64(-1),
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error-percent",
 				Kind:           "Score",
 				DisplayName:    "Lint Error Percentage",
@@ -1248,9 +1250,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error-percent",
-				Severity:       rpc.Severity_ALERT,
-				Value: &rpc.Score_PercentValue{
-					PercentValue: &rpc.PercentValue{
+				Severity:       scoring.Severity_ALERT,
+				Value: &scoring.Score_PercentValue{
+					PercentValue: &scoring.PercentValue{
 						Value: -1,
 					},
 				},
@@ -1260,7 +1262,7 @@ func TestProcessScoreType(t *testing.T) {
 			desc:       "happy path boolean",
 			definition: booleanDefinition,
 			scoreValue: true,
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-approval",
 				Kind:           "Score",
 				DisplayName:    "Lint Approval",
@@ -1268,9 +1270,9 @@ func TestProcessScoreType(t *testing.T) {
 				Uri:            "http://some/test/uri",
 				UriDisplayName: "Test URI",
 				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-approval",
-				Severity:       rpc.Severity_OK,
-				Value: &rpc.Score_BooleanValue{
-					BooleanValue: &rpc.BooleanValue{
+				Severity:       scoring.Severity_OK,
+				Value: &scoring.Score_BooleanValue{
+					BooleanValue: &scoring.BooleanValue{
 						Value:        true,
 						DisplayValue: "Approved",
 					},
@@ -1296,7 +1298,7 @@ func TestProcessScoreType(t *testing.T) {
 func TestProcessScoreTypeError(t *testing.T) {
 	tests := []struct {
 		desc       string
-		definition *rpc.ScoreDefinition
+		definition *scoring.ScoreDefinition
 		scoreValue interface{}
 	}{
 		{
