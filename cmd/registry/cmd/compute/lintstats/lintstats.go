@@ -23,8 +23,8 @@ import (
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -134,7 +134,7 @@ func computeLintStatsSpecs(ctx context.Context,
 			return nil // ignore missing results
 		}
 
-		messageType, err := types.MessageTypeForMimeType(contents.GetContentType())
+		messageType, err := mime.MessageTypeForMimeType(contents.GetContentType())
 		if err != nil {
 			return nil
 		}
@@ -271,7 +271,7 @@ func storeLintStatsArtifact(ctx context.Context,
 	messageData, _ := proto.Marshal(lintStats)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.LintStats"),
+		MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.LintStats"),
 		Contents: messageData,
 	}
 	return visitor.SetArtifact(ctx, client, artifact)

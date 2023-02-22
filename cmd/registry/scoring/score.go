@@ -23,8 +23,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -46,7 +46,7 @@ func FetchScoreDefinitions(
 	if err != nil {
 		return nil, err
 	}
-	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreDefinition"))
+	listFilter := fmt.Sprintf("mime_type == %q", mime.MimeTypeForKind("ScoreDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(ctx context.Context, artifact *rpc.Artifact) error {
 			definition := &scoring.ScoreDefinition{}
@@ -443,7 +443,7 @@ func uploadScore(ctx context.Context, client artifactClient, resource patterns.R
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", resource.ResourceName().String(), score.GetId()),
 		Contents: artifactBytes,
-		MimeType: types.MimeTypeForKind("Score"),
+		MimeType: mime.MimeTypeForKind("Score"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
 	if err = client.SetArtifact(ctx, artifact); err != nil {

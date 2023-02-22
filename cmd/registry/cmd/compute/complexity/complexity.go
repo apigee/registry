@@ -23,8 +23,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -139,28 +139,28 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 	}
 	var complexity *metrics.Complexity
-	if types.IsOpenAPIv2(spec.GetMimeType()) {
+	if mime.IsOpenAPIv2(spec.GetMimeType()) {
 		document, err := oas2.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		complexity = SummarizeOpenAPIv2Document(document)
-	} else if types.IsOpenAPIv3(spec.GetMimeType()) {
+	} else if mime.IsOpenAPIv3(spec.GetMimeType()) {
 		document, err := oas3.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		complexity = SummarizeOpenAPIv3Document(document)
-	} else if types.IsDiscovery(spec.GetMimeType()) {
+	} else if mime.IsDiscovery(spec.GetMimeType()) {
 		document, err := discovery.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
 		complexity = SummarizeDiscoveryDocument(document)
-	} else if types.IsProto(spec.GetMimeType()) && types.IsZipArchive(spec.GetMimeType()) {
+	} else if mime.IsProto(spec.GetMimeType()) && mime.IsZipArchive(spec.GetMimeType()) {
 		complexity, err = SummarizeZippedProtos(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
@@ -178,7 +178,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	messageData, _ := proto.Marshal(complexity)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Complexity"),
+		MimeType: mime.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
 	return visitor.SetArtifact(ctx, task.client, artifact)

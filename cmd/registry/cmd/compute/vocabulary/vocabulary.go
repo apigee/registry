@@ -21,8 +21,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/gnostic/metrics/vocabulary"
@@ -123,28 +123,28 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.specName)
 	var vocab *metrics.Vocabulary
 
-	if types.IsOpenAPIv2(contents.GetContentType()) {
+	if mime.IsOpenAPIv2(contents.GetContentType()) {
 		document, err := oas2.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
-	} else if types.IsOpenAPIv3(contents.GetContentType()) {
+	} else if mime.IsOpenAPIv3(contents.GetContentType()) {
 		document, err := oas3.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
-	} else if types.IsDiscovery(contents.GetContentType()) {
+	} else if mime.IsDiscovery(contents.GetContentType()) {
 		document, err := discovery.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
-	} else if types.IsProto(contents.GetContentType()) && types.IsZipArchive(contents.GetContentType()) {
+	} else if mime.IsProto(contents.GetContentType()) && mime.IsZipArchive(contents.GetContentType()) {
 		vocab, err = NewVocabularyFromZippedProtos(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
@@ -165,7 +165,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	}
 	return visitor.SetArtifact(ctx, task.client, &rpc.Artifact{
 		Name:     task.specName + "/artifacts/vocabulary",
-		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		MimeType: mime.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	})
 }

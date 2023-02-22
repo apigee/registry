@@ -24,7 +24,7 @@ import (
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
-	"github.com/apigee/registry/pkg/types"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -46,7 +46,7 @@ func TestGetValidResources(t *testing.T) {
 	}
 	seed := []seeder.RegistryResource{
 		&rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s", MimeType: "text/plain", Contents: []byte("hello")},
-		&rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/x", MimeType: types.MimeTypeForKind("DisplaySettings"), Contents: displaySettingsBytes},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/x", MimeType: mime.MimeTypeForKind("DisplaySettings"), Contents: displaySettingsBytes},
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
