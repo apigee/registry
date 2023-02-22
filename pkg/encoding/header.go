@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+package encoding
 
-type List struct {
-	Header `yaml:",inline"`
-	Items  []interface{} `yaml:"items"`
+type Header struct {
+	ApiVersion string   `yaml:"apiVersion,omitempty"`
+	Kind       string   `yaml:"kind,omitempty"`
+	Metadata   Metadata `yaml:"metadata,omitempty"`
+}
+
+type Metadata struct {
+	Name        string            `yaml:"name,omitempty"`
+	Parent      string            `yaml:"parent,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Annotations map[string]string `yaml:"annotations,omitempty"`
 }

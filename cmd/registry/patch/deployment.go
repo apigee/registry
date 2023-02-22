@@ -21,7 +21,7 @@ import (
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"gopkg.in/yaml.v3"
@@ -47,31 +47,31 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 }
 
 // NewApiDeployment allows an API deployment to be individually exported as a YAML file.
-func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
+func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*encoding.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeploymentRevision(message.Name)
 	if err != nil {
 		return nil, err
 	}
 	revisionName := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
-	var artifacts []*models.Artifact
+	var artifacts []*encoding.Artifact
 	if nested {
 		artifacts, err = collectChildArtifacts(ctx, client, deploymentName.Artifact("-"))
 		if err != nil {
 			return nil, err
 		}
 	}
-	return &models.ApiDeployment{
-		Header: models.Header{
+	return &encoding.ApiDeployment{
+		Header: encoding.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Deployment",
-			Metadata: models.Metadata{
+			Metadata: encoding.Metadata{
 				Name:        deploymentName.DeploymentID,
 				Parent:      names.ExportableName(deploymentName.Parent(), deploymentName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: models.ApiDeploymentData{
+		Data: encoding.ApiDeploymentData{
 			DisplayName:        message.DisplayName,
 			Description:        message.Description,
 			EndpointURI:        message.EndpointUri,
@@ -85,7 +85,7 @@ func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 }
 
 func applyApiDeploymentPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string, filename string) error {
-	var deployment models.ApiDeployment
+	var deployment encoding.ApiDeployment
 	err := yaml.Unmarshal(bytes, &deployment)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func applyApiDeploymentPatchBytes(ctx context.Context, client connection.Registr
 	return applyApiDeploymentPatch(ctx, client, &deployment, project, filename)
 }
 
-func deploymentName(parent string, metadata models.Metadata) (names.Deployment, error) {
+func deploymentName(parent string, metadata encoding.Metadata) (names.Deployment, error) {
 	if metadata.Parent != "" {
 		parent = parent + "/" + metadata.Parent
 	}
@@ -107,7 +107,7 @@ func deploymentName(parent string, metadata models.Metadata) (names.Deployment, 
 func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	deployment *models.ApiDeployment,
+	deployment *encoding.ApiDeployment,
 	parent string,
 	filename string) error {
 	name, err := deploymentName(parent, deployment.Metadata)

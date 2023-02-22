@@ -28,37 +28,37 @@ import (
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"gopkg.in/yaml.v3"
 )
 
 // NewApiSpec allows an API spec to be individually exported as a YAML file.
-func NewApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
+func NewApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*encoding.ApiSpec, error) {
 	specName, err := names.ParseSpecRevision(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	var artifacts []*models.Artifact
+	var artifacts []*encoding.Artifact
 	if nested {
 		artifacts, err = collectChildArtifacts(ctx, client, specName.Artifact("-"))
 		if err != nil {
 			return nil, err
 		}
 	}
-	return &models.ApiSpec{
-		Header: models.Header{
+	return &encoding.ApiSpec{
+		Header: encoding.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Spec",
-			Metadata: models.Metadata{
+			Metadata: encoding.Metadata{
 				Name:        specName.SpecID,
 				Parent:      names.ExportableName(specName.Parent(), specName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: models.ApiSpecData{
+		Data: encoding.ApiSpecData{
 			FileName:    message.Filename,
 			Description: message.Description,
 			MimeType:    message.MimeType,
@@ -74,7 +74,7 @@ func applyApiSpecPatchBytes(
 	bytes []byte,
 	project string,
 	filename string) error {
-	var spec models.ApiSpec
+	var spec encoding.ApiSpec
 	err := yaml.Unmarshal(bytes, &spec)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func applyApiSpecPatchBytes(
 	return applyApiSpecPatch(ctx, client, &spec, project, filename)
 }
 
-func specName(parent string, metadata models.Metadata) (names.Spec, error) {
+func specName(parent string, metadata encoding.Metadata) (names.Spec, error) {
 	if metadata.Parent != "" {
 		parent = parent + "/" + metadata.Parent
 	}
@@ -96,7 +96,7 @@ func specName(parent string, metadata models.Metadata) (names.Spec, error) {
 func applyApiSpecPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	spec *models.ApiSpec,
+	spec *encoding.ApiSpec,
 	parent string,
 	filename string) error {
 	name, err := specName(parent, spec.Metadata)

@@ -26,8 +26,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/log"
-	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -36,20 +36,20 @@ import (
 )
 
 // NewProject gets a serialized representation of a project.
-func NewProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) (*models.Project, error) {
+func NewProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) (*encoding.Project, error) {
 	projectName, err := names.ParseProject(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	return &models.Project{
-		Header: models.Header{
+	return &encoding.Project{
+		Header: encoding.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Project",
-			Metadata: models.Metadata{
+			Metadata: encoding.Metadata{
 				Name: projectName.ProjectID,
 			},
 		},
-		Data: models.ProjectData{
+		Data: encoding.ProjectData{
 			DisplayName: message.DisplayName,
 			Description: message.Description,
 		},
@@ -57,7 +57,7 @@ func NewProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 }
 
 func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, bytes []byte) error {
-	var project models.Project
+	var project encoding.Project
 	err := yaml.Unmarshal(bytes, &project)
 	if err != nil {
 		return err

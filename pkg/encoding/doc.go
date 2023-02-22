@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
-
-type Project struct {
-	Header `yaml:",inline"`
-	Data   ProjectData `yaml:"data"`
-}
-
-type ProjectData struct {
-	DisplayName string `yaml:"displayName,omitempty"`
-	Description string `yaml:"description,omitempty"`
-}
+// package encoding provides structs that can be used to serialize YAML files for import with `registry apply`.
+package encoding
