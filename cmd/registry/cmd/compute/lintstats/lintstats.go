@@ -20,7 +20,7 @@ import (
 	"sort"
 
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
@@ -87,11 +87,11 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-func computeLintStats(lint *artifacts.Lint) *artifacts.LintStats {
-	problemCounts := make([]*artifacts.LintProblemCount, 0)
+func computeLintStats(lint *style.Lint) *style.LintStats {
+	problemCounts := make([]*style.LintProblemCount, 0)
 	for _, file := range lint.Files {
 		for _, problem := range file.Problems {
-			var problemCount *artifacts.LintProblemCount
+			var problemCount *style.LintProblemCount
 			for _, pc := range problemCounts {
 				if pc.RuleId == problem.RuleId {
 					problemCount = pc
@@ -99,7 +99,7 @@ func computeLintStats(lint *artifacts.Lint) *artifacts.LintStats {
 				}
 			}
 			if problemCount == nil {
-				problemCount = &artifacts.LintProblemCount{
+				problemCount = &style.LintProblemCount{
 					Count:      0,
 					RuleId:     problem.RuleId,
 					RuleDocUri: problem.RuleDocUri,
@@ -113,7 +113,7 @@ func computeLintStats(lint *artifacts.Lint) *artifacts.LintStats {
 	sort.Slice(problemCounts, func(i, j int) bool {
 		return problemCounts[i].Count > problemCounts[j].Count
 	})
-	return &artifacts.LintStats{ProblemCounts: problemCounts}
+	return &style.LintStats{ProblemCounts: problemCounts}
 }
 
 func computeLintStatsSpecs(ctx context.Context,
@@ -142,7 +142,7 @@ func computeLintStatsSpecs(ctx context.Context,
 			return nil // ignore unexpected message types
 		}
 
-		lint := &artifacts.Lint{}
+		lint := &style.Lint{}
 		err = proto.Unmarshal(contents.GetData(), lint)
 		if err != nil {
 			return nil
@@ -189,7 +189,7 @@ func computeLintStatsProjects(ctx context.Context,
 	linter string,
 	dryRun bool) error {
 	return visitor.ListProjects(ctx, adminClient, projectName, nil, filter, func(ctx context.Context, project *rpc.Project) error {
-		project_stats := &artifacts.LintStats{}
+		project_stats := &style.LintStats{}
 
 		if err := visitor.ListAPIs(ctx, client, projectName.Api(""), filter, func(ctx context.Context, api *rpc.Api) error {
 			aggregateLintStats(ctx, client, api.GetName(), linter, project_stats)
@@ -215,7 +215,7 @@ func computeLintStatsAPIs(ctx context.Context,
 	linter string,
 	dryRun bool) error {
 	return visitor.ListAPIs(ctx, client, apiName, filter, func(ctx context.Context, api *rpc.Api) error {
-		api_stats := &artifacts.LintStats{}
+		api_stats := &style.LintStats{}
 
 		if err := visitor.ListVersions(ctx, client, apiName.Version(""), filter, func(ctx context.Context, version *rpc.ApiVersion) error {
 			aggregateLintStats(ctx, client, version.GetName(), linter, api_stats)
@@ -242,7 +242,7 @@ func computeLintStatsVersions(ctx context.Context,
 	linter string,
 	dryRun bool) error {
 	return visitor.ListVersions(ctx, client, versionName, filter, func(ctx context.Context, version *rpc.ApiVersion) error {
-		stats := &artifacts.LintStats{}
+		stats := &style.LintStats{}
 		if err := visitor.ListSpecs(ctx, client, versionName.Spec(""), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 			aggregateLintStats(ctx, client, spec.GetName(), linter, stats)
 			return nil
@@ -265,7 +265,7 @@ func storeLintStatsArtifact(ctx context.Context,
 	client *gapic.RegistryClient,
 	subject string,
 	linter string,
-	lintStats *artifacts.LintStats) error {
+	lintStats *style.LintStats) error {
 	// store the lintstats artifact
 	relation := lintStatsRelation(linter)
 	messageData, _ := proto.Marshal(lintStats)
@@ -281,7 +281,7 @@ func aggregateLintStats(ctx context.Context,
 	client connection.RegistryClient,
 	name string,
 	linter string,
-	aggregateStats *artifacts.LintStats) {
+	aggregateStats *style.LintStats) {
 	// Calculate the operation and schema count
 	request := rpc.GetArtifactContentsRequest{
 		Name: name + "/artifacts/" + lintStatsRelation(linter),
@@ -290,7 +290,7 @@ func aggregateLintStats(ctx context.Context,
 	if contents == nil {
 		return // ignore missing results
 	}
-	stats := &artifacts.LintStats{}
+	stats := &style.LintStats{}
 	err := proto.Unmarshal(contents.GetData(), stats)
 	if err != nil {
 		return

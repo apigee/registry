@@ -22,7 +22,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/types"
@@ -120,7 +120,7 @@ func touchArtifact(ctx context.Context, artifactName, action string) error {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 	}
 
-	messageData, _ := proto.Marshal(&artifacts.Receipt{Action: action})
+	messageData, _ := proto.Marshal(&controller.Receipt{Action: action})
 	return visitor.SetArtifact(ctx, client, &rpc.Artifact{
 		Name:     artifactName,
 		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Receipt"),

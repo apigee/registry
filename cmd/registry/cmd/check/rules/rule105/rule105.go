@@ -19,7 +19,7 @@ import (
 	"net/url"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -40,11 +40,11 @@ var sourceUriFormat = &lint.ApiSpecRule{
 	OnlyIf: func(a *rpc.ApiSpec) bool {
 		return a.SourceUri != ""
 	},
-	ApplyToApiSpec: func(ctx context.Context, a *rpc.ApiSpec) []*artifacts.Problem {
+	ApplyToApiSpec: func(ctx context.Context, a *rpc.ApiSpec) []*check.Problem {
 		u, err := url.ParseRequestURI(a.SourceUri)
 		if err != nil || u.Host == "" {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    `source_uri must be an absolute URI.`,
 				Suggestion: `Ensure source_uri includes a host.`,
 			}}

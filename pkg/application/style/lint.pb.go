@@ -21,7 +21,7 @@
 // (-- api-linter: core::0215::versioned-packages=disabled
 //     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
 
-package artifacts
+package style
 
 import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -40,8 +40,7 @@ const (
 
 // Lint wraps the result of a linter run for an API.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type Lint struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -101,8 +100,7 @@ func (x *Lint) GetFiles() []*LintFile {
 
 // LintFile wraps the result of a linter run for a file.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintFile struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -162,8 +160,7 @@ func (x *LintFile) GetProblems() []*LintProblem {
 
 // LintProblem represents a problem found by a linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintProblem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -250,8 +247,7 @@ func (x *LintProblem) GetLocation() *LintLocation {
 
 // LintLocation represents a range of text in a file.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintLocation struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -311,8 +307,7 @@ func (x *LintLocation) GetEndPosition() *LintPosition {
 
 // LintPosition represents a point in a file.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintPosition struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -372,8 +367,7 @@ func (x *LintPosition) GetColumnNumber() int32 {
 
 // LintStats summarizes linter results.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintStats struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -443,8 +437,7 @@ func (x *LintStats) GetProblemCounts() []*LintProblemCount {
 // LintProblemCount represents the number of times a problem was found in
 // linting.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintProblemCount struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -514,8 +507,7 @@ func (x *LintProblemCount) GetRuleDocUri() string {
 // LinterRequest represents a request to a linter plugin. The plugin will lint
 // the provided spec based on rules that have been enabled.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LinterRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -578,8 +570,7 @@ func (x *LinterRequest) GetRuleIds() []string {
 // LinterResponse represents a response returned from a linter plugin. It
 // contains a list of problems that were identified by the linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type LinterResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -646,8 +637,7 @@ func (x *LinterResponse) GetLint() *Lint {
 
 // Linter contains the name and source code / documentation of specific linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type Linter struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -793,14 +783,14 @@ var file_google_cloud_apigeeregistry_v1_style_lint_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x74, 0x65, 0x72, 0x12, 0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x15,
 	0x0a, 0x03, 0x75, 0x72, 0x69, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
-	0x52, 0x03, 0x75, 0x72, 0x69, 0x42, 0x6b, 0x0a, 0x28, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x6f, 0x6f,
+	0x52, 0x03, 0x75, 0x72, 0x69, 0x42, 0x6f, 0x0a, 0x28, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x6f, 0x6f,
 	0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65,
 	0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x73, 0x74, 0x79, 0x6c,
-	0x65, 0x42, 0x09, 0x4c, 0x69, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x32,
+	0x65, 0x42, 0x09, 0x4c, 0x69, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36,
 	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x67, 0x65,
 	0x65, 0x2f, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61,
-	0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x73, 0x3b, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63,
-	0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x73, 0x74, 0x79, 0x6c, 0x65,
+	0x3b, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

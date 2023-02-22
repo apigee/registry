@@ -18,7 +18,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,27 +57,27 @@ func TestRunDescriptionContainsNoTagsRule(t *testing.T) {
 	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
 	linter := &sampleOpenApiLinterRunner{}
-	request := &artifacts.LinterRequest{
+	request := &style.LinterRequest{
 		SpecDirectory: specDirectory,
 		RuleIds:       []string{"description-contains-no-tags"},
 	}
-	expectedResponse := &artifacts.LinterResponse{
-		Lint: &artifacts.Lint{
+	expectedResponse := &style.LinterResponse{
+		Lint: &style.Lint{
 			Name: "registry-lint-openapi-sample",
-			Files: []*artifacts.LintFile{
+			Files: []*style.LintFile{
 				{
 					FilePath: specFilePath,
-					Problems: []*artifacts.LintProblem{
+					Problems: []*style.LintProblem{
 						{
 							Message:    "Description field should not contain any tags.",
 							RuleId:     "description-contains-no-tags",
 							Suggestion: "Ensure that your description field does not contain any tags (regex <[^>]*>)",
-							Location: &artifacts.LintLocation{
-								StartPosition: &artifacts.LintPosition{
+							Location: &style.LintLocation{
+								StartPosition: &style.LintPosition{
 									LineNumber:   10,
 									ColumnNumber: 30,
 								},
-								EndPosition: &artifacts.LintPosition{
+								EndPosition: &style.LintPosition{
 									LineNumber:   11,
 									ColumnNumber: 0,
 								},
@@ -130,27 +130,27 @@ func TestRunDescriptionLessThan1000CharsRule(t *testing.T) {
 	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
 	linter := &sampleOpenApiLinterRunner{}
-	request := &artifacts.LinterRequest{
+	request := &style.LinterRequest{
 		SpecDirectory: specDirectory,
 		RuleIds:       []string{"description-less-than-1000-chars"},
 	}
-	expectedResponse := &artifacts.LinterResponse{
-		Lint: &artifacts.Lint{
+	expectedResponse := &style.LinterResponse{
+		Lint: &style.Lint{
 			Name: "registry-lint-openapi-sample",
-			Files: []*artifacts.LintFile{
+			Files: []*style.LintFile{
 				{
 					FilePath: specFilePath,
-					Problems: []*artifacts.LintProblem{
+					Problems: []*style.LintProblem{
 						{
 							Message:    "Description field should be less than 1000 chars.",
 							RuleId:     "description-less-than-1000-chars",
 							Suggestion: "Ensure that your description field is less than 1000 chars in length.",
-							Location: &artifacts.LintLocation{
-								StartPosition: &artifacts.LintPosition{
+							Location: &style.LintLocation{
+								StartPosition: &style.LintPosition{
 									LineNumber:   10,
 									ColumnNumber: 30,
 								},
-								EndPosition: &artifacts.LintPosition{
+								EndPosition: &style.LintPosition{
 									LineNumber:   11,
 									ColumnNumber: 0,
 								},

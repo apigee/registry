@@ -19,7 +19,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/controller"
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
@@ -589,31 +592,31 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "conformancereport",
 			yamlFile:   "testdata/artifacts/conformancereport.yaml",
-			message: &artifacts.ConformanceReport{
+			message: &style.ConformanceReport{
 				Id:         "conformancereport",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/demo/locations/global/artifacts/styleguide",
-				GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
 					{
-						State: artifacts.Guideline_ACTIVE,
-						GuidelineReports: []*artifacts.GuidelineReport{
+						State: style.Guideline_ACTIVE,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "sample-guideline",
-								RuleReportGroups: []*artifacts.RuleReportGroup{
+								RuleReportGroups: []*style.RuleReportGroup{
 									{
-										Severity: artifacts.Rule_ERROR,
-										RuleReports: []*artifacts.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:     "no-ref-siblings",
 												Spec:       "projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi",
 												File:       "openapi.yaml",
 												Suggestion: "",
-												Location: &artifacts.LintLocation{
-													StartPosition: &artifacts.LintPosition{
+												Location: &style.LintLocation{
+													StartPosition: &style.LintPosition{
 														LineNumber:   10,
 														ColumnNumber: 5,
 													},
-													EndPosition: &artifacts.LintPosition{
+													EndPosition: &style.LintPosition{
 														LineNumber:   10,
 														ColumnNumber: 25,
 													},
@@ -634,7 +637,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "display-settings",
 			yamlFile:   "testdata/artifacts/displaysettings.yaml",
-			message: &artifacts.DisplaySettings{
+			message: &apihub.DisplaySettings{
 				Id:              "display-settings", // deprecated field
 				Kind:            "DisplaySettings",  // deprecated field
 				Description:     "Defines display settings",
@@ -646,12 +649,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "extensions",
 			yamlFile:   "testdata/artifacts/extensions.yaml",
-			message: &artifacts.ApiSpecExtensionList{
+			message: &apihub.ApiSpecExtensionList{
 				Id:          "extensions",           // deprecated field
 				Kind:        "ApiSpecExtensionList", // deprecated field
 				DisplayName: "Sample Extensions",
 				Description: "Extensions connect external tools to registry applications",
-				Extensions: []*artifacts.ApiSpecExtensionList_ApiSpecExtension{
+				Extensions: []*apihub.ApiSpecExtensionList_ApiSpecExtension{
 					{
 						Id:          "sample",
 						DisplayName: "Sample",
@@ -665,12 +668,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "lifecycle",
 			yamlFile:   "testdata/artifacts/lifecycle.yaml",
-			message: &artifacts.Lifecycle{
+			message: &apihub.Lifecycle{
 				Id:          "lifecycle", // deprecated field
 				Kind:        "Lifecycle", // deprecated field
 				DisplayName: "Lifecycle",
 				Description: "A series of stages that an API typically moves through in its lifetime",
-				Stages: []*artifacts.Lifecycle_Stage{
+				Stages: []*apihub.Lifecycle_Stage{
 					{
 						Id:           "concept",
 						DisplayName:  "Concept",
@@ -698,17 +701,17 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "manifest",
 			yamlFile:   "testdata/artifacts/manifest.yaml",
-			message: &artifacts.Manifest{
+			message: &controller.Manifest{
 				Id:          "manifest", // deprecated field
 				Kind:        "Manifest", // deprecated field
 				DisplayName: "Sample Manifest",
 				Description: "A sample manifest",
-				GeneratedResources: []*artifacts.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
 						Filter:  "invalid-filter",
 						Receipt: false,
-						Dependencies: []*artifacts.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 								Filter:  "mime_type.contains('openapi')",
@@ -724,7 +727,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 			artifactID: "receipt",
 			parent:     "apis/a/versions/v/specs/s",
 			yamlFile:   "testdata/artifacts/receipt.yaml",
-			message: &artifacts.Receipt{
+			message: &controller.Receipt{
 				Id:          "receipt", // deprecated field
 				Kind:        "Receipt", // deprecated field
 				DisplayName: "Sample Receipt",
@@ -737,12 +740,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 			artifactID: "references",
 			parent:     "apis/a",
 			yamlFile:   "testdata/artifacts/references.yaml",
-			message: &artifacts.ReferenceList{
+			message: &apihub.ReferenceList{
 				Id:          "references",    // deprecated field
 				Kind:        "ReferenceList", // deprecated field
 				DisplayName: "Related References",
 				Description: "References related to this API",
-				References: []*artifacts.ReferenceList_Reference{
+				References: []*apihub.ReferenceList_Reference{
 					{
 						Id:          "github",
 						DisplayName: "GitHub Repo",
@@ -763,7 +766,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "score",
 			yamlFile:   "testdata/artifacts/score.yaml",
-			message: &artifacts.Score{
+			message: &scoring.Score{
 				Id:             "score",
 				Kind:           "Score",
 				DisplayName:    "Sample Score",
@@ -771,9 +774,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 				Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 				UriDisplayName: "Spectral rules",
 				DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
-				Severity:       artifacts.Severity_ALERT,
-				Value: &artifacts.Score_IntegerValue{
-					IntegerValue: &artifacts.IntegerValue{
+				Severity:       scoring.Severity_ALERT,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    10,
 						MinValue: 0,
 						MaxValue: 100,
@@ -784,13 +787,13 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "scorecard",
 			yamlFile:   "testdata/artifacts/scorecard.yaml",
-			message: &artifacts.ScoreCard{
+			message: &scoring.ScoreCard{
 				Id:             "scorecard",
 				Kind:           "ScoreCard",
 				DisplayName:    "Sample ScoreCard",
 				Description:    "Represents sample ScoreCard artifact",
 				DefinitionName: "projects/demo/locations/global/artifacts/sample-scorecard-definition",
-				Scores: []*artifacts.Score{
+				Scores: []*scoring.Score{
 					{
 						Id:             "score1",
 						Kind:           "Score",
@@ -799,9 +802,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 						Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 						UriDisplayName: "Spectral rules",
 						DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
-						Severity:       artifacts.Severity_ALERT,
-						Value: &artifacts.Score_IntegerValue{
-							IntegerValue: &artifacts.IntegerValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_IntegerValue{
+							IntegerValue: &scoring.IntegerValue{
 								Value:    10,
 								MinValue: 0,
 								MaxValue: 100,
@@ -816,9 +819,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 						Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 						UriDisplayName: "Spectral rules",
 						DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
-						Severity:       artifacts.Severity_WARNING,
-						Value: &artifacts.Score_IntegerValue{
-							IntegerValue: &artifacts.IntegerValue{
+						Severity:       scoring.Severity_WARNING,
+						Value: &scoring.Score_IntegerValue{
+							IntegerValue: &scoring.IntegerValue{
 								Value:    20,
 								MinValue: 0,
 								MaxValue: 100,
@@ -831,12 +834,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "scorecarddefinition",
 			yamlFile:   "testdata/artifacts/scorecarddefinition.yaml",
-			message: &artifacts.ScoreCardDefinition{
+			message: &scoring.ScoreCardDefinition{
 				Id:          "scorecarddefinition",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Sample ScoreCard definition",
 				Description: "Represents sample ScoreCard definition artifact",
-				TargetResource: &artifacts.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 					Filter:  "mime_type.contains('openapi')",
 				},
@@ -849,47 +852,47 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "scoredefinition",
 			yamlFile:   "testdata/artifacts/scoredefinition.yaml",
-			message: &artifacts.ScoreDefinition{
+			message: &scoring.ScoreDefinition{
 				Id:             "scoredefinition",
 				Kind:           "ScoreDefinition",
 				DisplayName:    "Sample Score definition",
 				Description:    "Represents sample Score definition artifact",
 				Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 				UriDisplayName: "Spectral rules",
-				TargetResource: &artifacts.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 					Filter:  "mime_type.contains('openapi')",
 				},
-				Formula: &artifacts.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &artifacts.ScoreFormula{
-						Artifact: &artifacts.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-styleguide",
 						},
 						ScoreExpression: "sample expression",
 					},
 				},
-				Type: &artifacts.ScoreDefinition_Integer{
-					Integer: &artifacts.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*artifacts.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: artifacts.Severity_ALERT,
-								Range: &artifacts.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 30,
 								},
 							},
 							{
-								Severity: artifacts.Severity_WARNING,
-								Range: &artifacts.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 31,
 									Max: 60,
 								},
 							},
 							{
-								Severity: artifacts.Severity_OK,
-								Range: &artifacts.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_OK,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
@@ -902,33 +905,33 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "styleguide",
 			yamlFile:   "testdata/artifacts/styleguide.yaml",
-			message: &artifacts.StyleGuide{
+			message: &style.StyleGuide{
 				Id:          "styleguide", // deprecated field
 				Kind:        "StyleGuide", // deprecated field
 				DisplayName: "Sample Style Guide",
 				MimeTypes: []string{
 					"application/x.openapi+gzip;version=2",
 				},
-				Guidelines: []*artifacts.Guideline{
+				Guidelines: []*style.Guideline{
 					{
 						Id:          "refproperties",
 						DisplayName: "Govern Ref Properties",
 						Description: "This guideline governs properties for ref fields on specs.",
-						Rules: []*artifacts.Rule{
+						Rules: []*style.Rule{
 							{
 								Id:             "norefsiblings",
 								DisplayName:    "No Ref Siblings",
 								Description:    "An object exposing a $ref property cannot be further extended with additional properties.",
 								Linter:         "spectral",
 								LinterRulename: "no-$ref-siblings",
-								Severity:       artifacts.Rule_ERROR,
+								Severity:       style.Rule_ERROR,
 								DocUri:         "https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings",
 							},
 						},
-						State: artifacts.Guideline_ACTIVE,
+						State: style.Guideline_ACTIVE,
 					},
 				},
-				Linters: []*artifacts.Linter{
+				Linters: []*style.Linter{
 					{
 						Name: "spectral",
 						Uri:  "https://github.com/stoplightio/spectral",
@@ -939,12 +942,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "taxonomies",
 			yamlFile:   "testdata/artifacts/taxonomies.yaml",
-			message: &artifacts.TaxonomyList{
+			message: &apihub.TaxonomyList{
 				Id:          "taxonomies",   // deprecated field
 				Kind:        "TaxonomyList", // deprecated field
 				DisplayName: "TaxonomyList",
 				Description: "A list of taxonomies that can be used to classify resources in the registry",
-				Taxonomies: []*artifacts.TaxonomyList_Taxonomy{
+				Taxonomies: []*apihub.TaxonomyList_Taxonomy{
 					{
 						Id:              "target-users",
 						DisplayName:     "Target users",
@@ -954,7 +957,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 						SearchExcluded:  false,
 						SystemManaged:   true,
 						DisplayOrder:    0,
-						Elements: []*artifacts.TaxonomyList_Taxonomy_Element{
+						Elements: []*apihub.TaxonomyList_Taxonomy_Element{
 							{
 								Id:          "team",
 								DisplayName: "Team",
@@ -986,7 +989,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 						SearchExcluded:  false,
 						SystemManaged:   true,
 						DisplayOrder:    1,
-						Elements: []*artifacts.TaxonomyList_Taxonomy_Element{
+						Elements: []*apihub.TaxonomyList_Taxonomy_Element{
 							{
 								Id:          "openapi",
 								DisplayName: "OpenAPI",

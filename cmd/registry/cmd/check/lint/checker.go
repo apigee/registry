@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -63,12 +63,12 @@ func New(rules RuleRegistry, configs Configs) *Checker {
 	return l
 }
 
-func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *artifacts.CheckReport, err error) {
-	response = &artifacts.CheckReport{
+func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *check.CheckReport, err error) {
+	response = &check.CheckReport{
 		Id:         "check-report",
 		Kind:       "CheckReport",
 		CreateTime: timestamppb.Now(),
-		Problems:   make([]*artifacts.Problem, 0),
+		Problems:   make([]*check.Problem, 0),
 	}
 
 	// enable rules to access client
@@ -105,7 +105,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 
 type checkTask struct {
 	checker  *Checker
-	response *artifacts.CheckReport
+	response *check.CheckReport
 	resource Resource
 }
 
@@ -114,7 +114,7 @@ func (t *checkTask) String() string {
 }
 
 func (t *checkTask) Run(ctx context.Context) error {
-	var problems []*artifacts.Problem
+	var problems []*check.Problem
 	var errMessages []string
 	for name, rule := range t.checker.rules {
 		if t.checker.configs.IsRuleEnabled(string(name), t.resource.GetName()) {
@@ -149,7 +149,7 @@ func (t *checkTask) Run(ctx context.Context) error {
 	return nil
 }
 
-func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []*artifacts.Problem, err error) {
+func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []*check.Problem, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if rerr, ok := r.(error); ok {

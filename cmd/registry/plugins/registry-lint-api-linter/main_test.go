@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,23 +44,23 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
 		linter           *apiLinterRunner
 		runLinter        runLinter
-		request          *artifacts.LinterRequest
-		expectedResponse *artifacts.LinterResponse
+		request          *style.LinterRequest
+		expectedResponse *style.LinterResponse
 		expectedError    error
 	}{
 		{
 			&apiLinterRunner{},
-			func(specPath, specDir string) ([]*artifacts.LintProblem, error) {
-				return []*artifacts.LintProblem{
+			func(specPath, specDir string) ([]*style.LintProblem, error) {
+				return []*style.LintProblem{
 						{
 							Message: "test",
 							RuleId:  "test",
-							Location: &artifacts.LintLocation{
-								StartPosition: &artifacts.LintPosition{
+							Location: &style.LintLocation{
+								StartPosition: &style.LintPosition{
 									LineNumber:   1,
 									ColumnNumber: 1,
 								},
-								EndPosition: &artifacts.LintPosition{
+								EndPosition: &style.LintPosition{
 									LineNumber:   3,
 									ColumnNumber: 10,
 								},
@@ -69,26 +69,26 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 					},
 					nil
 			},
-			&artifacts.LinterRequest{
+			&style.LinterRequest{
 				SpecDirectory: specDirectory,
 				RuleIds:       []string{"test"},
 			},
-			&artifacts.LinterResponse{
-				Lint: &artifacts.Lint{
+			&style.LinterResponse{
+				Lint: &style.Lint{
 					Name: "registry-lint-api-linter",
-					Files: []*artifacts.LintFile{
+					Files: []*style.LintFile{
 						{
 							FilePath: specDirectory,
-							Problems: []*artifacts.LintProblem{
+							Problems: []*style.LintProblem{
 								{
 									Message: "test",
 									RuleId:  "test",
-									Location: &artifacts.LintLocation{
-										StartPosition: &artifacts.LintPosition{
+									Location: &style.LintLocation{
+										StartPosition: &style.LintPosition{
 											LineNumber:   1,
 											ColumnNumber: 1,
 										},
-										EndPosition: &artifacts.LintPosition{
+										EndPosition: &style.LintPosition{
 											LineNumber:   3,
 											ColumnNumber: 10,
 										},
@@ -103,10 +103,10 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		},
 		{
 			&apiLinterRunner{},
-			func(specPath, specDir string) ([]*artifacts.LintProblem, error) {
-				return []*artifacts.LintProblem{}, errors.New("test")
+			func(specPath, specDir string) ([]*style.LintProblem, error) {
+				return []*style.LintProblem{}, errors.New("test")
 			},
-			&artifacts.LinterRequest{
+			&style.LinterRequest{
 				SpecDirectory: specDirectory,
 			},
 			nil,

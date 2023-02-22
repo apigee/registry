@@ -17,10 +17,11 @@ package scorecard
 import (
 	"context"
 
+	scoring_message "github.com/apigee/registry/pkg/application/scoring"
+
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
@@ -71,7 +72,7 @@ func Command() *cobra.Command {
 			// List resources based on the retrieved definitions
 			for _, d := range scoreCardDefinitions {
 				// Extract definition
-				definition := &artifacts.ScoreCardDefinition{}
+				definition := &scoring_message.ScoreCardDefinition{}
 				if err := proto.Unmarshal(d.GetContents(), definition); err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Failed to unmarshal ScoreCardDefinition: %q", d.GetName())
 					continue

@@ -18,15 +18,15 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 )
 
-func CheckURI(field, uri string) []*artifacts.Problem {
+func CheckURI(field, uri string) []*check.Problem {
 	if uri != "" {
 		u, err := url.ParseRequestURI(uri)
 		if err != nil || u.Host == "" {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`%s must be an absolute URI.`, field),
 				Suggestion: fmt.Sprintf(`Ensure %s includes a host.`, field),
 			}}

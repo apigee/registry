@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -316,12 +316,12 @@ func TestTimestampArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &artifacts.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*artifacts.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
-						Dependencies: []*artifacts.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 								Filter:  "mime_type.contains('openapi')",
@@ -459,13 +459,13 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &artifacts.Manifest{
+			manifest := &controller.Manifest{
 
 				Id: "controller-test",
-				GeneratedResources: []*artifacts.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/artifacts/vocabulary",
-						Dependencies: []*artifacts.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.api/versions/-/specs/-",
 							},
@@ -639,12 +639,12 @@ func TestTimestampDerivedArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &artifacts.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*artifacts.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/summary",
-						Dependencies: []*artifacts.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec/artifacts/lint-gnostic",
 							},
@@ -813,9 +813,9 @@ func TestRefreshArtifacts(t *testing.T) {
 
 			// time.Sleep(test.wait * time.Second)
 
-			manifest := &artifacts.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*artifacts.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/score-receipt",
 						Receipt: true,

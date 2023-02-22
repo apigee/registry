@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
@@ -41,7 +41,7 @@ func TestChecker_run(t *testing.T) {
 	defaultConfigs := Configs{}
 
 	testRuleName := NewRuleName(111, "test-rule")
-	ruleProblems := []*artifacts.Problem{{
+	ruleProblems := []*check.Problem{{
 		Message:  "rule1_problem",
 		Location: "projects/checker-test",
 		RuleId:   string(testRuleName),
@@ -50,7 +50,7 @@ func TestChecker_run(t *testing.T) {
 	tests := []struct {
 		testName string
 		configs  Configs
-		problems []*artifacts.Problem
+		problems []*check.Problem
 	}{
 		{"Empty", Configs{}, ruleProblems},
 		{
@@ -81,7 +81,7 @@ func TestChecker_run(t *testing.T) {
 					DisabledRules: []string{string(testRuleName)},
 				},
 			),
-			[]*artifacts.Problem{},
+			[]*check.Problem{},
 		},
 	}
 
@@ -90,11 +90,11 @@ func TestChecker_run(t *testing.T) {
 			rules := NewRuleRegistry()
 			err := rules.Register(111, &ProjectRule{
 				Name: NewRuleName(111, "test-rule"),
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*artifacts.Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*check.Problem {
 					if c := RegistryClient(ctx); c == nil {
 						t.Errorf("RegistryClient missing in context: %v", ctx)
 					}
-					return []*artifacts.Problem{{
+					return []*check.Problem{{
 						Message: "rule1_problem",
 					}}
 				},
@@ -119,7 +119,7 @@ func TestChecker_run(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(test.problems, resp.Problems, cmpopts.IgnoreUnexported(artifacts.Problem{})); diff != "" {
+			if diff := cmp.Diff(test.problems, resp.Problems, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})
@@ -137,7 +137,7 @@ func TestChecker_panic(t *testing.T) {
 			testName: "Panic",
 			rule: &ProjectRule{
 				Name: NewRuleName(testRuleNum, "panic"),
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*artifacts.Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*check.Problem {
 					panic("panic")
 				},
 			},
@@ -146,7 +146,7 @@ func TestChecker_panic(t *testing.T) {
 			testName: "PanicError",
 			rule: &ProjectRule{
 				Name: NewRuleName(testRuleNum, "panic"),
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*artifacts.Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*check.Problem {
 					panic(fmt.Errorf("panic"))
 				},
 			},

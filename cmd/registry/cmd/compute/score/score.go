@@ -20,7 +20,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/pkg/artifacts"
+	scoring_message "github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
@@ -72,7 +72,7 @@ func Command() *cobra.Command {
 			// List resources based on the retrieved definitions
 			for _, d := range scoreDefinitions {
 				// Extract definition
-				definition := &artifacts.ScoreDefinition{}
+				definition := &scoring_message.ScoreDefinition{}
 				if err := proto.Unmarshal(d.GetContents(), definition); err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Failed to unmarshal ScoreDefinition: %q", d.GetName())
 					continue

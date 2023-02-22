@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/log"
 )
 
@@ -35,7 +35,7 @@ func ProcessManifest(
 	ctx context.Context,
 	client listingClient,
 	projectID string,
-	manifest *artifacts.Manifest,
+	manifest *controller.Manifest,
 	maxActions int) []*Action {
 	var actions []*Action
 	//Check for errors in manifest
@@ -80,7 +80,7 @@ func processManifestResource(
 	ctx context.Context,
 	client listingClient,
 	projectID string,
-	generatedResource *artifacts.GeneratedResource) ([]*Action, error) {
+	generatedResource *controller.GeneratedResource) ([]*Action, error) {
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
 	// Generate dependency map
 	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
@@ -103,7 +103,7 @@ func generateDependencyMap(
 	ctx context.Context,
 	client listingClient,
 	resourcePattern string,
-	dependency *artifacts.Dependency) (map[string]time.Time, error) {
+	dependency *controller.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
 	// of match pattern which store the maxTimestamp
 	// An example entry will look like this:
@@ -159,7 +159,7 @@ func generateActions(
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *artifacts.GeneratedResource) []*Action {
+	generatedResource *controller.GeneratedResource) []*Action {
 	actions := make([]*Action, 0)
 
 	updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
@@ -184,7 +184,7 @@ func generateUpdateActions(
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *artifacts.GeneratedResource) ([]*Action, map[string]bool, error) {
+	generatedResource *controller.GeneratedResource) ([]*Action, map[string]bool, error) {
 	// Visited tracks the parents of target resources which were already generated.
 	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
@@ -260,7 +260,7 @@ func generateCreateActions(
 	client listingClient,
 	resourcePattern string,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *artifacts.GeneratedResource,
+	generatedResource *controller.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
 	var parentList []patterns.ResourceInstance
 
@@ -338,7 +338,7 @@ func needsUpdate(
 	targetResourceName patterns.ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *artifacts.GeneratedResource) (bool, error) {
+	generatedResource *controller.GeneratedResource) (bool, error) {
 	// Check "refresh" first to decide whether to take action or not.
 	if generatedResource.Refresh != nil && targetResourceTime.Add(generatedResource.Refresh.AsDuration()).Before(time.Now()) {
 		return true, nil
@@ -371,7 +371,7 @@ func needsUpdate(
 func needsCreate(
 	targetResourceName patterns.ResourceName,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *artifacts.GeneratedResource) (bool, error) {
+	generatedResource *controller.GeneratedResource) (bool, error) {
 	// Take action if "refresh" is set and > 0
 	if generatedResource.Refresh != nil && generatedResource.Refresh.AsDuration().Seconds() > 0 {
 		return true, nil

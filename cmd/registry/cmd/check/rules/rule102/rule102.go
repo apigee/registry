@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 )
@@ -43,11 +43,11 @@ var recommendedDeploymentRef = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return strings.TrimSpace(a.RecommendedDeployment) != ""
 	},
-	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*artifacts.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []*check.Problem {
 		deploymentName, err := names.ParseDeployment(a.RecommendedDeployment)
 		if err != nil {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_deployment %q is not a valid ApiDeployment name.`, a.RecommendedDeployment),
 				Suggestion: fmt.Sprintf(`Parse error: %s`, err),
 			}}
@@ -55,8 +55,8 @@ var recommendedDeploymentRef = &lint.ApiRule{
 
 		apiName, _ := names.ParseApi(a.Name) // name assumed to be valid
 		if deploymentName.Api() != apiName {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_deployment %q is not a child of this Api.`, a.RecommendedDeployment),
 				Suggestion: `Correct the recommended_deployment.`,
 			}}
@@ -66,8 +66,8 @@ var recommendedDeploymentRef = &lint.ApiRule{
 		if _, err := registryClient.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{
 			Name: a.RecommendedDeployment,
 		}); err != nil {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    fmt.Sprintf(`recommended_deployment %q not found in registry.`, a.RecommendedDeployment),
 				Suggestion: `Correct the recommended_deployment.`,
 			}}

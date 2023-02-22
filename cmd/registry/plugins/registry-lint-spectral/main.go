@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/style"
 )
 
 // spectralConfiguration describes a spectral ruleset that is used to lint
@@ -59,15 +59,15 @@ type runLinter func(specPath, configPath string) ([]*spectralLintResult, error)
 // spectralLinterRunner implements the LinterRunner interface for the Spectral linter.
 type spectralLinterRunner struct{}
 
-func (linter *spectralLinterRunner) Run(req *artifacts.LinterRequest) (*artifacts.LinterResponse, error) {
+func (linter *spectralLinterRunner) Run(req *style.LinterRequest) (*style.LinterResponse, error) {
 	return linter.RunImpl(req, runSpectralLinter)
 }
 
 func (linter *spectralLinterRunner) RunImpl(
-	req *artifacts.LinterRequest,
+	req *style.LinterRequest,
 	runLinter runLinter,
-) (*artifacts.LinterResponse, error) {
-	lintFiles := make([]*artifacts.LintFile, 0)
+) (*style.LinterResponse, error) {
+	lintFiles := make([]*style.LintFile, 0)
 
 	// Create a temporary directory to store the configuration.
 	root, err := os.MkdirTemp("", "spectral-config-")
@@ -100,7 +100,7 @@ func (linter *spectralLinterRunner) RunImpl(
 		lintProblems := getLintProblemsFromSpectralResults(lintResults)
 
 		// Formulate the response.
-		lintFile := &artifacts.LintFile{
+		lintFile := &style.LintFile{
 			FilePath: path,
 			Problems: lintProblems,
 		}
@@ -113,8 +113,8 @@ func (linter *spectralLinterRunner) RunImpl(
 		return nil, err
 	}
 
-	return &artifacts.LinterResponse{
-		Lint: &artifacts.Lint{
+	return &style.LinterResponse{
+		Lint: &style.Lint{
 			Name:  "registry-lint-spectral",
 			Files: lintFiles,
 		},
@@ -148,19 +148,19 @@ func (linter *spectralLinterRunner) createConfigurationFile(root string, ruleIds
 
 func getLintProblemsFromSpectralResults(
 	lintResults []*spectralLintResult,
-) []*artifacts.LintProblem {
-	problems := make([]*artifacts.LintProblem, len(lintResults))
+) []*style.LintProblem {
+	problems := make([]*style.LintProblem, len(lintResults))
 	for i, result := range lintResults {
-		problem := &artifacts.LintProblem{
+		problem := &style.LintProblem{
 			Message:    result.Message,
 			RuleId:     result.Code,
 			RuleDocUri: "https://meta.stoplight.io/docs/spectral/docs/reference/openapi-rules.md#" + result.Code,
-			Location: &artifacts.LintLocation{
-				StartPosition: &artifacts.LintPosition{
+			Location: &style.LintLocation{
+				StartPosition: &style.LintPosition{
 					LineNumber:   result.Range.Start.Line + 1,
 					ColumnNumber: result.Range.Start.Character + 1,
 				},
-				EndPosition: &artifacts.LintPosition{
+				EndPosition: &style.LintPosition{
 					LineNumber:   result.Range.End.Line + 1,
 					ColumnNumber: result.Range.End.Character,
 				},

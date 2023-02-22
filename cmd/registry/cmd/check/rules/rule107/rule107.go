@@ -19,7 +19,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/util"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -40,7 +40,7 @@ var endpointUriFormat = &lint.ApiDeploymentRule{
 	OnlyIf: func(a *rpc.ApiDeployment) bool {
 		return a.EndpointUri != ""
 	},
-	ApplyToApiDeployment: func(ctx context.Context, a *rpc.ApiDeployment) []*artifacts.Problem {
+	ApplyToApiDeployment: func(ctx context.Context, a *rpc.ApiDeployment) []*check.Problem {
 		return util.CheckURI("endpoint_uri", a.EndpointUri)
 	},
 }

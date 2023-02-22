@@ -31,7 +31,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 )
 
 const ruleNum = 113
@@ -55,20 +55,20 @@ var annotations = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*artifacts.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		labels := value.(map[string]string)
 		if len(labels) == 0 {
 			return nil
 		}
 		totalSize := 0
-		var probs []*artifacts.Problem
+		var probs []*check.Problem
 		for k, v := range labels {
 			probs = append(probs, checkAnnotation(k, v)...)
 			totalSize += len(k) + len(v)
 		}
 		if totalSize > totalSizeLimit {
-			probs = append(probs, &artifacts.Problem{
-				Severity:   artifacts.Problem_ERROR,
+			probs = append(probs, &check.Problem{
+				Severity:   check.Problem_ERROR,
 				Message:    `Maximum size of all annotations is 256k.`,
 				Suggestion: fmt.Sprintf(`Reduce size by %d bytes.`, totalSize-totalSizeLimit),
 			})
@@ -78,24 +78,24 @@ var annotations = &lint.FieldRule{
 	},
 }
 
-func checkAnnotation(k string, v string) []*artifacts.Problem {
-	var probs []*artifacts.Problem
+func checkAnnotation(k string, v string) []*check.Problem {
+	var probs []*check.Problem
 	if r, _ := utf8.DecodeRuneInString(k); r == utf8.RuneError || !unicode.In(r, unicode.Ll, unicode.Lo) {
-		probs = append(probs, &artifacts.Problem{
-			Severity:   artifacts.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q has illegal first character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
 	} else if ok, r := validKeyRunes(k); !ok {
-		probs = append(probs, &artifacts.Problem{
-			Severity:   artifacts.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q contains illegal character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
 	}
 	if count := utf8.RuneCountInString(k); count > 64 {
-		probs = append(probs, &artifacts.Problem{
-			Severity:   artifacts.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, k),
 			Suggestion: `Fix key.`,
 		})

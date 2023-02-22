@@ -20,7 +20,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
@@ -85,9 +85,9 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 
-			guides := make([]*artifacts.StyleGuide, 0)
+			guides := make([]*style.StyleGuide, 0)
 			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
-				guide := new(artifacts.StyleGuide)
+				guide := new(style.StyleGuide)
 				if err := proto.Unmarshal(artifact.GetContents(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
 					return nil
@@ -112,7 +112,7 @@ func Command() *cobra.Command {
 
 // processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *artifacts.StyleGuide, specs []*rpc.ApiSpec, dryRun bool, jobs int) {
+func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *style.StyleGuide, specs []*rpc.ApiSpec, dryRun bool, jobs int) {
 	linterNameToMetadata, err := conformance.GenerateLinterMetadata(styleguide)
 	if err != nil {
 		log.Errorf(ctx, "Failed generating linter metadata, check styleguide definition, Error: %s", err)

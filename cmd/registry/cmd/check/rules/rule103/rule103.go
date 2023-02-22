@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -42,10 +42,10 @@ var stateSingleWord = &lint.ApiVersionRule{
 	OnlyIf: func(a *rpc.ApiVersion) bool {
 		return true
 	},
-	ApplyToApiVersion: func(ctx context.Context, a *rpc.ApiVersion) []*artifacts.Problem {
+	ApplyToApiVersion: func(ctx context.Context, a *rpc.ApiVersion) []*check.Problem {
 		if arr := strings.SplitN(a.State, " ", 2); len(arr) > 1 {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_INFO,
+			return []*check.Problem{{
+				Severity:   check.Problem_INFO,
 				Message:    `State is free-form, but we expect single words that describe API maturity.`,
 				Suggestion: `Use single words like: "CONCEPT", "DESIGN", "DEVELOPMENT", "STAGING", "PRODUCTION", "DEPRECATED", "RETIRED"`,
 			}}

@@ -19,7 +19,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
@@ -47,18 +48,18 @@ func TestTaxonomyList(t *testing.T) {
 	registryClient, _ := grpctest.SetupRegistry(ctx, t, "check-test", nil)
 	ctx = context.WithValue(ctx, lint.ContextKeyRegistryClient, registryClient)
 
-	tl, _ := proto.Marshal(&artifacts.TaxonomyList{
-		Taxonomies: []*artifacts.TaxonomyList_Taxonomy{
+	tl, _ := proto.Marshal(&apihub.TaxonomyList{
+		Taxonomies: []*apihub.TaxonomyList_Taxonomy{
 			{
 				Id: "apihub-list1",
-				Elements: []*artifacts.TaxonomyList_Taxonomy_Element{
+				Elements: []*apihub.TaxonomyList_Taxonomy_Element{
 					{Id: "good1"},
 					{Id: "good2"},
 				},
 			},
 			{
 				Id: "apihub-list2",
-				Elements: []*artifacts.TaxonomyList_Taxonomy_Element{
+				Elements: []*apihub.TaxonomyList_Taxonomy_Element{
 					{Id: "good3"},
 					{Id: "good4"},
 				},
@@ -80,7 +81,7 @@ func TestTaxonomyList(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		labels   map[string]string
-		expected []*artifacts.Problem
+		expected []*check.Problem
 	}{
 		{"good", map[string]string{
 			"apihub-list1": "good1",
@@ -89,10 +90,10 @@ func TestTaxonomyList(t *testing.T) {
 		{"bad1", map[string]string{
 			"apihub-list1": "good3",
 			"apihub-list2": "good3",
-		}, []*artifacts.Problem{{
+		}, []*check.Problem{{
 			Message:    `Label value "good3" not present in Taxonomy "apihub-list1"`,
 			Suggestion: `Adjust label value or Taxonomy elements.`,
-			Severity:   artifacts.Problem_ERROR,
+			Severity:   check.Problem_ERROR,
 		}}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -101,7 +102,7 @@ func TestTaxonomyList(t *testing.T) {
 			}
 			if taxonomyLabels.OnlyIf(p, "Labels") {
 				got := taxonomyLabels.ApplyToField(ctx, p, "Labels", tt.labels)
-				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(artifacts.Problem{})); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -53,21 +53,21 @@ func Test_primarySpecRef(t *testing.T) {
 	for _, tt := range []struct {
 		desc     string
 		in       string
-		expected []*artifacts.Problem
+		expected []*check.Problem
 	}{
 		{"empty", "", nil},
-		{"unable to parse", "bad", []*artifacts.Problem{{
-			Severity:   artifacts.Problem_ERROR,
+		{"unable to parse", "bad", []*check.Problem{{
+			Severity:   check.Problem_ERROR,
 			Message:    `primary_spec "bad" is not a valid ApiSpec name.`,
 			Suggestion: `Parse error: invalid spec name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/versions/([A-Za-z0-9-.]+)/specs/([A-Za-z0-9-.]+)$"`,
 		}}},
-		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad", []*artifacts.Problem{{
-			Severity:   artifacts.Problem_ERROR,
+		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad", []*check.Problem{{
+			Severity:   check.Problem_ERROR,
 			Message:    `primary_spec "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad" is not an API sibling of this Version.`,
 			Suggestion: `Correct the primary_spec.`,
 		}}},
-		{"missing", "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/missing", []*artifacts.Problem{{
-			Severity:   artifacts.Problem_ERROR,
+		{"missing", "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/missing", []*check.Problem{{
+			Severity:   check.Problem_ERROR,
 			Message:    `primary_spec "projects/check-test/locations/global/apis/myapi/versions/myversion/specs/missing" not found in registry.`,
 			Suggestion: `Correct the primary_spec.`,
 		}}},
@@ -81,7 +81,7 @@ func Test_primarySpecRef(t *testing.T) {
 
 			if primarySpecRef.OnlyIf(a) {
 				got := primarySpecRef.ApplyToApiVersion(ctx, a)
-				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(artifacts.Problem{})); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

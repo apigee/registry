@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -50,7 +50,7 @@ var mimeTypeContents = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "MimeType"
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*artifacts.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		var declared string
 		var contents []byte
 		switch t := resource.(type) {
@@ -73,8 +73,8 @@ var mimeTypeContents = &lint.FieldRule{
 		detected := http.DetectContentType(contents)
 
 		if strings.TrimSpace(declared) == "" {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity:   check.Problem_ERROR,
 				Message:    "Empty mime_type.",
 				Suggestion: fmt.Sprintf("Detected mime_type: %q.", detected),
 			}}
@@ -82,16 +82,16 @@ var mimeTypeContents = &lint.FieldRule{
 
 		declaredType, _, err := mime.ParseMediaType(declared)
 		if err != nil {
-			return []*artifacts.Problem{{
-				Severity: artifacts.Problem_ERROR,
+			return []*check.Problem{{
+				Severity: check.Problem_ERROR,
 				Message:  fmt.Sprintf("Unable to parse mime_type %q: %s.", declared, err),
 			}}
 		}
 
 		detectedType, _, _ := mime.ParseMediaType(detected)
 		if declaredType != detectedType {
-			return []*artifacts.Problem{{
-				Severity:   artifacts.Problem_WARNING,
+			return []*check.Problem{{
+				Severity:   check.Problem_WARNING,
 				Message:    fmt.Sprintf("Unexpected mime_type %q for contents.", declared),
 				Suggestion: fmt.Sprintf("Detected mime_type: %q.", detected),
 			}}

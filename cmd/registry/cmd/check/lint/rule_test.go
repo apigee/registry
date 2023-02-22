@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -34,7 +34,7 @@ func TestProjectRule(t *testing.T) {
 				OnlyIf: func(p *rpc.Project) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*artifacts.Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -55,7 +55,7 @@ func TestArtifactRule(t *testing.T) {
 				OnlyIf: func(p *rpc.Artifact) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToArtifact: func(ctx context.Context, p *rpc.Artifact) []*artifacts.Problem {
+				ApplyToArtifact: func(ctx context.Context, p *rpc.Artifact) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -76,7 +76,7 @@ func TestApiRule(t *testing.T) {
 				OnlyIf: func(p *rpc.Api) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApi: func(ctx context.Context, p *rpc.Api) []*artifacts.Problem {
+				ApplyToApi: func(ctx context.Context, p *rpc.Api) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -97,7 +97,7 @@ func TestApiDeploymentRule(t *testing.T) {
 				OnlyIf: func(p *rpc.ApiDeployment) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApiDeployment: func(ctx context.Context, p *rpc.ApiDeployment) []*artifacts.Problem {
+				ApplyToApiDeployment: func(ctx context.Context, p *rpc.ApiDeployment) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -118,7 +118,7 @@ func TestApiVersion(t *testing.T) {
 				OnlyIf: func(p *rpc.ApiVersion) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApiVersion: func(ctx context.Context, p *rpc.ApiVersion) []*artifacts.Problem {
+				ApplyToApiVersion: func(ctx context.Context, p *rpc.ApiVersion) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -139,7 +139,7 @@ func TestApiSpec(t *testing.T) {
 				OnlyIf: func(p *rpc.ApiSpec) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApiSpec: func(ctx context.Context, p *rpc.ApiSpec) []*artifacts.Problem {
+				ApplyToApiSpec: func(ctx context.Context, p *rpc.ApiSpec) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -162,7 +162,7 @@ func TestFieldRule(t *testing.T) {
 				OnlyIf: func(resource Resource, name string) bool {
 					return name == "Name"
 				},
-				ApplyToField: func(ctx context.Context, resource Resource, name string, value interface{}) []*artifacts.Problem {
+				ApplyToField: func(ctx context.Context, resource Resource, name string, value interface{}) []*check.Problem {
 					return test.problems
 				},
 			}
@@ -174,7 +174,7 @@ func TestFieldRule(t *testing.T) {
 
 type ruleTest struct {
 	testName string
-	problems []*artifacts.Problem
+	problems []*check.Problem
 }
 
 // runRule runs a rule within a test environment.
@@ -197,11 +197,11 @@ func (test *ruleTest) runRule(rule Rule, r Resource, t *testing.T) {
 func makeRuleTests(r Resource) []ruleTest {
 	return []ruleTest{
 		{"NoProblems", nil},
-		{"OneProblem", []*artifacts.Problem{{
+		{"OneProblem", []*check.Problem{{
 			Message:  "There was a problem.",
 			Location: r.GetName(),
 		}}},
-		{"TwoProblems", []*artifacts.Problem{
+		{"TwoProblems", []*check.Problem{
 			{
 				Message:  "This was the first problem.",
 				Location: r.GetName(),

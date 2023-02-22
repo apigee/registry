@@ -19,13 +19,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/names"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
 )
 
-func ValidateScoreDefinition(parent string, scoreDefinition *artifacts.ScoreDefinition) []error {
+func ValidateScoreDefinition(parent string, scoreDefinition *scoring.ScoreDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
@@ -37,10 +37,10 @@ func ValidateScoreDefinition(parent string, scoreDefinition *artifacts.ScoreDefi
 	// Validate formula if there were no errors in target_resource
 	if len(totalErrs) == 0 {
 		switch formula := scoreDefinition.GetFormula().(type) {
-		case *artifacts.ScoreDefinition_ScoreFormula:
+		case *scoring.ScoreDefinition_ScoreFormula:
 			errs := validateScoreFormula(targetName, formula.ScoreFormula)
 			totalErrs = append(totalErrs, errs...)
-		case *artifacts.ScoreDefinition_RollupFormula:
+		case *scoring.ScoreDefinition_RollupFormula:
 			if len(formula.RollupFormula.GetScoreFormulas()) == 0 {
 				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.score_formulas"))
 			}
@@ -58,12 +58,12 @@ func ValidateScoreDefinition(parent string, scoreDefinition *artifacts.ScoreDefi
 
 	// Validate threshold
 	switch scoreType := scoreDefinition.GetType().(type) {
-	case *artifacts.ScoreDefinition_Percent:
+	case *scoring.ScoreDefinition_Percent:
 		// minValue: 0 maxValue:100
 		// validate that the set thresholds are within these bounds
 		errs := validateNumberThresholds(scoreType.Percent.GetThresholds(), 0, 100)
 		totalErrs = append(totalErrs, errs...)
-	case *artifacts.ScoreDefinition_Integer:
+	case *scoring.ScoreDefinition_Integer:
 		// defaults if not set: minValue: 0 maxValue:0
 		minValue := scoreType.Integer.GetMinValue()
 		maxValue := scoreType.Integer.GetMaxValue()
@@ -75,7 +75,7 @@ func ValidateScoreDefinition(parent string, scoreDefinition *artifacts.ScoreDefi
 			errs := validateNumberThresholds(scoreType.Integer.GetThresholds(), minValue, maxValue)
 			totalErrs = append(totalErrs, errs...)
 		}
-	case *artifacts.ScoreDefinition_Boolean:
+	case *scoring.ScoreDefinition_Boolean:
 		errs := validateBooleanThresholds(scoreType.Boolean.GetThresholds())
 		totalErrs = append(totalErrs, errs...)
 	default:
@@ -85,7 +85,7 @@ func ValidateScoreDefinition(parent string, scoreDefinition *artifacts.ScoreDefi
 	return totalErrs
 }
 
-func ValidateScoreCardDefinition(parent string, scoreCardDefinition *artifacts.ScoreCardDefinition) []error {
+func ValidateScoreCardDefinition(parent string, scoreCardDefinition *scoring.ScoreCardDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
@@ -137,7 +137,7 @@ func validateReferencesInPattern(targetName patterns.ResourceName, pattern strin
 	return errs
 }
 
-func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *artifacts.ScoreFormula) []error {
+func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *scoring.ScoreFormula) []error {
 	errs := make([]error, 0)
 
 	// Validation checks for score_formula.artifact.pattern
@@ -163,7 +163,7 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *artifa
 	return errs
 }
 
-func validateNumberThresholds(thresholds []*artifacts.NumberThreshold, minValue, maxValue int32) []error {
+func validateNumberThresholds(thresholds []*scoring.NumberThreshold, minValue, maxValue int32) []error {
 	if len(thresholds) == 0 {
 		// no error returned since thresholds are optional
 		return []error{}
@@ -234,7 +234,7 @@ func validateNumberThresholds(thresholds []*artifacts.NumberThreshold, minValue,
 	return errs
 }
 
-func validateBooleanThresholds(thresholds []*artifacts.BooleanThreshold) []error {
+func validateBooleanThresholds(thresholds []*scoring.BooleanThreshold) []error {
 	errs := make([]error, 0)
 
 	var isFalseCovered, isTrueCovered bool
@@ -257,7 +257,7 @@ func validateBooleanThresholds(thresholds []*artifacts.BooleanThreshold) []error
 	return errs
 }
 
-func GenerateCombinedPattern(targetPattern *artifacts.ResourcePattern, inputPatternName patterns.ResourceName, inputFilter string) (string, string, error) {
+func GenerateCombinedPattern(targetPattern *scoring.ResourcePattern, inputPatternName patterns.ResourceName, inputFilter string) (string, string, error) {
 	projectID := strings.Split(inputPatternName.Project(), "/")[1]
 	// Generate a common list pattern based on the supplied input and the targetPattern in the definition
 	targetPatternName, err := patterns.ParseResourcePattern(fmt.Sprintf("projects/%s/locations/global/%s", projectID, targetPattern.GetPattern()))

@@ -14,11 +14,11 @@
 
 package linter
 
-import "github.com/apigee/registry/pkg/artifacts"
+import "github.com/apigee/registry/pkg/application/style"
 
 // LinterRunner is an interface through which a linter executes.
 type LinterRunner interface {
 
 	// Runs the linter with a provided linter request.
-	Run(request *artifacts.LinterRequest) (*artifacts.LinterResponse, error)
+	Run(request *style.LinterRequest) (*style.LinterResponse, error)
 }

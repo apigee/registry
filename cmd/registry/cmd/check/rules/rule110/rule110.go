@@ -20,7 +20,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/util"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 )
 
 var ruleNum = 110
@@ -41,7 +41,7 @@ var description = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*artifacts.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		return util.CheckUTF(fieldName, value, 5000)
 	},
 }

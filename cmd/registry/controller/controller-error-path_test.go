@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -47,13 +47,13 @@ func deleteProject(
 func TestControllerErrors(t *testing.T) {
 	tests := []struct {
 		desc              string
-		generatedResource *artifacts.GeneratedResource
+		generatedResource *controller.GeneratedResource
 	}{
 		{
 			desc: "Non-existing reference in dependencies",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/lintstats-gnostic",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec", // Correct pattern should be: $resource.version
 					},
@@ -63,9 +63,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect reference keyword",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.apispec", // Correct pattern should be: $resource.spec
 					},
@@ -75,9 +75,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Nonexistent dependency resource",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/lintstats-gnostic",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.version/artifacts/lint-gnostic", // There is no version level lint-gnostic artifact in the registry
 					},
@@ -88,9 +88,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect reference in action",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lintstats-gnostic",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -100,9 +100,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect resource pattern",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/specs/-/artifacts/lintstats-gnostic", // Correct pattern should be: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -112,9 +112,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect matching",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/summary",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.api/versions/-/artifacts/complexity", // Correct pattern should be: $resource.version/artifacts/vocabulary
 					},
@@ -127,9 +127,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect action reference",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.version/-/artifacts/complexity",
 					},
@@ -140,9 +140,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Missing reference",
-			generatedResource: &artifacts.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/artifacts/summary",
-				Dependencies: []*artifacts.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.api/versions/-/artifacts/complexity",
 					},

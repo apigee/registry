@@ -20,12 +20,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/check"
 	"gopkg.in/yaml.v2"
 )
 
 func TestProblemJSON(t *testing.T) {
-	problem := &artifacts.Problem{
+	problem := &check.Problem{
 		Message:  "foo bar",
 		Location: "test/location",
 		RuleId:   "core::0131",
@@ -52,11 +52,11 @@ func TestProblemJSON(t *testing.T) {
 }
 
 func TestProblemYAML(t *testing.T) {
-	problem := &artifacts.Problem{
+	problem := &check.Problem{
 		Message:  "foo bar",
 		Location: "test/location",
 		RuleId:   "core::0131",
-		Severity: artifacts.Problem_ERROR,
+		Severity: check.Problem_ERROR,
 	}
 	serialized, err := yaml.Marshal(problem)
 	if err != nil {
@@ -69,7 +69,7 @@ func TestProblemYAML(t *testing.T) {
 		{"Message", `message: foo bar`},
 		{"Location", `location: test/location`},
 		{"RuleId", `ruleid: core::0131`},
-		{"Severity", fmt.Sprintf(`severity: %d`, artifacts.Problem_ERROR.Number())},
+		{"Severity", fmt.Sprintf(`severity: %d`, check.Problem_ERROR.Number())},
 	}
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {

@@ -22,25 +22,25 @@ import (
 	"strings"
 
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/log"
 )
 
 // Runs the API linter with a provided spec path
-type runLinter func(specPath, specDir string) ([]*artifacts.LintProblem, error)
+type runLinter func(specPath, specDir string) ([]*style.LintProblem, error)
 
 // apiLinterRunner implements the LinterRunner interface for the API linter.
 type apiLinterRunner struct{}
 
-func (linter *apiLinterRunner) Run(req *artifacts.LinterRequest) (*artifacts.LinterResponse, error) {
+func (linter *apiLinterRunner) Run(req *style.LinterRequest) (*style.LinterResponse, error) {
 	return linter.RunImpl(req, runApiLinter)
 }
 
 func (linter *apiLinterRunner) RunImpl(
-	req *artifacts.LinterRequest,
+	req *style.LinterRequest,
 	runLinter runLinter,
-) (*artifacts.LinterResponse, error) {
-	lintFiles := make([]*artifacts.LintFile, 0)
+) (*style.LinterResponse, error) {
+	lintFiles := make([]*style.LintFile, 0)
 
 	//log.Infof(context.TODO(), "REQUEST %+v", req)
 	// Traverse the files in the directory
@@ -72,7 +72,7 @@ func (linter *apiLinterRunner) RunImpl(
 		filteredProblems := linter.filterProblems(lintProblems, req.GetRuleIds())
 
 		// Formulate the response.
-		lintFiles = append(lintFiles, &artifacts.LintFile{
+		lintFiles = append(lintFiles, &style.LintFile{
 			FilePath: path,
 			Problems: filteredProblems,
 		})
@@ -83,15 +83,15 @@ func (linter *apiLinterRunner) RunImpl(
 		return nil, err
 	}
 
-	return &artifacts.LinterResponse{
-		Lint: &artifacts.Lint{
+	return &style.LinterResponse{
+		Lint: &style.Lint{
 			Name:  "registry-lint-api-linter",
 			Files: lintFiles,
 		},
 	}, nil
 }
 
-func runApiLinter(specPath, specDirectory string) ([]*artifacts.LintProblem, error) {
+func runApiLinter(specPath, specDirectory string) ([]*style.LintProblem, error) {
 	// TODO: Replace this new instance with a logger inherited from the context.
 	logger := log.NewLogger()
 	logger.Infof("Running api-linter on %s", specPath)
@@ -108,9 +108,9 @@ func main() {
 }
 
 func (linter *apiLinterRunner) filterProblems(
-	problems []*artifacts.LintProblem,
+	problems []*style.LintProblem,
 	rules []string,
-) []*artifacts.LintProblem {
+) []*style.LintProblem {
 	// Construct a set of all the problems enabled for this mimetype
 	// so we have efficient lookup.
 	enabledProblems := make(map[string]bool)
@@ -142,12 +142,12 @@ func createAndRunApiLinterCommand(specDirectory, specName string) ([]byte, error
 	return cmd.CombinedOutput()
 }
 
-func parseLinterOutput(data []byte) ([]*artifacts.LintProblem, error) {
+func parseLinterOutput(data []byte) ([]*style.LintProblem, error) {
 	// Parse the API Linter output.
 	if len(data) == 0 {
-		return []*artifacts.LintProblem{}, nil
+		return []*style.LintProblem{}, nil
 	}
-	var lintFiles []*artifacts.LintFile
+	var lintFiles []*style.LintFile
 	err := json.Unmarshal(data, &lintFiles)
 	if err != nil {
 		return nil, err
@@ -159,5 +159,5 @@ func parseLinterOutput(data []byte) ([]*artifacts.LintProblem, error) {
 		lintFile := lintFiles[0]
 		return lintFile.GetProblems(), nil
 	}
-	return []*artifacts.LintProblem{}, nil
+	return []*style.LintProblem{}, nil
 }

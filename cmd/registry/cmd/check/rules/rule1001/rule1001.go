@@ -22,7 +22,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/pkg/artifacts"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
@@ -45,7 +46,7 @@ var taxonomyLabels = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "Labels"
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*artifacts.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		labels := map[string]string{}
 		for k, v := range value.(map[string]string) {
 			if strings.HasPrefix(k, "apihub-") {
@@ -60,11 +61,11 @@ var taxonomyLabels = &lint.FieldRule{
 		project := name.Project()
 		taxonomies := taxonomies(ctx, project)
 
-		var probs []*artifacts.Problem
+		var probs []*check.Problem
 		for k, v := range labels {
 			if !taxonomies.exists(k, v) {
-				probs = append(probs, &artifacts.Problem{
-					Severity:   artifacts.Problem_ERROR,
+				probs = append(probs, &check.Problem{
+					Severity:   check.Problem_ERROR,
 					Message:    fmt.Sprintf(`Label value %q not present in Taxonomy %q`, v, k),
 					Suggestion: `Adjust label value or Taxonomy elements.`,
 				})
@@ -82,7 +83,7 @@ func taxonomies(ctx context.Context, project names.Project) *TaxList {
 		Name: project.Artifact("apihub-taxonomies").String(),
 	})
 	if err == nil {
-		tl := new(artifacts.TaxonomyList)
+		tl := new(apihub.TaxonomyList)
 		if err = proto.Unmarshal(ac.Data, tl); err == nil {
 			return &TaxList{tl}
 		}
@@ -91,7 +92,7 @@ func taxonomies(ctx context.Context, project names.Project) *TaxList {
 }
 
 type TaxList struct {
-	*artifacts.TaxonomyList
+	*apihub.TaxonomyList
 }
 
 func (tl *TaxList) exists(k, v string) bool {

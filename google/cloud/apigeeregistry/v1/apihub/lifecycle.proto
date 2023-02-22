@@ -21,7 +21,7 @@ package google.cloud.apigeeregistry.v1.apihub;
 option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
 option java_multiple_files = true;
 option java_outer_classname = "ApiHubLifecycleModelsProto";
-option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
+option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
 
 // A lifecycle represents a series of stages that an API typically moves through
 // in its lifetime. Lifecycles are usually organization-specific, so rather than
