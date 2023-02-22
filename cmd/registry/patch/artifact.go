@@ -25,7 +25,7 @@ import (
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
@@ -77,7 +77,7 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 }
 
 // NewArtifact allows an artifact to be individually exported as a YAML file.
-func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, error) {
+func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*encoding.Artifact, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -135,11 +135,11 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 		node = removeIdAndKind(node)
 	}
 	// Wrap the artifact for YAML export.
-	return &models.Artifact{
-		Header: models.Header{
+	return &encoding.Artifact{
+		Header: encoding.Header{
 			ApiVersion: RegistryV1,
 			Kind:       types.KindForMimeType(message.MimeType),
-			Metadata: models.Metadata{
+			Metadata: encoding.Metadata{
 				Name:        artifactName.ArtifactID(),
 				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
 				Labels:      message.Labels,
@@ -151,7 +151,7 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 }
 
 func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string, filename string) error {
-	var artifact models.Artifact
+	var artifact encoding.Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
@@ -159,14 +159,14 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClie
 	return applyArtifactPatch(ctx, client, &artifact, project, filename)
 }
 
-func artifactName(parent string, metadata models.Metadata) (names.Artifact, error) {
+func artifactName(parent string, metadata encoding.Metadata) (names.Artifact, error) {
 	if metadata.Parent != "" {
 		parent = parent + "/" + metadata.Parent
 	}
 	return names.ParseArtifact(parent + "/artifacts/" + metadata.Name)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string, filename string) error {
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *encoding.Artifact, parent string, filename string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.

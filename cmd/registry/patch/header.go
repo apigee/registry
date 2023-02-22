@@ -15,22 +15,22 @@
 package patch
 
 import (
-	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/encoding"
 	"gopkg.in/yaml.v3"
 )
 
 const RegistryV1 = "apigeeregistry/v1"
 
-func readHeader(bytes []byte) (models.Header, error) {
-	var header models.Header
+func readHeader(bytes []byte) (encoding.Header, error) {
+	var header encoding.Header
 	err := yaml.Unmarshal(bytes, &header)
 	return header, err
 }
 
-func readHeaderWithItems(bytes []byte) (models.Header, yaml.Node, error) {
+func readHeaderWithItems(bytes []byte) (encoding.Header, yaml.Node, error) {
 	type headerWithItems struct {
-		models.Header `yaml:",inline"`
-		Items         yaml.Node `yaml:"items,omitempty"`
+		encoding.Header `yaml:",inline"`
+		Items           yaml.Node `yaml:"items,omitempty"`
 	}
 	var wrapper headerWithItems
 	err := yaml.Unmarshal(bytes, &wrapper)

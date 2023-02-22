@@ -24,8 +24,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/log"
-	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -280,8 +280,8 @@ func (v *getVisitor) write() error {
 		if len(v.results) == 1 {
 			result = v.results[0]
 		} else {
-			result = &models.List{
-				Header: models.Header{ApiVersion: patch.RegistryV1},
+			result = &encoding.List{
+				Header: encoding.Header{ApiVersion: patch.RegistryV1},
 				Items:  v.results,
 			}
 		}
