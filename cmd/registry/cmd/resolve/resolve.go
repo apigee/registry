@@ -20,6 +20,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/tasks"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
@@ -32,8 +33,8 @@ import (
 func fetchManifest(
 	ctx context.Context,
 	client connection.RegistryClient,
-	manifestName string) (*rpc.Manifest, error) {
-	manifest := &rpc.Manifest{}
+	manifestName string) (*artifacts.Manifest, error) {
+	manifest := &artifacts.Manifest{}
 	body, err := client.GetArtifactContents(
 		ctx,
 		&rpc.GetArtifactContentsRequest{

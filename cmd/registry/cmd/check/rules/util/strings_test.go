@@ -18,26 +18,26 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestCheckUTF(t *testing.T) {
-	bad := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	bad := []*artifacts.Problem{{
+		Severity:   artifacts.Problem_ERROR,
 		Message:    `xxx must contain only UTF-8 characters.`,
 		Suggestion: `Fix xxx.`}}
 
-	tooLong := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	tooLong := []*artifacts.Problem{{
+		Severity:   artifacts.Problem_ERROR,
 		Message:    `xxx exceeds limit of 64 characters.`,
 		Suggestion: `Fix xxx.`}}
 
 	tests := []struct {
 		name     string
 		in       string
-		expected []*rpc.Problem
+		expected []*artifacts.Problem
 	}{
 		{"empty", "", nil},
 		{"invalid", string([]byte{0xff}), bad},
@@ -47,7 +47,7 @@ func TestCheckUTF(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := CheckUTF("xxx", test.in, 64)
-			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+			if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(artifacts.Problem{})); diff != "" {
 				t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 			}
 		})

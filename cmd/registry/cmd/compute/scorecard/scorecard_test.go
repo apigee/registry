@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -64,10 +65,10 @@ func deleteProject(
 }
 
 var (
-	scoreCardAll = &rpc.ScoreCardDefinition{
+	scoreCardAll = &artifacts.ScoreCardDefinition{
 		Id:   "lint-summary",
 		Kind: "ScoreCardDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &artifacts.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 		},
 		ScorePatterns: []string{
@@ -75,10 +76,10 @@ var (
 		},
 	}
 
-	scoreCardOpenAPI = &rpc.ScoreCardDefinition{
+	scoreCardOpenAPI = &artifacts.ScoreCardDefinition{
 		Id:   "lint-summary-openapi",
 		Kind: "ScoreCardDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &artifacts.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 			Filter:  "mime_type.contains('openapi')",
 		},
@@ -87,10 +88,10 @@ var (
 		},
 	}
 
-	scoreCardProto = &rpc.ScoreCardDefinition{
+	scoreCardProto = &artifacts.ScoreCardDefinition{
 		Id:   "lint-summary-proto",
 		Kind: "ScoreCardDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &artifacts.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 			Filter:  "mime_type.contains('protobuf')",
 		},
@@ -99,11 +100,11 @@ var (
 		},
 	}
 
-	scoreLintError = &rpc.Score{
+	scoreLintError = &artifacts.Score{
 		Id:   "score-lint-error",
 		Kind: "Score",
-		Value: &rpc.Score_IntegerValue{
-			IntegerValue: &rpc.IntegerValue{
+		Value: &artifacts.Score_IntegerValue{
+			IntegerValue: &artifacts.IntegerValue{
 				Value:    1,
 				MinValue: 0,
 				MaxValue: 10,

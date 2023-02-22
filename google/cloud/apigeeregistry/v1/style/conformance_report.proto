@@ -26,7 +26,7 @@ import "google/cloud/apigeeregistry/v1/style/style_guide.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
 option java_outer_classname = "ConformanceReportProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
 
 // ConformanceReport describes how well an API Spec or a series of
 // API Specs conform to a specific API Style guide.

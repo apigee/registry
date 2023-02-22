@@ -24,7 +24,7 @@ import "google/cloud/apigeeregistry/v1/style/lint.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
 option java_outer_classname = "StyleGuideProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
 
 // StyleGuide defines a set of guidelines and linters that govern the
 // static analysis of API Specs with specified mime types.

@@ -17,7 +17,7 @@ package scoring
 import (
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -31,13 +31,13 @@ func TestGetMap(t *testing.T) {
 		wantMap       map[string]interface{}
 	}{
 		{
-			desc: "happy path rpc.Lint",
-			contentsProto: &rpc.Lint{
+			desc: "happy path artifacts.Lint",
+			contentsProto: &artifacts.Lint{
 				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+				Files: []*artifacts.LintFile{
 					{
 						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						Problems: []*artifacts.LintProblem{
 							{
 								Message: "lint-error",
 							},
@@ -86,18 +86,18 @@ func TestGetMapError(t *testing.T) {
 	}{
 		{
 			desc: "unsupported artifact type",
-			contentsProto: &rpc.ScoreDefinition{
-				TargetResource: &rpc.ResourcePattern{},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+			contentsProto: &artifacts.ScoreDefinition{
+				TargetResource: &artifacts.ResourcePattern{},
+				Formula: &artifacts.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &artifacts.ScoreFormula{
+						Artifact: &artifacts.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/lint-error",
 						},
 						ScoreExpression: "size(files[0].problems)",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &artifacts.ScoreDefinition_Integer{
+					Integer: &artifacts.IntegerType{
 						MinValue: 0,
 						MaxValue: 10,
 					},

@@ -19,7 +19,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -30,21 +30,21 @@ func respondWithErrorAndExit(errs ...error) {
 	for i, err := range errs {
 		errorMessages[i] = err.Error()
 	}
-	response := &rpc.LinterResponse{
+	response := &artifacts.LinterResponse{
 		Errors: errorMessages,
 	}
 	respondAndExit(response)
 }
 
 // RespondAndExit serializes and writes the plugin response to STDOUT, and then exits.
-func respondAndExit(response *rpc.LinterResponse) {
+func respondAndExit(response *artifacts.LinterResponse) {
 	responseBytes, _ := proto.Marshal(response)
 	os.Stdout.Write(responseBytes)
 	os.Exit(0)
 }
 
 // GetRequest constructs a LinterRequest object from standard input.
-func getRequest() (*rpc.LinterRequest, error) {
+func getRequest() (*artifacts.LinterRequest, error) {
 	// Read from stdin.
 	pluginData, err := io.ReadAll(os.Stdin)
 	if err != nil {
@@ -56,7 +56,7 @@ func getRequest() (*rpc.LinterRequest, error) {
 	}
 
 	// Deserialize the request from the input into a request object.
-	linterRequest := &rpc.LinterRequest{}
+	linterRequest := &artifacts.LinterRequest{}
 	if err := proto.Unmarshal(pluginData, linterRequest); err != nil {
 		return nil, err
 	}

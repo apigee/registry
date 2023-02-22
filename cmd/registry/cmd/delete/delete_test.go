@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/types"
@@ -36,7 +37,7 @@ func TestMain(m *testing.M) {
 
 func setup(t *testing.T) (context.Context, connection.RegistryClient) {
 	// Seed a registry with a list of leaf-level artifacts.
-	displaySettingsBytes, err := proto.Marshal(&rpc.DisplaySettings{Organization: "Sample"})
+	displaySettingsBytes, err := proto.Marshal(&artifacts.DisplaySettings{Organization: "Sample"})
 	if err != nil {
 		t.Fatalf("Failed to prepare test data: %+v", err)
 	}

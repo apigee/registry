@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/compress"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
@@ -38,40 +39,40 @@ func conformanceReportId(styleguideId string) string {
 	return fmt.Sprintf("conformance-%s", styleguideId)
 }
 
-func initializeConformanceReport(specName, styleguideId, project string) *rpc.ConformanceReport {
+func initializeConformanceReport(specName, styleguideId, project string) *artifacts.ConformanceReport {
 	// Create an empty conformance report.
-	conformanceReport := &rpc.ConformanceReport{
+	conformanceReport := &artifacts.ConformanceReport{
 		Id:         conformanceReportId(styleguideId),
 		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 	}
 
 	// Initialize guideline report groups.
-	guidelineState := rpc.Guideline_State(0)
+	guidelineState := artifacts.Guideline_State(0)
 	numStates := guidelineState.Descriptor().Values().Len()
-	conformanceReport.GuidelineReportGroups = make([]*rpc.GuidelineReportGroup, numStates)
+	conformanceReport.GuidelineReportGroups = make([]*artifacts.GuidelineReportGroup, numStates)
 	for i := 0; i < numStates; i++ {
-		conformanceReport.GuidelineReportGroups[i] = &rpc.GuidelineReportGroup{
-			State:            rpc.Guideline_State(i),
-			GuidelineReports: make([]*rpc.GuidelineReport, 0),
+		conformanceReport.GuidelineReportGroups[i] = &artifacts.GuidelineReportGroup{
+			State:            artifacts.Guideline_State(i),
+			GuidelineReports: make([]*artifacts.GuidelineReport, 0),
 		}
 	}
 
 	return conformanceReport
 }
 
-func initializeGuidelineReport(guidelineID string) *rpc.GuidelineReport {
+func initializeGuidelineReport(guidelineID string) *artifacts.GuidelineReport {
 	// Create an empty guideline report.
-	guidelineReport := &rpc.GuidelineReport{GuidelineId: guidelineID}
+	guidelineReport := &artifacts.GuidelineReport{GuidelineId: guidelineID}
 
 	// Initialize rule report groups.
-	ruleSeverity := rpc.Rule_Severity(0)
+	ruleSeverity := artifacts.Rule_Severity(0)
 	numSeverities := ruleSeverity.Descriptor().Values().Len()
-	guidelineReport.RuleReportGroups = make([]*rpc.RuleReportGroup, numSeverities)
+	guidelineReport.RuleReportGroups = make([]*artifacts.RuleReportGroup, numSeverities)
 	for i := 0; i < numSeverities; i++ {
-		guidelineReport.RuleReportGroups[i] = &rpc.RuleReportGroup{
-			Severity:    rpc.Rule_Severity(i),
-			RuleReports: make([]*rpc.RuleReport, 0),
+		guidelineReport.RuleReportGroups[i] = &artifacts.RuleReportGroup{
+			Severity:    artifacts.Rule_Severity(i),
+			RuleReports: make([]*artifacts.RuleReport, 0),
 		}
 	}
 
@@ -151,9 +152,9 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 func (task *ComputeConformanceTask) invokeLinter(
 	ctx context.Context,
 	specDirectory string,
-	metadata *linterMetadata) (*rpc.LinterResponse, error) {
+	metadata *linterMetadata) (*artifacts.LinterResponse, error) {
 	// Formulate the request.
-	requestBytes, err := proto.Marshal(&rpc.LinterRequest{
+	requestBytes, err := proto.Marshal(&artifacts.LinterRequest{
 		SpecDirectory: specDirectory,
 		RuleIds:       metadata.rules,
 	})
@@ -177,7 +178,7 @@ func (task *ComputeConformanceTask) invokeLinter(
 	log.Debugf(ctx, "Plugin %s ran in time %s", executableName, pluginElapsedTime)
 
 	// Unmarshal the output bytes into a response object. If there's a failure, log and continue.
-	linterResponse := &rpc.LinterResponse{}
+	linterResponse := &artifacts.LinterResponse{}
 	err = proto.Unmarshal(output, linterResponse)
 	if err != nil {
 		return nil, fmt.Errorf("Failed unmarshalling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
@@ -193,9 +194,9 @@ func (task *ComputeConformanceTask) invokeLinter(
 
 func (task *ComputeConformanceTask) computeConformanceReport(
 	ctx context.Context,
-	conformanceReport *rpc.ConformanceReport,
+	conformanceReport *artifacts.ConformanceReport,
 	guidelineReportsMap map[string]int,
-	linterResponse *rpc.LinterResponse,
+	linterResponse *artifacts.LinterResponse,
 	linterMetadata *linterMetadata,
 ) {
 	// Process linterResponse to generate conformance report
@@ -231,7 +232,7 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 				guidelineReportsMap[guideline.GetId()] = reportIndex
 			}
 
-			ruleReport := &rpc.RuleReport{
+			ruleReport := &artifacts.RuleReport{
 				RuleId:      guidelineRule.GetId(),
 				Spec:        fmt.Sprintf("%s@%s", task.Spec.GetName(), task.Spec.GetRevisionId()),
 				File:        filepath.Base(lintFile.GetFilePath()),
@@ -255,7 +256,7 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 
 func (task *ComputeConformanceTask) storeConformanceReport(
 	ctx context.Context,
-	conformanceReport *rpc.ConformanceReport) error {
+	conformanceReport *artifacts.ConformanceReport) error {
 	// Store the conformance report.
 	messageData, err := proto.Marshal(conformanceReport)
 	if err != nil {

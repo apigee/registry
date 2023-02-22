@@ -23,7 +23,7 @@ import "google/api/field_behavior.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.controller";
 option java_multiple_files = true;
 option java_outer_classname = "ControllerReceiptProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
 
 // Stores the receipt of an external action,
 // which does not store any direct artifacts in the registry.

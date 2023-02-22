@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/types"
@@ -48,7 +49,7 @@ func FetchScoreDefinitions(
 	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(ctx context.Context, artifact *rpc.Artifact) error {
-			definition := &rpc.ScoreDefinition{}
+			definition := &artifacts.ScoreDefinition{}
 			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
 				log.Debugf(ctx, "Skipping definition %q: %s", artifact.GetName(), err1)
@@ -77,7 +78,7 @@ func CalculateScore(
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// Extract definition
-	definition := &rpc.ScoreDefinition{}
+	definition := &artifacts.ScoreDefinition{}
 	if err := proto.Unmarshal(defArtifact.GetContents(), definition); err != nil {
 		return err
 	}
@@ -141,15 +142,15 @@ type scoreResult struct {
 func processFormula(
 	ctx context.Context,
 	client artifactClient,
-	definition *rpc.ScoreDefinition,
+	definition *artifacts.ScoreDefinition,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
 	takeAction bool) scoreResult {
 	// Apply score formula
 	switch formula := definition.GetFormula().(type) {
-	case *rpc.ScoreDefinition_ScoreFormula:
+	case *artifacts.ScoreDefinition_ScoreFormula:
 		return processScoreFormula(ctx, client, formula.ScoreFormula, resource, scoreArtifact, takeAction)
-	case *rpc.ScoreDefinition_RollupFormula:
+	case *artifacts.ScoreDefinition_RollupFormula:
 		return processRollUpFormula(ctx, client, formula.RollupFormula, resource, scoreArtifact, takeAction)
 	default:
 		return scoreResult{
@@ -163,7 +164,7 @@ func processFormula(
 func processScoreFormula(
 	ctx context.Context,
 	client artifactClient,
-	formula *rpc.ScoreFormula,
+	formula *artifacts.ScoreFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
 	takeAction bool) scoreResult {
@@ -229,7 +230,7 @@ func processScoreFormula(
 func processRollUpFormula(
 	ctx context.Context,
 	client artifactClient,
-	formula *rpc.RollUpFormula,
+	formula *artifacts.RollUpFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
 	takeAction bool) scoreResult {
@@ -306,9 +307,9 @@ func processRollUpFormula(
 	}
 }
 
-func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, project string) (*rpc.Score, error) {
+func processScoreType(definition *artifacts.ScoreDefinition, scoreValue interface{}, project string) (*artifacts.Score, error) {
 	// Initialize Score proto
-	score := &rpc.Score{
+	score := &artifacts.Score{
 		Id:             fmt.Sprintf("score-%s", definition.GetId()),
 		Kind:           "Score",
 		DisplayName:    definition.GetDisplayName(),
@@ -320,7 +321,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 
 	// Set the Value field according to the type
 	switch definition.GetType().(type) {
-	case *rpc.ScoreDefinition_Integer:
+	case *artifacts.ScoreDefinition_Integer:
 		// Score proto expects int32 type
 		var value int32
 
@@ -340,8 +341,8 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		configuredMax := definition.GetInteger().GetMaxValue() // 0 if not set
 
 		// Populate Value field in Score proto
-		score.Value = &rpc.Score_IntegerValue{
-			IntegerValue: &rpc.IntegerValue{
+		score.Value = &artifacts.Score_IntegerValue{
+			IntegerValue: &artifacts.IntegerValue{
 				Value:    value,
 				MinValue: configuredMin,
 				MaxValue: configuredMax,
@@ -350,7 +351,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 
 		// Check that the scoreValue is within min/max limits and assign default ALERT Severity
 		if value < configuredMin || value > configuredMax {
-			score.Severity = rpc.Severity_ALERT
+			score.Severity = artifacts.Severity_ALERT
 			break
 		}
 
@@ -362,7 +363,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			}
 		}
 
-	case *rpc.ScoreDefinition_Percent:
+	case *artifacts.ScoreDefinition_Percent:
 		// Score proto expects float32 type
 		var value float32
 
@@ -379,15 +380,15 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		}
 
 		// Populate Value field in Score proto
-		score.Value = &rpc.Score_PercentValue{
-			PercentValue: &rpc.PercentValue{
+		score.Value = &artifacts.Score_PercentValue{
+			PercentValue: &artifacts.PercentValue{
 				Value: value,
 			},
 		}
 
 		// Check that the scoreValue is within min/max limits and assign default ALERT Severity
 		if value < 0 || value > 100 {
-			score.Severity = rpc.Severity_ALERT
+			score.Severity = artifacts.Severity_ALERT
 			break
 		}
 
@@ -399,7 +400,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			}
 		}
 
-	case *rpc.ScoreDefinition_Boolean:
+	case *artifacts.ScoreDefinition_Boolean:
 		// Convert scoreValue to appropriate type
 		boolVal, ok := scoreValue.(bool)
 		if !ok {
@@ -416,8 +417,8 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		}
 
 		// Populate Value field in Score proto
-		score.Value = &rpc.Score_BooleanValue{
-			BooleanValue: &rpc.BooleanValue{
+		score.Value = &artifacts.Score_BooleanValue{
+			BooleanValue: &artifacts.BooleanValue{
 				Value:        boolVal,
 				DisplayValue: displayValue,
 			},
@@ -434,7 +435,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 	return score, nil
 }
 
-func uploadScore(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, score *rpc.Score) error {
+func uploadScore(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, score *artifacts.Score) error {
 	artifactBytes, err := proto.Marshal(score)
 	if err != nil {
 		return err

@@ -17,50 +17,50 @@ package conformance
 import (
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
-var noRefSiblingsRule = &rpc.Rule{
+var noRefSiblingsRule = &artifacts.Rule{
 	Id:             "norefsiblings",
 	Linter:         "sample",
 	LinterRulename: "no-$ref-siblings",
-	Severity:       rpc.Rule_ERROR,
+	Severity:       artifacts.Rule_ERROR,
 }
 
-var noRefCyclesRule = &rpc.Rule{
+var noRefCyclesRule = &artifacts.Rule{
 	Id:             "norefcycles",
 	Linter:         "spectral",
 	LinterRulename: "no-ref-cycles",
-	Severity:       rpc.Rule_ERROR,
+	Severity:       artifacts.Rule_ERROR,
 }
 
-var operationDescriptionRule = &rpc.Rule{
+var operationDescriptionRule = &artifacts.Rule{
 	Id:             "operationdescription",
 	Linter:         "spectral",
 	LinterRulename: "operation-description",
-	Severity:       rpc.Rule_ERROR,
+	Severity:       artifacts.Rule_ERROR,
 }
 
 func TestGenerateLinterMetadata(t *testing.T) {
 	tests := []struct {
 		desc       string
-		styleguide *rpc.StyleGuide
+		styleguide *artifacts.StyleGuide
 		want       map[string]*linterMetadata
 		wantErr    bool
 	}{
 		{
 			desc: "Normal case",
-			styleguide: &rpc.StyleGuide{
+			styleguide: &artifacts.StyleGuide{
 				Id:        "openapitest",
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*artifacts.Guideline{
 					{
 						Id:    "refproperties",
-						Rules: []*rpc.Rule{noRefSiblingsRule},
-						State: rpc.Guideline_ACTIVE,
+						Rules: []*artifacts.Rule{noRefSiblingsRule},
+						State: artifacts.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -71,10 +71,10 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id:    "refproperties",
-								Rules: []*rpc.Rule{noRefSiblingsRule},
-								State: rpc.Guideline_ACTIVE,
+								Rules: []*artifacts.Rule{noRefSiblingsRule},
+								State: artifacts.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -83,14 +83,14 @@ func TestGenerateLinterMetadata(t *testing.T) {
 		},
 		{
 			desc: "Multiple linters",
-			styleguide: &rpc.StyleGuide{
+			styleguide: &artifacts.StyleGuide{
 				Id:        "openapitest",
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*artifacts.Guideline{
 					{
 						Id:    "descriptionproperties",
-						Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-						State: rpc.Guideline_ACTIVE,
+						Rules: []*artifacts.Rule{noRefSiblingsRule, noRefCyclesRule},
+						State: artifacts.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -101,10 +101,10 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id:    "descriptionproperties",
-								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								State: rpc.Guideline_ACTIVE,
+								Rules: []*artifacts.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: artifacts.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -115,10 +115,10 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id:    "descriptionproperties",
-								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								State: rpc.Guideline_ACTIVE,
+								Rules: []*artifacts.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: artifacts.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -127,19 +127,19 @@ func TestGenerateLinterMetadata(t *testing.T) {
 		},
 		{
 			desc: "Multiple linters guidelines",
-			styleguide: &rpc.StyleGuide{
+			styleguide: &artifacts.StyleGuide{
 				Id:        "openapitest",
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*artifacts.Guideline{
 					{
 						Id:    "refproperties",
-						Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-						State: rpc.Guideline_ACTIVE,
+						Rules: []*artifacts.Rule{noRefSiblingsRule, noRefCyclesRule},
+						State: artifacts.Guideline_ACTIVE,
 					},
 					{
 						Id:    "descriptionproperties",
-						Rules: []*rpc.Rule{operationDescriptionRule},
-						State: rpc.Guideline_PROPOSED,
+						Rules: []*artifacts.Rule{operationDescriptionRule},
+						State: artifacts.Guideline_PROPOSED,
 					},
 				},
 			},
@@ -150,10 +150,10 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id:    "refproperties",
-								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								State: rpc.Guideline_ACTIVE,
+								Rules: []*artifacts.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: artifacts.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -164,18 +164,18 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id:    "refproperties",
-								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								State: rpc.Guideline_ACTIVE,
+								Rules: []*artifacts.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: artifacts.Guideline_ACTIVE,
 							},
 						},
 						operationDescriptionRule.GetLinterRulename(): {
 							guidelineRule: operationDescriptionRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id:    "descriptionproperties",
-								Rules: []*rpc.Rule{operationDescriptionRule},
-								State: rpc.Guideline_PROPOSED,
+								Rules: []*artifacts.Rule{operationDescriptionRule},
+								State: artifacts.Guideline_PROPOSED,
 							},
 						},
 					},
@@ -184,14 +184,14 @@ func TestGenerateLinterMetadata(t *testing.T) {
 		},
 		{
 			desc: "Empty metadata",
-			styleguide: &rpc.StyleGuide{
+			styleguide: &artifacts.StyleGuide{
 				Id:        "openapitest",
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*artifacts.Guideline{
 					{
 						Id:    "refproperties",
-						Rules: []*rpc.Rule{},
-						State: rpc.Guideline_ACTIVE,
+						Rules: []*artifacts.Rule{},
+						State: artifacts.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -200,20 +200,20 @@ func TestGenerateLinterMetadata(t *testing.T) {
 		},
 		{
 			desc: "Missing linterName",
-			styleguide: &rpc.StyleGuide{
+			styleguide: &artifacts.StyleGuide{
 				Id:        "openapitest",
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*artifacts.Guideline{
 					{
 						Id: "refproperties",
-						Rules: []*rpc.Rule{
+						Rules: []*artifacts.Rule{
 							{
 								Id:             "norefsiblings",
 								LinterRulename: "no-$ref-siblings",
-								Severity:       rpc.Rule_ERROR,
+								Severity:       artifacts.Rule_ERROR,
 							},
 						},
-						State: rpc.Guideline_ACTIVE,
+						State: artifacts.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -222,21 +222,21 @@ func TestGenerateLinterMetadata(t *testing.T) {
 		},
 		{
 			desc: "Missing linterRuleName",
-			styleguide: &rpc.StyleGuide{
+			styleguide: &artifacts.StyleGuide{
 				Id:        "openapitest",
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*artifacts.Guideline{
 					{
 						Id: "refproperties",
-						Rules: []*rpc.Rule{
+						Rules: []*artifacts.Rule{
 							{
 								Id:       "norefsiblings",
 								Linter:   "spectral",
-								Severity: rpc.Rule_ERROR,
+								Severity: artifacts.Rule_ERROR,
 							},
 							noRefCyclesRule,
 						},
-						State: rpc.Guideline_ACTIVE,
+						State: artifacts.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -247,17 +247,17 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
-							guideline: &rpc.Guideline{
+							guideline: &artifacts.Guideline{
 								Id: "refproperties",
-								Rules: []*rpc.Rule{
+								Rules: []*artifacts.Rule{
 									{
 										Id:       "norefsiblings",
 										Linter:   "spectral",
-										Severity: rpc.Rule_ERROR,
+										Severity: artifacts.Rule_ERROR,
 									},
 									noRefCyclesRule,
 								},
-								State: rpc.Guideline_ACTIVE,
+								State: artifacts.Guideline_ACTIVE,
 							},
 						},
 					},

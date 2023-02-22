@@ -18,21 +18,21 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 )
 
-func CheckUTF(fieldName string, value interface{}, maxLen int) []*rpc.Problem {
+func CheckUTF(fieldName string, value interface{}, maxLen int) []*artifacts.Problem {
 	v := value.(string)
 	if !utf8.ValidString(v) {
-		return []*rpc.Problem{{
-			Severity:   rpc.Problem_ERROR,
+		return []*artifacts.Problem{{
+			Severity:   artifacts.Problem_ERROR,
 			Message:    fmt.Sprintf("%s must contain only UTF-8 characters.", fieldName),
 			Suggestion: fmt.Sprintf("Fix %s.", fieldName),
 		}}
 	}
 	if utf8.RuneCountInString(v) > maxLen {
-		return []*rpc.Problem{{
-			Severity:   rpc.Problem_ERROR,
+		return []*artifacts.Problem{{
+			Severity:   artifacts.Problem_ERROR,
 			Message:    fmt.Sprintf("%s exceeds limit of %d characters.", fieldName, maxLen),
 			Suggestion: fmt.Sprintf("Fix %s.", fieldName),
 		}}

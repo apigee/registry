@@ -21,7 +21,7 @@ package google.cloud.apigeeregistry.v1.apihub;
 option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
 option java_multiple_files = true;
 option java_outer_classname = "ApiHubTaxonomyModelsProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
 
 // A TaxonomyList message contains a list of taxonomies that can be used to
 // classify resources in the registry. Typically all of the system-managed

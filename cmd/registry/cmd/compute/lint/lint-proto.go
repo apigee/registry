@@ -21,12 +21,12 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/compress"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // NewLintFromZippedProtos runs the API linter and returns the results.
-func NewLintFromZippedProtos(name string, b []byte) (*rpc.Lint, error) {
+func NewLintFromZippedProtos(name string, b []byte) (*artifacts.Lint, error) {
 	// create a tmp directory
 	root, err := os.MkdirTemp("", "registry-protos-")
 	if err != nil {
@@ -62,8 +62,8 @@ func NewLintFromZippedProtos(name string, b []byte) (*rpc.Lint, error) {
 	return lintDirectory(name, root)
 }
 
-func lintDirectory(name string, root string) (*rpc.Lint, error) {
-	lint := &rpc.Lint{}
+func lintDirectory(name string, root string) (*artifacts.Lint, error) {
+	lint := &artifacts.Lint{}
 	lint.Name = name
 	// run the api-linter on each proto file
 	err := filepath.Walk(root+"/protos",
@@ -83,7 +83,7 @@ func lintDirectory(name string, root string) (*rpc.Lint, error) {
 	return lint, err
 }
 
-func lintFileForProto(path string, root string) (*rpc.LintFile, error) {
+func lintFileForProto(path string, root string) (*artifacts.LintFile, error) {
 	filename := strings.TrimPrefix(path, root+"/protos/")
 	cmd := exec.Command("api-linter", filename, "-I", "protos", "-I", "api-common-protos", "-I", "googleapis", "--output-format", "json")
 	cmd.Dir = root
@@ -91,9 +91,9 @@ func lintFileForProto(path string, root string) (*rpc.LintFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result rpc.Lint
+	var result artifacts.Lint
 	// The API linter returns a JSON array. Since the proto parser requires a top-level struct,
-	// wrap the results so that they are in the form of an rpc.Lint JSON serialization.
+	// wrap the results so that they are in the form of an artifacts.Lint JSON serialization.
 	wrappedJSON := "{\"files\": " + string(data) + "}"
 	err = protojson.Unmarshal([]byte(wrappedJSON), &result)
 	if err != nil {

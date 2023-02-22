@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -32,30 +33,30 @@ const styleguideId = "openapi-test"
 
 // This test will catch any changes made to the original status values.
 func TestInitializeConformanceReport(t *testing.T) {
-	want := &rpc.ConformanceReport{
+	want := &artifacts.ConformanceReport{
 		Id:         fmt.Sprintf("conformance-%s", styleguideId),
 		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
-		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+		GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
 			{
-				State:            rpc.Guideline_STATE_UNSPECIFIED,
-				GuidelineReports: make([]*rpc.GuidelineReport, 0),
+				State:            artifacts.Guideline_STATE_UNSPECIFIED,
+				GuidelineReports: make([]*artifacts.GuidelineReport, 0),
 			},
 			{
-				State:            rpc.Guideline_PROPOSED,
-				GuidelineReports: make([]*rpc.GuidelineReport, 0),
+				State:            artifacts.Guideline_PROPOSED,
+				GuidelineReports: make([]*artifacts.GuidelineReport, 0),
 			},
 			{
-				State:            rpc.Guideline_ACTIVE,
-				GuidelineReports: make([]*rpc.GuidelineReport, 0),
+				State:            artifacts.Guideline_ACTIVE,
+				GuidelineReports: make([]*artifacts.GuidelineReport, 0),
 			},
 			{
-				State:            rpc.Guideline_DEPRECATED,
-				GuidelineReports: make([]*rpc.GuidelineReport, 0),
+				State:            artifacts.Guideline_DEPRECATED,
+				GuidelineReports: make([]*artifacts.GuidelineReport, 0),
 			},
 			{
-				State:            rpc.Guideline_DISABLED,
-				GuidelineReports: make([]*rpc.GuidelineReport, 0),
+				State:            artifacts.Guideline_DISABLED,
+				GuidelineReports: make([]*artifacts.GuidelineReport, 0),
 			},
 		},
 	}
@@ -72,28 +73,28 @@ func TestInitializeConformanceReport(t *testing.T) {
 
 // This test will catch any changes made to the original severity values.
 func TestInitializeGuidelineReport(t *testing.T) {
-	want := &rpc.GuidelineReport{
+	want := &artifacts.GuidelineReport{
 		GuidelineId: styleguideId,
-		RuleReportGroups: []*rpc.RuleReportGroup{
+		RuleReportGroups: []*artifacts.RuleReportGroup{
 			{
-				Severity:    rpc.Rule_SEVERITY_UNSPECIFIED,
-				RuleReports: make([]*rpc.RuleReport, 0),
+				Severity:    artifacts.Rule_SEVERITY_UNSPECIFIED,
+				RuleReports: make([]*artifacts.RuleReport, 0),
 			},
 			{
-				Severity:    rpc.Rule_ERROR,
-				RuleReports: make([]*rpc.RuleReport, 0),
+				Severity:    artifacts.Rule_ERROR,
+				RuleReports: make([]*artifacts.RuleReport, 0),
 			},
 			{
-				Severity:    rpc.Rule_WARNING,
-				RuleReports: make([]*rpc.RuleReport, 0),
+				Severity:    artifacts.Rule_WARNING,
+				RuleReports: make([]*artifacts.RuleReport, 0),
 			},
 			{
-				Severity:    rpc.Rule_INFO,
-				RuleReports: make([]*rpc.RuleReport, 0),
+				Severity:    artifacts.Rule_INFO,
+				RuleReports: make([]*artifacts.RuleReport, 0),
 			},
 			{
-				Severity:    rpc.Rule_HINT,
-				RuleReports: make([]*rpc.RuleReport, 0),
+				Severity:    artifacts.Rule_HINT,
+				RuleReports: make([]*artifacts.RuleReport, 0),
 			},
 		},
 	}
@@ -111,27 +112,27 @@ func TestInitializeGuidelineReport(t *testing.T) {
 func TestComputeConformanceReport(t *testing.T) {
 	tests := []struct {
 		desc           string
-		linterResponse *rpc.LinterResponse
+		linterResponse *artifacts.LinterResponse
 		linterMetadata *linterMetadata
-		wantReport     *rpc.ConformanceReport
+		wantReport     *artifacts.ConformanceReport
 	}{
 		// Test basic flow.
 		{
 			desc: "Normal case",
-			linterResponse: &rpc.LinterResponse{
-				Lint: &rpc.Lint{
+			linterResponse: &artifacts.LinterResponse{
+				Lint: &artifacts.Lint{
 					Name: "sample-result",
-					Files: []*rpc.LintFile{
+					Files: []*artifacts.LintFile{
 						{
 							FilePath: "test-result-file",
-							Problems: []*rpc.LintProblem{
+							Problems: []*artifacts.LintProblem{
 								{
 									Message:    "no-$ref-siblings violated",
 									RuleId:     "no-$ref-siblings",
 									Suggestion: "fix no-$ref-siblings",
-									Location: &rpc.LintLocation{
-										StartPosition: &rpc.LintPosition{LineNumber: 11, ColumnNumber: 25},
-										EndPosition:   &rpc.LintPosition{LineNumber: 11, ColumnNumber: 32},
+									Location: &artifacts.LintLocation{
+										StartPosition: &artifacts.LintPosition{LineNumber: 11, ColumnNumber: 25},
+										EndPosition:   &artifacts.LintPosition{LineNumber: 11, ColumnNumber: 32},
 									},
 								},
 							},
@@ -144,68 +145,68 @@ func TestComputeConformanceReport(t *testing.T) {
 				rules: []string{"no-$ref-siblings"},
 				rulesMetadata: map[string]*ruleMetadata{
 					"no-$ref-siblings": {
-						guidelineRule: &rpc.Rule{
+						guidelineRule: &artifacts.Rule{
 							Id:       "norefsiblings",
-							Severity: rpc.Rule_ERROR,
+							Severity: artifacts.Rule_ERROR,
 						},
-						guideline: &rpc.Guideline{
+						guideline: &artifacts.Guideline{
 							Id:    "refproperties",
-							State: rpc.Guideline_ACTIVE,
+							State: artifacts.Guideline_ACTIVE,
 						},
 					},
 				},
 			},
-			wantReport: &rpc.ConformanceReport{
+			wantReport: &artifacts.ConformanceReport{
 				Id:         fmt.Sprintf("conformance-%s", styleguideId),
 				Kind:       "ConformanceReport",
 				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
-					{State: rpc.Guideline_PROPOSED},
+				GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
+					{State: artifacts.Guideline_STATE_UNSPECIFIED},
+					{State: artifacts.Guideline_PROPOSED},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: artifacts.Guideline_ACTIVE,
+						GuidelineReports: []*artifacts.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*artifacts.RuleReportGroup{
+									{Severity: artifacts.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: artifacts.Rule_ERROR,
+										RuleReports: []*artifacts.RuleReport{
 											{
 												RuleId:     "norefsiblings",
 												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix no-$ref-siblings",
-												Location: &rpc.LintLocation{
-													StartPosition: &rpc.LintPosition{LineNumber: 11, ColumnNumber: 25},
-													EndPosition:   &rpc.LintPosition{LineNumber: 11, ColumnNumber: 32},
+												Location: &artifacts.LintLocation{
+													StartPosition: &artifacts.LintPosition{LineNumber: 11, ColumnNumber: 25},
+													EndPosition:   &artifacts.LintPosition{LineNumber: 11, ColumnNumber: 32},
 												},
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: artifacts.Rule_WARNING},
+									{Severity: artifacts.Rule_INFO},
+									{Severity: artifacts.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: artifacts.Guideline_DEPRECATED},
+					{State: artifacts.Guideline_DISABLED},
 				},
 			},
 		},
 		// Test: LinterResponse includes multiple rule violations. Validate that only the once configured in the styleguide show up in the final conformance report.
 		{
 			desc: "Multiple violations",
-			linterResponse: &rpc.LinterResponse{
-				Lint: &rpc.Lint{
+			linterResponse: &artifacts.LinterResponse{
+				Lint: &artifacts.Lint{
 					Name: "sample-result",
-					Files: []*rpc.LintFile{
+					Files: []*artifacts.LintFile{
 						{
 							FilePath: "test-result-file",
-							Problems: []*rpc.LintProblem{
+							Problems: []*artifacts.LintProblem{
 								{
 									Message:    "tag-description violated",
 									RuleId:     "tag-description",
@@ -226,34 +227,34 @@ func TestComputeConformanceReport(t *testing.T) {
 				rules: []string{"operation-description"},
 				rulesMetadata: map[string]*ruleMetadata{
 					"operation-description": {
-						guidelineRule: &rpc.Rule{
+						guidelineRule: &artifacts.Rule{
 							Id:       "operationdescription",
-							Severity: rpc.Rule_ERROR,
+							Severity: artifacts.Rule_ERROR,
 						},
-						guideline: &rpc.Guideline{
+						guideline: &artifacts.Guideline{
 							Id:    "descriptionproperties",
-							State: rpc.Guideline_ACTIVE,
+							State: artifacts.Guideline_ACTIVE,
 						},
 					},
 				},
 			},
-			wantReport: &rpc.ConformanceReport{
+			wantReport: &artifacts.ConformanceReport{
 				Id:         fmt.Sprintf("conformance-%s", styleguideId),
 				Kind:       "ConformanceReport",
 				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
-					{State: rpc.Guideline_PROPOSED},
+				GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
+					{State: artifacts.Guideline_STATE_UNSPECIFIED},
+					{State: artifacts.Guideline_PROPOSED},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: artifacts.Guideline_ACTIVE,
+						GuidelineReports: []*artifacts.GuidelineReport{
 							{
 								GuidelineId: "descriptionproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*artifacts.RuleReportGroup{
+									{Severity: artifacts.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: artifacts.Rule_ERROR,
+										RuleReports: []*artifacts.RuleReport{
 											{
 												RuleId:     "operationdescription",
 												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
@@ -262,28 +263,28 @@ func TestComputeConformanceReport(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: artifacts.Rule_WARNING},
+									{Severity: artifacts.Rule_INFO},
+									{Severity: artifacts.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: artifacts.Guideline_DEPRECATED},
+					{State: artifacts.Guideline_DISABLED},
 				},
 			},
 		},
 		// Test: Multiple rules are defined in multiple guidelines, check conformance report gets generated accurately.
 		{
 			desc: "Multiple guidelines",
-			linterResponse: &rpc.LinterResponse{
-				Lint: &rpc.Lint{
+			linterResponse: &artifacts.LinterResponse{
+				Lint: &artifacts.Lint{
 					Name: "sample-result",
-					Files: []*rpc.LintFile{
+					Files: []*artifacts.LintFile{
 						{
 							FilePath: "test-result-file",
-							Problems: []*rpc.LintProblem{
+							Problems: []*artifacts.LintProblem{
 								{
 									Message:    "tag-description violated",
 									RuleId:     "tag-description",
@@ -319,63 +320,63 @@ func TestComputeConformanceReport(t *testing.T) {
 				rules: []string{"operation-description", "tag-description", "info-description", "no-$ref-siblings"},
 				rulesMetadata: map[string]*ruleMetadata{
 					"operation-description": {
-						guidelineRule: &rpc.Rule{
+						guidelineRule: &artifacts.Rule{
 							Id:       "operationdescription",
-							Severity: rpc.Rule_ERROR,
+							Severity: artifacts.Rule_ERROR,
 						},
-						guideline: &rpc.Guideline{
+						guideline: &artifacts.Guideline{
 							Id:    "descriptionproperties",
-							State: rpc.Guideline_ACTIVE,
+							State: artifacts.Guideline_ACTIVE,
 						},
 					},
 					"tag-description": {
-						guidelineRule: &rpc.Rule{
+						guidelineRule: &artifacts.Rule{
 							Id:       "tagdescription",
-							Severity: rpc.Rule_WARNING,
+							Severity: artifacts.Rule_WARNING,
 						},
-						guideline: &rpc.Guideline{
+						guideline: &artifacts.Guideline{
 							Id:    "descriptionproperties",
-							State: rpc.Guideline_ACTIVE,
+							State: artifacts.Guideline_ACTIVE,
 						},
 					},
 					"info-description": {
-						guidelineRule: &rpc.Rule{
+						guidelineRule: &artifacts.Rule{
 							Id:       "infodescription",
-							Severity: rpc.Rule_WARNING,
+							Severity: artifacts.Rule_WARNING,
 						},
-						guideline: &rpc.Guideline{
+						guideline: &artifacts.Guideline{
 							Id:    "descriptionproperties",
-							State: rpc.Guideline_ACTIVE,
+							State: artifacts.Guideline_ACTIVE,
 						},
 					},
 					"no-$ref-siblings": {
-						guidelineRule: &rpc.Rule{
+						guidelineRule: &artifacts.Rule{
 							Id:       "norefsiblings",
-							Severity: rpc.Rule_ERROR,
+							Severity: artifacts.Rule_ERROR,
 						},
-						guideline: &rpc.Guideline{
+						guideline: &artifacts.Guideline{
 							Id:    "refproperties",
-							State: rpc.Guideline_PROPOSED,
+							State: artifacts.Guideline_PROPOSED,
 						},
 					},
 				},
 			},
-			wantReport: &rpc.ConformanceReport{
+			wantReport: &artifacts.ConformanceReport{
 				Id:         fmt.Sprintf("conformance-%s", styleguideId),
 				Kind:       "ConformanceReport",
 				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{State: rpc.Guideline_STATE_UNSPECIFIED},
+				GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
+					{State: artifacts.Guideline_STATE_UNSPECIFIED},
 					{
-						State: rpc.Guideline_PROPOSED,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: artifacts.Guideline_PROPOSED,
+						GuidelineReports: []*artifacts.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*artifacts.RuleReportGroup{
+									{Severity: artifacts.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: artifacts.Rule_ERROR,
+										RuleReports: []*artifacts.RuleReport{
 											{
 												RuleId:     "norefsiblings",
 												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
@@ -384,23 +385,23 @@ func TestComputeConformanceReport(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_WARNING},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: artifacts.Rule_WARNING},
+									{Severity: artifacts.Rule_INFO},
+									{Severity: artifacts.Rule_HINT},
 								},
 							},
 						},
 					},
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: artifacts.Guideline_ACTIVE,
+						GuidelineReports: []*artifacts.GuidelineReport{
 							{
 								GuidelineId: "descriptionproperties",
-								RuleReportGroups: []*rpc.RuleReportGroup{
-									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+								RuleReportGroups: []*artifacts.RuleReportGroup{
+									{Severity: artifacts.Rule_SEVERITY_UNSPECIFIED},
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: artifacts.Rule_ERROR,
+										RuleReports: []*artifacts.RuleReport{
 											{
 												RuleId:     "operationdescription",
 												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
@@ -410,8 +411,8 @@ func TestComputeConformanceReport(t *testing.T) {
 										},
 									},
 									{
-										Severity: rpc.Rule_WARNING,
-										RuleReports: []*rpc.RuleReport{
+										Severity: artifacts.Rule_WARNING,
+										RuleReports: []*artifacts.RuleReport{
 											{
 												RuleId:     "tagdescription",
 												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
@@ -426,14 +427,14 @@ func TestComputeConformanceReport(t *testing.T) {
 											},
 										},
 									},
-									{Severity: rpc.Rule_INFO},
-									{Severity: rpc.Rule_HINT},
+									{Severity: artifacts.Rule_INFO},
+									{Severity: artifacts.Rule_HINT},
 								},
 							},
 						},
 					},
-					{State: rpc.Guideline_DEPRECATED},
-					{State: rpc.Guideline_DISABLED},
+					{State: artifacts.Guideline_DEPRECATED},
+					{State: artifacts.Guideline_DISABLED},
 				},
 			},
 		},
@@ -456,7 +457,7 @@ func TestComputeConformanceReport(t *testing.T) {
 			task.computeConformanceReport(ctx, gotReport, guidelineReportsMap, test.linterResponse, test.linterMetadata)
 
 			opts := cmp.Options{
-				protocmp.IgnoreFields(&rpc.RuleReport{}),
+				protocmp.IgnoreFields(&artifacts.RuleReport{}),
 				protocmp.Transform(),
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),
 			}
@@ -469,13 +470,13 @@ func TestComputeConformanceReport(t *testing.T) {
 
 // Test the scenario where there are preexisting entries in the conformance report from other linters.
 func TestPreExistingConformanceReport(t *testing.T) {
-	linterResponse := &rpc.LinterResponse{
-		Lint: &rpc.Lint{
+	linterResponse := &artifacts.LinterResponse{
+		Lint: &artifacts.Lint{
 			Name: "sample-result",
-			Files: []*rpc.LintFile{
+			Files: []*artifacts.LintFile{
 				{
 					FilePath: "test-result-file",
-					Problems: []*rpc.LintProblem{
+					Problems: []*artifacts.LintProblem{
 						{
 							Message:    "operation-description violated",
 							RuleId:     "operation-description",
@@ -492,35 +493,35 @@ func TestPreExistingConformanceReport(t *testing.T) {
 		rules: []string{"operation-description"},
 		rulesMetadata: map[string]*ruleMetadata{
 			"operation-description": {
-				guidelineRule: &rpc.Rule{
+				guidelineRule: &artifacts.Rule{
 					Id:       "operationdescription",
-					Severity: rpc.Rule_ERROR,
+					Severity: artifacts.Rule_ERROR,
 				},
-				guideline: &rpc.Guideline{
+				guideline: &artifacts.Guideline{
 					Id:    "descriptionproperties",
-					State: rpc.Guideline_ACTIVE,
+					State: artifacts.Guideline_ACTIVE,
 				},
 			},
 		},
 	}
 
-	preexistingReport := &rpc.ConformanceReport{
+	preexistingReport := &artifacts.ConformanceReport{
 		Id:         fmt.Sprintf("conformance-%s", styleguideId),
 		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
-		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			{State: rpc.Guideline_STATE_UNSPECIFIED},
-			{State: rpc.Guideline_PROPOSED},
+		GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
+			{State: artifacts.Guideline_STATE_UNSPECIFIED},
+			{State: artifacts.Guideline_PROPOSED},
 			{
-				State: rpc.Guideline_ACTIVE,
-				GuidelineReports: []*rpc.GuidelineReport{
+				State: artifacts.Guideline_ACTIVE,
+				GuidelineReports: []*artifacts.GuidelineReport{
 					{
 						GuidelineId: "descriptionproperties",
-						RuleReportGroups: []*rpc.RuleReportGroup{
-							{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+						RuleReportGroups: []*artifacts.RuleReportGroup{
+							{Severity: artifacts.Rule_SEVERITY_UNSPECIFIED},
 							{
-								Severity: rpc.Rule_ERROR,
-								RuleReports: []*rpc.RuleReport{
+								Severity: artifacts.Rule_ERROR,
+								RuleReports: []*artifacts.RuleReport{
 									{
 										RuleId:     "tagdescription",
 										Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
@@ -529,15 +530,15 @@ func TestPreExistingConformanceReport(t *testing.T) {
 									},
 								},
 							},
-							{Severity: rpc.Rule_WARNING},
-							{Severity: rpc.Rule_INFO},
-							{Severity: rpc.Rule_HINT},
+							{Severity: artifacts.Rule_WARNING},
+							{Severity: artifacts.Rule_INFO},
+							{Severity: artifacts.Rule_HINT},
 						},
 					},
 				},
 			},
-			{State: rpc.Guideline_DEPRECATED},
-			{State: rpc.Guideline_DISABLED},
+			{State: artifacts.Guideline_DEPRECATED},
+			{State: artifacts.Guideline_DISABLED},
 		},
 	}
 
@@ -545,23 +546,23 @@ func TestPreExistingConformanceReport(t *testing.T) {
 		"descriptionproperties": 0,
 	}
 
-	wantReport := &rpc.ConformanceReport{
+	wantReport := &artifacts.ConformanceReport{
 		Id:         fmt.Sprintf("conformance-%s", styleguideId),
 		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
-		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			{State: rpc.Guideline_STATE_UNSPECIFIED},
-			{State: rpc.Guideline_PROPOSED},
+		GuidelineReportGroups: []*artifacts.GuidelineReportGroup{
+			{State: artifacts.Guideline_STATE_UNSPECIFIED},
+			{State: artifacts.Guideline_PROPOSED},
 			{
-				State: rpc.Guideline_ACTIVE,
-				GuidelineReports: []*rpc.GuidelineReport{
+				State: artifacts.Guideline_ACTIVE,
+				GuidelineReports: []*artifacts.GuidelineReport{
 					{
 						GuidelineId: "descriptionproperties",
-						RuleReportGroups: []*rpc.RuleReportGroup{
-							{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+						RuleReportGroups: []*artifacts.RuleReportGroup{
+							{Severity: artifacts.Rule_SEVERITY_UNSPECIFIED},
 							{
-								Severity: rpc.Rule_ERROR,
-								RuleReports: []*rpc.RuleReport{
+								Severity: artifacts.Rule_ERROR,
+								RuleReports: []*artifacts.RuleReport{
 									{
 										RuleId:     "tagdescription",
 										Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
@@ -576,15 +577,15 @@ func TestPreExistingConformanceReport(t *testing.T) {
 									},
 								},
 							},
-							{Severity: rpc.Rule_WARNING},
-							{Severity: rpc.Rule_INFO},
-							{Severity: rpc.Rule_HINT},
+							{Severity: artifacts.Rule_WARNING},
+							{Severity: artifacts.Rule_INFO},
+							{Severity: artifacts.Rule_HINT},
 						},
 					},
 				},
 			},
-			{State: rpc.Guideline_DEPRECATED},
-			{State: rpc.Guideline_DISABLED},
+			{State: artifacts.Guideline_DEPRECATED},
+			{State: artifacts.Guideline_DISABLED},
 		},
 	}
 
@@ -601,7 +602,7 @@ func TestPreExistingConformanceReport(t *testing.T) {
 	task.computeConformanceReport(ctx, preexistingReport, guidelineReportsMap, linterResponse, linterMetadata)
 
 	opts := cmp.Options{
-		protocmp.IgnoreFields(&rpc.RuleReport{}),
+		protocmp.IgnoreFields(&artifacts.RuleReport{}),
 		protocmp.Transform(),
 		cmpopts.SortSlices(func(a, b string) bool { return a < b }),
 	}

@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,23 +44,23 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
 		linter           *apiLinterRunner
 		runLinter        runLinter
-		request          *rpc.LinterRequest
-		expectedResponse *rpc.LinterResponse
+		request          *artifacts.LinterRequest
+		expectedResponse *artifacts.LinterResponse
 		expectedError    error
 	}{
 		{
 			&apiLinterRunner{},
-			func(specPath, specDir string) ([]*rpc.LintProblem, error) {
-				return []*rpc.LintProblem{
+			func(specPath, specDir string) ([]*artifacts.LintProblem, error) {
+				return []*artifacts.LintProblem{
 						{
 							Message: "test",
 							RuleId:  "test",
-							Location: &rpc.LintLocation{
-								StartPosition: &rpc.LintPosition{
+							Location: &artifacts.LintLocation{
+								StartPosition: &artifacts.LintPosition{
 									LineNumber:   1,
 									ColumnNumber: 1,
 								},
-								EndPosition: &rpc.LintPosition{
+								EndPosition: &artifacts.LintPosition{
 									LineNumber:   3,
 									ColumnNumber: 10,
 								},
@@ -69,26 +69,26 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 					},
 					nil
 			},
-			&rpc.LinterRequest{
+			&artifacts.LinterRequest{
 				SpecDirectory: specDirectory,
 				RuleIds:       []string{"test"},
 			},
-			&rpc.LinterResponse{
-				Lint: &rpc.Lint{
+			&artifacts.LinterResponse{
+				Lint: &artifacts.Lint{
 					Name: "registry-lint-api-linter",
-					Files: []*rpc.LintFile{
+					Files: []*artifacts.LintFile{
 						{
 							FilePath: specDirectory,
-							Problems: []*rpc.LintProblem{
+							Problems: []*artifacts.LintProblem{
 								{
 									Message: "test",
 									RuleId:  "test",
-									Location: &rpc.LintLocation{
-										StartPosition: &rpc.LintPosition{
+									Location: &artifacts.LintLocation{
+										StartPosition: &artifacts.LintPosition{
 											LineNumber:   1,
 											ColumnNumber: 1,
 										},
-										EndPosition: &rpc.LintPosition{
+										EndPosition: &artifacts.LintPosition{
 											LineNumber:   3,
 											ColumnNumber: 10,
 										},
@@ -103,10 +103,10 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		},
 		{
 			&apiLinterRunner{},
-			func(specPath, specDir string) ([]*rpc.LintProblem, error) {
-				return []*rpc.LintProblem{}, errors.New("test")
+			func(specPath, specDir string) ([]*artifacts.LintProblem, error) {
+				return []*artifacts.LintProblem{}, errors.New("test")
 			},
-			&rpc.LinterRequest{
+			&artifacts.LinterRequest{
 				SpecDirectory: specDirectory,
 			},
 			nil,

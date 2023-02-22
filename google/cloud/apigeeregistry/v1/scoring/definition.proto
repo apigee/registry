@@ -24,7 +24,7 @@ import "google/cloud/apigeeregistry/v1/scoring/severity.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.scoring";
 option java_multiple_files = true;
 option java_outer_classname = "ScoringDefinitionProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
 
 // Stores the definition which will be used to derive scores for the resources
 // stored in registry.

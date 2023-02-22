@@ -18,7 +18,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,27 +57,27 @@ func TestRunDescriptionContainsNoTagsRule(t *testing.T) {
 	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
 	linter := &sampleOpenApiLinterRunner{}
-	request := &rpc.LinterRequest{
+	request := &artifacts.LinterRequest{
 		SpecDirectory: specDirectory,
 		RuleIds:       []string{"description-contains-no-tags"},
 	}
-	expectedResponse := &rpc.LinterResponse{
-		Lint: &rpc.Lint{
+	expectedResponse := &artifacts.LinterResponse{
+		Lint: &artifacts.Lint{
 			Name: "registry-lint-openapi-sample",
-			Files: []*rpc.LintFile{
+			Files: []*artifacts.LintFile{
 				{
 					FilePath: specFilePath,
-					Problems: []*rpc.LintProblem{
+					Problems: []*artifacts.LintProblem{
 						{
 							Message:    "Description field should not contain any tags.",
 							RuleId:     "description-contains-no-tags",
 							Suggestion: "Ensure that your description field does not contain any tags (regex <[^>]*>)",
-							Location: &rpc.LintLocation{
-								StartPosition: &rpc.LintPosition{
+							Location: &artifacts.LintLocation{
+								StartPosition: &artifacts.LintPosition{
 									LineNumber:   10,
 									ColumnNumber: 30,
 								},
-								EndPosition: &rpc.LintPosition{
+								EndPosition: &artifacts.LintPosition{
 									LineNumber:   11,
 									ColumnNumber: 0,
 								},
@@ -130,27 +130,27 @@ func TestRunDescriptionLessThan1000CharsRule(t *testing.T) {
 	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
 	linter := &sampleOpenApiLinterRunner{}
-	request := &rpc.LinterRequest{
+	request := &artifacts.LinterRequest{
 		SpecDirectory: specDirectory,
 		RuleIds:       []string{"description-less-than-1000-chars"},
 	}
-	expectedResponse := &rpc.LinterResponse{
-		Lint: &rpc.Lint{
+	expectedResponse := &artifacts.LinterResponse{
+		Lint: &artifacts.Lint{
 			Name: "registry-lint-openapi-sample",
-			Files: []*rpc.LintFile{
+			Files: []*artifacts.LintFile{
 				{
 					FilePath: specFilePath,
-					Problems: []*rpc.LintProblem{
+					Problems: []*artifacts.LintProblem{
 						{
 							Message:    "Description field should be less than 1000 chars.",
 							RuleId:     "description-less-than-1000-chars",
 							Suggestion: "Ensure that your description field is less than 1000 chars in length.",
-							Location: &rpc.LintLocation{
-								StartPosition: &rpc.LintPosition{
+							Location: &artifacts.LintLocation{
+								StartPosition: &artifacts.LintPosition{
 									LineNumber:   10,
 									ColumnNumber: 30,
 								},
-								EndPosition: &rpc.LintPosition{
+								EndPosition: &artifacts.LintPosition{
 									LineNumber:   11,
 									ColumnNumber: 0,
 								},

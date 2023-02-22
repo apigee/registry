@@ -19,11 +19,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 )
 
 // NewLintFromOpenAPI runs the API linter and returns the results.
-func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, error) {
+func NewLintFromOpenAPI(name string, spec []byte, linter string) (*artifacts.Lint, error) {
 	// create a tmp directory
 	root, err := os.MkdirTemp("", "registry-openapi-")
 	if err != nil {
@@ -38,7 +38,7 @@ func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, err
 		return nil, err
 	}
 	// run the linter on the spec
-	var lintFile *rpc.LintFile
+	var lintFile *artifacts.LintFile
 	switch linter {
 	case "":
 		err = errors.New("unspecified linter")
@@ -52,9 +52,9 @@ func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, err
 	if err != nil {
 		return nil, err
 	}
-	lint := &rpc.Lint{
+	lint := &artifacts.Lint{
 		Name:  name,
-		Files: []*rpc.LintFile{lintFile},
+		Files: []*artifacts.LintFile{lintFile},
 	}
 	return lint, nil
 }

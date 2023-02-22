@@ -17,12 +17,12 @@ package conformance
 import (
 	"fmt"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 )
 
 type ruleMetadata struct {
-	guidelineRule *rpc.Rule      // Rule object associated with the linter-rule.
-	guideline     *rpc.Guideline // Guideline object associated with the linter-rule.
+	guidelineRule *artifacts.Rule      // Rule object associated with the linter-rule.
+	guideline     *artifacts.Guideline // Guideline object associated with the linter-rule.
 }
 
 type linterMetadata struct {
@@ -35,7 +35,7 @@ func getLinterBinaryName(linterName string) string {
 	return "registry-lint-" + linterName
 }
 
-func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetadata, error) {
+func GenerateLinterMetadata(styleguide *artifacts.StyleGuide) (map[string]*linterMetadata, error) {
 	linterNameToMetadata := make(map[string]*linterMetadata)
 
 	// Iterate through all the guidelines of the style guide.

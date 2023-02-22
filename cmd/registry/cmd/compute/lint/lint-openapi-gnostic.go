@@ -20,14 +20,14 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/apigee/registry/pkg/artifacts"
 	linter "github.com/google/gnostic/metrics/lint"
 	yaml "gopkg.in/yaml.v3"
 )
 
-func lintFileForOpenAPIWithGnostic(path string, root string) (*rpc.LintFile, error) {
+func lintFileForOpenAPIWithGnostic(path string, root string) (*artifacts.LintFile, error) {
 	cmd := exec.Command("gnostic", path, "--linter-out=.")
 	cmd.Dir = root
 	_, err := cmd.CombinedOutput()
@@ -46,9 +46,9 @@ func lintFileForOpenAPIWithGnostic(path string, root string) (*rpc.LintFile, err
 	if err != nil {
 		return nil, err
 	}
-	problems := make([]*rpc.LintProblem, 0)
+	problems := make([]*artifacts.LintProblem, 0)
 	for _, message := range output.Messages {
-		problem := &rpc.LintProblem{
+		problem := &artifacts.LintProblem{
 			Message:    message.Message,
 			Suggestion: message.Suggestion,
 		}
@@ -56,12 +56,12 @@ func lintFileForOpenAPIWithGnostic(path string, root string) (*rpc.LintFile, err
 		if err == nil {
 			l := int32(node.Line)
 			c := int32(node.Column)
-			problem.Location = &rpc.LintLocation{
-				StartPosition: &rpc.LintPosition{
+			problem.Location = &artifacts.LintLocation{
+				StartPosition: &artifacts.LintPosition{
 					LineNumber:   l,
 					ColumnNumber: c,
 				},
-				EndPosition: &rpc.LintPosition{
+				EndPosition: &artifacts.LintPosition{
 					LineNumber:   l,
 					ColumnNumber: c + int32(len(node.Value)-1),
 				},
@@ -69,7 +69,7 @@ func lintFileForOpenAPIWithGnostic(path string, root string) (*rpc.LintFile, err
 		}
 		problems = append(problems, problem)
 	}
-	result := &rpc.LintFile{Problems: problems}
+	result := &artifacts.LintFile{Problems: problems}
 	return result, nil
 }
 

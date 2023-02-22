@@ -20,7 +20,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 )
 
 type SpectralLintResult struct {
@@ -42,7 +42,7 @@ type SpectralLintLocation struct {
 	Character int32 `json:"character"`
 }
 
-func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, error) {
+func lintFileForOpenAPIWithSpectral(path string, root string) (*artifacts.LintFile, error) {
 	cmd := exec.Command("spectral", "lint", path, "--f", "json", "--output", "spectral-lint.json")
 	cmd.Dir = root
 	// ignore errors from Spectral because Spectral returns an error result when APIs have errors.
@@ -56,18 +56,18 @@ func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, er
 	if err != nil {
 		return nil, err
 	}
-	problems := make([]*rpc.LintProblem, 0)
+	problems := make([]*artifacts.LintProblem, 0)
 	for _, result := range lintResults {
-		problem := &rpc.LintProblem{
+		problem := &artifacts.LintProblem{
 			Message:    result.Message,
 			RuleId:     result.Code,
 			RuleDocUri: "https://meta.stoplight.io/docs/spectral/docs/reference/openapi-rules.md#" + result.Code,
-			Location: &rpc.LintLocation{
-				StartPosition: &rpc.LintPosition{
+			Location: &artifacts.LintLocation{
+				StartPosition: &artifacts.LintPosition{
 					LineNumber:   result.Range.Start.Line + 1,
 					ColumnNumber: result.Range.Start.Character + 1,
 				},
-				EndPosition: &rpc.LintPosition{
+				EndPosition: &artifacts.LintPosition{
 					LineNumber:   result.Range.End.Line + 1,
 					ColumnNumber: result.Range.End.Character,
 				},
@@ -75,6 +75,6 @@ func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, er
 		}
 		problems = append(problems, problem)
 	}
-	result := &rpc.LintFile{Problems: problems}
+	result := &artifacts.LintFile{Problems: problems}
 	return result, nil
 }

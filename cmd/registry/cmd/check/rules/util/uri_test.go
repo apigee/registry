@@ -17,21 +17,21 @@ package util
 import (
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestCheckURI(t *testing.T) {
-	prob := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	prob := []*artifacts.Problem{{
+		Severity:   artifacts.Problem_ERROR,
 		Message:    `test must be an absolute URI.`,
 		Suggestion: `Ensure test includes a host.`,
 	}}
 
 	for _, tt := range []struct {
 		in       string
-		expected []*rpc.Problem
+		expected []*artifacts.Problem
 	}{
 		{"", nil},
 		{"x", prob},
@@ -43,7 +43,7 @@ func TestCheckURI(t *testing.T) {
 	} {
 		t.Run(tt.in, func(t *testing.T) {
 			got := CheckURI("test", tt.in)
-			if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+			if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(artifacts.Problem{})); diff != "" {
 				t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 			}
 		})

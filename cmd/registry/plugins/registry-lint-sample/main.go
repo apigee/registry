@@ -18,30 +18,30 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/plugins/linter"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 )
 
 // SampleLinterRunner implements the LinterRunner interface for the sample linter.
 type SampleLinterRunner struct{}
 
-func (*SampleLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
+func (*SampleLinterRunner) Run(req *artifacts.LinterRequest) (*artifacts.LinterResponse, error) {
 	// Formulate the response. In this sample plugin, we will simply return a fake rule violation /
 	// lint problem for every rule that the user specifies, on the given file that is provided.
-	lintFile := &rpc.LintFile{
+	lintFile := &artifacts.LintFile{
 		FilePath: req.SpecDirectory,
 	}
 
 	for _, rule := range req.RuleIds {
-		lintFile.Problems = append(lintFile.Problems, &rpc.LintProblem{
+		lintFile.Problems = append(lintFile.Problems, &artifacts.LintProblem{
 			RuleId:  rule,
 			Message: fmt.Sprintf("This is a sample violation of the rule %s", rule),
 		})
 	}
 
-	return &rpc.LinterResponse{
-		Lint: &rpc.Lint{
+	return &artifacts.LinterResponse{
+		Lint: &artifacts.Lint{
 			Name: "registry-lint-sample",
-			Files: []*rpc.LintFile{
+			Files: []*artifacts.LintFile{
 				lintFile,
 			},
 		},

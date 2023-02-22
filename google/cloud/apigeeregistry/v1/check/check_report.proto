@@ -24,7 +24,7 @@ import "google/protobuf/timestamp.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
 option java_outer_classname = "CheckReportProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/artifacts;artifacts";
 
 // CheckReport is the results of running the check command.
 message CheckReport {

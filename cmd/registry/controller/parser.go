@@ -20,10 +20,10 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/artifacts"
 )
 
-func ValidateManifest(parent string, manifest *rpc.Manifest) []error {
+func ValidateManifest(parent string, manifest *artifacts.Manifest) []error {
 	totalErrors := make([]error, 0)
 	for _, resource := range manifest.GeneratedResources {
 		errs := validateGeneratedResourceEntry(parent, resource)
@@ -34,7 +34,7 @@ func ValidateManifest(parent string, manifest *rpc.Manifest) []error {
 	return totalErrors
 }
 
-func validateGeneratedResourceEntry(parent string, generatedResource *rpc.GeneratedResource) []error {
+func validateGeneratedResourceEntry(parent string, generatedResource *artifacts.GeneratedResource) []error {
 	parsedTargetResource, err := patterns.ParseResourcePattern(
 		fmt.Sprintf("%s/%s", parent, generatedResource.Pattern))
 
