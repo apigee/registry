@@ -23,15 +23,15 @@ import (
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
 
-var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", types.MimeTypeForKind("StyleGuide"))
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"))
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{

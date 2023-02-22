@@ -27,7 +27,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
-	"github.com/apigee/registry/pkg/types"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -247,7 +247,7 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 	request := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
 			Name:     task.specName(),
-			MimeType: types.OpenAPIMimeType("+gzip", task.version),
+			MimeType: mime.OpenAPIMimeType("+gzip", task.version),
 			Filename: task.fileName(),
 			Contents: gzippedContents,
 		},

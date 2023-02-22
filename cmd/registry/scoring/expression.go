@@ -23,7 +23,7 @@ import (
 	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/application/style"
-	"github.com/apigee/registry/pkg/types"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/google/cel-go/cel"
 	metrics "github.com/google/gnostic/metrics"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -60,7 +60,7 @@ func evaluateScoreExpression(expression string, artifactMap map[string]interface
 }
 
 func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
-	messageType, err := types.MessageTypeForMimeType(mimeType)
+	messageType, err := mime.MessageTypeForMimeType(mimeType)
 	if err != nil {
 		return nil, fmt.Errorf("failed extracting message type from %q", mimeType)
 	}

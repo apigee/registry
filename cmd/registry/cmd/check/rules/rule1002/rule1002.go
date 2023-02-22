@@ -21,7 +21,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/pkg/application/check"
-	"github.com/apigee/registry/pkg/types"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -62,7 +62,7 @@ var internalMimeTypeContents = &lint.FieldRule{
 		// internal types, see github.com/apigee/registry/cmd/registry/types
 		typeParam := declaredParameters["type"]
 		if strings.HasPrefix(typeParam, "google.cloud.apigeeregistry.") || strings.HasPrefix(typeParam, "gnostic.metrics.") {
-			message, err := types.MessageForMimeType(declared)
+			message, err := mime.MessageForMimeType(declared)
 			if err != nil {
 				return []*check.Problem{{
 					Severity:   check.Problem_ERROR,

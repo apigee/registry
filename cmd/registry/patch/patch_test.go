@@ -25,8 +25,8 @@ import (
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -1260,7 +1260,7 @@ func TestInvalidArtifactPatches(t *testing.T) {
 }
 
 func getArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
-	message, err := types.MessageForMimeType(artifact.GetMimeType())
+	message, err := mime.MessageForMimeType(artifact.GetMimeType())
 	if err != nil {
 		return nil, err
 	}

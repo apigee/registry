@@ -22,8 +22,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/application/check"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
@@ -90,7 +90,7 @@ var requiredArtifacts = &lint.ProjectRule{
 }
 
 func checkTaxonomies(a *rpc.Artifact) []*check.Problem {
-	message, err := types.MessageForMimeType(a.GetMimeType())
+	message, err := mime.MessageForMimeType(a.GetMimeType())
 	if err == nil {
 		err = proto.Unmarshal(a.GetContents(), message)
 	}

@@ -27,8 +27,8 @@ import (
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -110,7 +110,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	name := filepath.Base(filename)
 	defer os.RemoveAll(root)
 
-	if types.IsZipArchive(task.Spec.GetMimeType()) {
+	if mime.IsZipArchive(task.Spec.GetMimeType()) {
 		_, err = compress.UnzipArchiveToPath(data, root)
 	} else {
 		// Write the file to the temporary directory.
@@ -265,7 +265,7 @@ func (task *ComputeConformanceTask) storeConformanceReport(
 
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId)),
-		MimeType: types.MimeTypeForKind("ConformanceReport"),
+		MimeType: mime.MimeTypeForKind("ConformanceReport"),
 		Contents: messageData,
 	}
 	return visitor.SetArtifact(ctx, task.Client, artifact)

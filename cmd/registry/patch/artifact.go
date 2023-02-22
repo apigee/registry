@@ -26,8 +26,8 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/encoding"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/pkg/types"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -102,7 +102,7 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 		// The top-level node is a "document" node. We need to marshal the node below it.
 		node = doc.Content[0]
 	} else {
-		m, err := types.MessageForMimeType(message.MimeType)
+		m, err := mime.MessageForMimeType(message.MimeType)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +138,7 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 	return &encoding.Artifact{
 		Header: encoding.Header{
 			ApiVersion: RegistryV1,
-			Kind:       types.KindForMimeType(message.MimeType),
+			Kind:       mime.KindForMimeType(message.MimeType),
 			Metadata: encoding.Metadata{
 				Name:        artifactName.ArtifactID(),
 				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
@@ -182,7 +182,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
-	m, err = types.MessageForKind(content.Kind)
+	m, err = mime.MessageForKind(content.Kind)
 	if err == nil {
 		err = protojson.Unmarshal(jWithIdAndKind, m)
 		if err != nil {
@@ -213,7 +213,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	}
 	artifact := &rpc.Artifact{
 		Name:        name.String(),
-		MimeType:    types.MimeTypeForKind(content.Kind),
+		MimeType:    mime.MimeTypeForKind(content.Kind),
 		Contents:    bytes,
 		Labels:      content.Metadata.Labels,
 		Annotations: content.Metadata.Annotations,

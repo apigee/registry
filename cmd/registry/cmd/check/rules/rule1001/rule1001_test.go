@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection/grpctest"
-	"github.com/apigee/registry/pkg/types"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
@@ -70,7 +70,7 @@ func TestTaxonomyList(t *testing.T) {
 		ArtifactId: "apihub-taxonomies",
 		Parent:     "projects/check-test/locations/global",
 		Artifact: &rpc.Artifact{
-			MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.apihub.TaxonomyList"),
+			MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.apihub.TaxonomyList"),
 			Contents: tl,
 		},
 	})
