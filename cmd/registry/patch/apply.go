@@ -26,6 +26,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/log"
 	"gopkg.in/yaml.v3"
 )
@@ -93,7 +94,7 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 	header, items, err := readHeaderWithItems(bytes)
 	if err != nil {
 		return err
-	} else if header.ApiVersion != RegistryV1 {
+	} else if header.ApiVersion != encoding.RegistryV1 {
 		return nil
 	}
 
@@ -119,7 +120,7 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 		if err != nil {
 			return err
 		}
-		if itemHeader.ApiVersion != RegistryV1 {
+		if itemHeader.ApiVersion != encoding.RegistryV1 {
 			continue
 		}
 		p.add(&applyBytesTask{
@@ -193,7 +194,7 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 	header, err := readHeader(task.bytes)
 	if err != nil {
 		return err
-	} else if header.ApiVersion != RegistryV1 {
+	} else if header.ApiVersion != encoding.RegistryV1 {
 		return nil
 	}
 

@@ -74,7 +74,7 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 	// Wrap the artifact for YAML export.
 	return &encoding.Artifact{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       mime.KindForMimeType(message.MimeType),
 			Metadata: encoding.Metadata{
 				Name:        artifactName.ArtifactID(),

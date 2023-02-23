@@ -49,7 +49,7 @@ func NewApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	}
 	return &encoding.ApiSpec{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "Spec",
 			Metadata: encoding.Metadata{
 				Name:        specName.SpecID,

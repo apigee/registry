@@ -59,7 +59,7 @@ func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}
 	return &encoding.ApiVersion{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "Version",
 			Metadata: encoding.Metadata{
 				Name:        versionName.VersionID,

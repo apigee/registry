@@ -43,7 +43,7 @@ func NewProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	}
 	return &encoding.Project{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "Project",
 			Metadata: encoding.Metadata{
 				Name: projectName.ProjectID,
