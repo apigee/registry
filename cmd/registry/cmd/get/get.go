@@ -285,7 +285,7 @@ func (v *getVisitor) write() error {
 				Items:  v.results,
 			}
 		}
-		bytes, err := patch.Encode(result)
+		bytes, err := encoding.EncodeYAML(result)
 		if err != nil {
 			return err
 		}
