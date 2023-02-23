@@ -281,11 +281,11 @@ func (v *getVisitor) write() error {
 			result = v.results[0]
 		} else {
 			result = &encoding.List{
-				Header: encoding.Header{ApiVersion: patch.RegistryV1},
+				Header: encoding.Header{ApiVersion: encoding.RegistryV1},
 				Items:  v.results,
 			}
 		}
-		bytes, err := patch.Encode(result)
+		bytes, err := encoding.EncodeYAML(result)
 		if err != nil {
 			return err
 		}

@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
@@ -106,9 +107,9 @@ func TestProjectImports(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewApi(%+v) returned an error: %s", got, err)
 			}
-			actual, err := Encode(model)
+			actual, err := encoding.EncodeYAML(model)
 			if err != nil {
-				t.Fatalf("Encode(%+v) returned an error: %s", model, err)
+				t.Fatalf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 			}
 			if diff := cmp.Diff(expected, actual); diff != "" {
 				t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
@@ -135,9 +136,9 @@ func TestProjectImports(t *testing.T) {
 				if err != nil {
 					t.Fatalf("NewArtifact(%+v) returned an error: %s", message, err)
 				}
-				actual, err := Encode(model)
+				actual, err := encoding.EncodeYAML(model)
 				if err != nil {
-					t.Fatalf("Encode(%+v) returned an error: %s", model, err)
+					t.Fatalf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 				}
 				if diff := cmp.Diff(expected, actual); diff != "" {
 					t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)

@@ -43,7 +43,7 @@ func NewProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	}
 	return &encoding.Project{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "Project",
 			Metadata: encoding.Metadata{
 				Name: projectName.ProjectID,
@@ -379,7 +379,7 @@ func (task *exportAPITask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	bytes, err := Encode(api)
+	bytes, err := encoding.EncodeYAML(api)
 	if err != nil {
 		return err
 	}
@@ -412,7 +412,7 @@ func (task *exportArtifactTask) Run(ctx context.Context) error {
 		log.FromContext(ctx).Warnf("Skipped %s", task.message.Name)
 		return nil
 	}
-	bytes, err := Encode(artifact)
+	bytes, err := encoding.EncodeYAML(artifact)
 	if err != nil {
 		return err
 	}
@@ -445,7 +445,7 @@ func (task *exportVersionTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	bytes, err := Encode(version)
+	bytes, err := encoding.EncodeYAML(version)
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func (task *exportSpecTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	bytes, err := Encode(spec)
+	bytes, err := encoding.EncodeYAML(spec)
 	if err != nil {
 		return err
 	}
@@ -518,7 +518,7 @@ func (task *exportDeploymentTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	bytes, err := Encode(deployment)
+	bytes, err := encoding.EncodeYAML(deployment)
 	if err != nil {
 		return err
 	}

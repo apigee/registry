@@ -86,7 +86,7 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 
 	return &encoding.Api{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "API",
 			Metadata: encoding.Metadata{
 				Name:        apiName.ApiID,

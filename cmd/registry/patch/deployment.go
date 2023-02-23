@@ -62,7 +62,7 @@ func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	}
 	return &encoding.ApiDeployment{
 		Header: encoding.Header{
-			ApiVersion: RegistryV1,
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "Deployment",
 			Metadata: encoding.Metadata{
 				Name:        deploymentName.DeploymentID,

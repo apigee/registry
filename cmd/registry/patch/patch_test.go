@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -109,9 +110,9 @@ func TestProjectPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -232,9 +233,9 @@ func TestApiPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -335,9 +336,9 @@ func TestVersionPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -438,9 +439,9 @@ func TestSpecPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -544,9 +545,9 @@ func TestDeploymentPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -1094,9 +1095,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.artifactID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -1187,9 +1188,9 @@ func TestYamlArtifactPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.artifactID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out))

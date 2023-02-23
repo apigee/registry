@@ -26,3 +26,5 @@ type Metadata struct {
 	Labels      map[string]string `yaml:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
+
+const RegistryV1 = "apigeeregistry/v1"
