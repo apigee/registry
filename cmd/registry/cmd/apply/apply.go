@@ -55,7 +55,7 @@ func Command() *cobra.Command {
 			if err := visitor.VerifyLocation(ctx, client, project); err != nil {
 				return fmt.Errorf("parent project %q does not exist: %s", project, err)
 			}
-			return patch.Apply(ctx, client, fileName, project, recursive, jobs)
+			return patch.Apply(ctx, client, cmd.InOrStdin(), fileName, project, recursive, jobs)
 		},
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "file or directory containing the patch(es) to apply. Use '-' to read from standard input")

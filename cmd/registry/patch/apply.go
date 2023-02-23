@@ -31,10 +31,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Apply(ctx context.Context, client connection.RegistryClient, path, project string, recursive bool, jobs int) error {
+func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, path, project string, recursive bool, jobs int) error {
 	patches := &patchGroup{}
 	if path == "-" {
-		bytes, err := io.ReadAll(os.Stdin)
+		bytes, err := io.ReadAll(in)
 		if err != nil {
 			return err
 		}
