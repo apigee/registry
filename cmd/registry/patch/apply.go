@@ -68,6 +68,8 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, project 
 }
 
 type patchGroup struct {
+	filesRead       int
+	filesApplied    int
 	apiTasks        []tasks.Task
 	versionTasks    []tasks.Task
 	specTasks       []tasks.Task
@@ -91,13 +93,14 @@ func (p *patchGroup) add(task *applyBytesTask) {
 }
 
 func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileName, project string) error {
+	p.filesRead++
 	header, items, err := readHeaderWithItems(bytes)
 	if err != nil {
 		return err
 	} else if header.ApiVersion != encoding.RegistryV1 {
 		return nil
 	}
-
+	p.filesApplied++
 	if items.Kind != yaml.SequenceNode {
 		p.add(&applyBytesTask{
 			client:  client,
@@ -152,6 +155,13 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 		}
 		wait()
 	}
+	if p.filesRead == 0 {
+		return fmt.Errorf("no YAML files found")
+	}
+	if p.filesApplied == 0 {
+		return fmt.Errorf("no YAML files applied (%d found, none with 'apiVersion: %s')", p.filesRead, encoding.RegistryV1)
+	}
+	log.FromContext(ctx).Infof("%d YAML file(s) applied (%d found, %d with 'apiVersion: %s')", p.filesApplied, p.filesRead, p.filesApplied, encoding.RegistryV1)
 	return nil
 }
 
