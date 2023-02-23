@@ -1214,7 +1214,8 @@ func TestInvalidArtifactPatches(t *testing.T) {
 		},
 		{
 			artifactID: "lifecycle-invalid-parent",
-		}, {
+		},
+		{
 			artifactID: "references-no-data",
 		},
 		{
@@ -1273,4 +1274,33 @@ func unmarshal(value []byte, message proto.Message) (proto.Message, error) {
 		return nil, err
 	}
 	return message, nil
+}
+
+func TestEmptyArtifactPatches(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "empty directory",
+			path: "testdata/empty",
+		},
+		{
+			name: "unrecognized yaml",
+			path: "testdata/sample-hierarchical/apis/registry/versions/v1/specs/openapi/openapi.yaml",
+		},
+	}
+	ctx := context.Background()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
+		&rpc.Project{
+			Name: "projects/patch-empty-test",
+		},
+	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := Apply(ctx, registryClient, nil, test.path, "projects/patch-empty-test/locations/global", true, 10); err == nil {
+				t.Errorf("Apply() succeeded and should have failed")
+			}
+		})
+	}
 }

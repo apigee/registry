@@ -73,7 +73,7 @@ func TestExport(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Setup: Failed to create registry client: %s", err)
 		}
-		if err := Apply(ctx, registryClient, test.root, project.String()+"/locations/global", true, 1); err != nil {
+		if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 1); err != nil {
 			t.Fatalf("Apply() returned error: %s", err)
 		}
 
