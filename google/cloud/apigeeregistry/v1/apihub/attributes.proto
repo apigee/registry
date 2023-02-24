@@ -1,0 +1,73 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.apihub;
+
+import "google/api/field_behavior.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
+option java_multiple_files = true;
+option java_outer_classname = "DisplaySettingsProto";
+option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
+
+// Defines a structure for general metadata storage.
+message Attributes {
+  // A description of the attributes.
+  string description = 3;
+
+  // Full resource name of an AttributesDefinition artifact that
+  // describes these attributes.
+  string definition_name = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // The attribute values, stored using attribute field names as keys.
+  map<string,string> values = 5;
+}
+
+message AttributesDefinition {
+    // A description of the attribute set being defined.
+    string description = 3;
+
+    // The attribute definitions
+    repeated AttributeDefinition attributes = 4;
+}
+
+message AttributeDefinition {
+    // The name of the attribute, used as a key in the attributes map.
+    string name = 3;
+
+    // The title of the attribute, used when the attribute is displayed.
+    string title = 4;
+
+    // Optional list of allowed values for the attribute.
+    repeated string allowed_values = 5;
+
+    // Possible attribute value sizes.
+    enum Size {
+      // The default value, unused.
+      SIZE_UNSPECIFIED = 0;
+      // One line of text or less.
+      SMALL = 1;
+      // A few lines of text.
+      MEDIUM = 2;
+      // Many lines of text.
+      LARGE = 3;
+    }
+
+    // The size of the attribute value.
+    Size size = 6;
+}
