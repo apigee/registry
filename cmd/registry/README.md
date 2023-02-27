@@ -29,6 +29,15 @@ following on the command line:
 xattr -d com.apple.quarantine registry
 ```
 
+## Easy installation
+
+This will download and install the latest version of the `registry` tool (on
+Linux or Darwin):
+
+```
+curl -L https://raw.githubusercontent.com/apigee/registry/main/downloadLatest.sh | sh -
+```
+
 ## Running with Apigee API hub
 
 To use the `registry` tool with a hosted instance associated with Apigee API
