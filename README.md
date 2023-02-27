@@ -115,8 +115,8 @@ This repository includes tests that verify `registry-server`. These server
 tests focus on correctness at the API level and compliance with the API design
 guidelines described at [aip.dev](https://aip.dev). Server tests are included
 in runs of `make test` and `go test ./...`, and the server tests can be run by
-themselves with `go test ./server/registry`. By default, server tests
-verify the local code in `./server/registry`, but to allow **API conformance
+themselves with `go test ./server/registry`. By default, server tests verify
+the local code in `./server/registry`, but to allow **API conformance
 testing**, the tests can be run to verify remote servers using the following
 options:
 
