@@ -21,10 +21,12 @@ Following steps assume you're in the root directory.
 
 1. Setup the client authentication. This step differs based on the load
    balancer type you chose in the previous step:
+
    - External LB: run `. auth/GKE.sh`.
    - Internal LB: Usually you can't access services that are behind the
      internal LB from your local. For more details, please check
      [here](https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing#inspect).
+
      1. Find the ingress IP:
         `kubectl get service registry-backend -o jsonpath="{.status.loadBalancer.ingress[0].ip}"`.
      1. Find the service port:
