@@ -63,6 +63,8 @@ jobs:
 
     - name: Install protoc (needed for registry upload tests)
       uses: arduino/setup-protoc@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create default configuration that uses a local server
       run: registry config configurations create local --registry.address='127.0.0.1:8080' --registry.insecure
