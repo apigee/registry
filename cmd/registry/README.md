@@ -31,7 +31,9 @@ xattr -d com.apple.quarantine registry
 
 ## Easy installation
 
-This will download and install the latest version of the `registry` tool (on Linux or Darwin):
+This will download and install the latest version of the `registry` tool (on
+Linux or Darwin):
+
 ```
 curl -L https://raw.githubusercontent.com/apigee/registry/main/downloadLatest.sh | sh -
 ```

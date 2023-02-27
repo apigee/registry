@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,5 +96,3 @@ printf "Add the registry to your path with:"
 printf "\n"
 printf "  export PATH=\$PATH:\$HOME/.registry/bin \n"
 printf "\n"
-
-export PATH=$PATH:$HOME/.registry/bin
