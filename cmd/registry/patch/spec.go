@@ -30,6 +30,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/encoding"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"gopkg.in/yaml.v3"
@@ -129,8 +130,9 @@ func applyApiSpecPatch(
 			req.ApiSpec.Contents = body
 		}
 	}
-	// if we didn't find the spec body in a file, and it was supposed to be a zip file, create it.
-	if req.ApiSpec.Contents == nil && strings.HasSuffix(spec.Data.FileName, ".zip") {
+	// if we didn't find the spec contents in a file and it was supposed to be a zip archive,
+	// create it from the contents of the directory where we found the YAML file.
+	if req.ApiSpec.Contents == nil && mime.IsZipArchive(spec.Data.MimeType) {
 		prefix := filepath.Dir(filename)
 		filenames := []string{}
 		err := filepath.WalkDir(prefix, func(p string, entry fs.DirEntry, err error) error {
@@ -139,7 +141,7 @@ func applyApiSpecPatch(
 			} else if entry.IsDir() {
 				return nil // Do nothing for the directory, but still walk its contents.
 			} else if p == filename || strings.HasSuffix(p, ".zip") {
-				return nil // Skip the Registry YAML file and any zip archives.
+				return nil // Omit the Registry YAML file and any zip archives.
 			} else {
 				filenames = append(filenames, strings.TrimPrefix(p, prefix+"/"))
 			}
