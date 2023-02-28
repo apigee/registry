@@ -46,7 +46,7 @@ func NodeForMessage(m proto.Message) (*yaml.Node, error) {
 	var s []byte
 	s, err := protojson.MarshalOptions{
 		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
+		EmitUnpopulated: true,
 		Indent:          "  ",
 		UseProtoNames:   false,
 	}.Marshal(m)
@@ -98,7 +98,12 @@ func StyleForJSON(node *yaml.Node) {
 	case yaml.DocumentNode, yaml.SequenceNode, yaml.MappingNode:
 		node.Style = yaml.FlowStyle
 	case yaml.ScalarNode:
-		node.Style = yaml.DoubleQuotedStyle
+		switch node.Tag {
+		case "!!str":
+			node.Style = yaml.DoubleQuotedStyle
+		default:
+			node.Style = 0
+		}
 	case yaml.AliasNode:
 	default:
 	}
