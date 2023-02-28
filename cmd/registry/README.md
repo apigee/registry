@@ -29,6 +29,15 @@ following on the command line:
 xattr -d com.apple.quarantine registry
 ```
 
+## Easy installation
+
+This will download and install the latest version of the `registry` tool (on
+Linux or Darwin):
+
+```
+curl -L https://raw.githubusercontent.com/apigee/registry/main/downloadLatest.sh | sh -
+```
+
 ## Running with Apigee API hub
 
 To use the `registry` tool with a hosted instance associated with Apigee API
@@ -68,8 +77,8 @@ The `registry` tool currently includes several demonstration subcommands that
 upload API descriptions into a registry and one subcommmand (`registry apply`)
 that is likely to become a recommended way to populate an API registry.
 
-- `registry upload openapi` reads OpenAPI descriptions from a directory
-  that follows the style of the
+- `registry upload openapi` reads OpenAPI descriptions from a directory that
+  follows the style of the
   [APIs-guru/openapi-directory](https://github.com/APIs-guru/openapi-directory)
   repository. To try it, clone the `openapi-directory` repo, change your
   directory to the repo, and run the `registry upload openapi` command as

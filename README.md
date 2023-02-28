@@ -5,7 +5,7 @@
 
 # Registry API Core Implementation
 
-This repository contains the core implementation of the Registry API. Please 
+This repository contains the core implementation of the Registry API. Please
 see the [wiki](https://github.com/apigee/registry/wiki) for more information.
 
 ## The Registry API
@@ -28,6 +28,18 @@ The Registry API is formally described by the Protocol Buffer source files in
 follows the Google API Design Guidelines at [aip.dev](https://aip.dev) and
 presents a developer experience consistent with production Google APIs. Please
 tell us about your experience if you use it.
+
+## The Registry Tool
+
+The Registry Tool (`registry`) is a command-line tool that simplifies setup and
+operation of a registry. See [cmd/registry-server](cmd/registry-server) and
+[the Registry wiki](https://github.com/apigee/registry/wiki/registry) for more
+information. The `registry` tool can be built from sources here or installed
+with this script on Linux or Darwin:
+
+```
+curl -L https://raw.githubusercontent.com/apigee/registry/main/downloadLatest.sh | sh -
+```
 
 ## This Implementation
 
@@ -103,8 +115,8 @@ This repository includes tests that verify `registry-server`. These server
 tests focus on correctness at the API level and compliance with the API design
 guidelines described at [aip.dev](https://aip.dev). Server tests are included
 in runs of `make test` and `go test ./...`, and the server tests can be run by
-themselves with `go test ./server/registry`. By default, server tests
-verify the local code in `./server/registry`, but to allow **API conformance
+themselves with `go test ./server/registry`. By default, server tests verify
+the local code in `./server/registry`, but to allow **API conformance
 testing**, the tests can be run to verify remote servers using the following
 options:
 
