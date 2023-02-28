@@ -22,52 +22,49 @@ import "google/api/field_behavior.proto";
 
 option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
 option java_multiple_files = true;
-option java_outer_classname = "DisplaySettingsProto";
+option java_outer_classname = "AttributeSetProto";
 option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
 
-// Defines a structure for general metadata storage.
-message Attributes {
-  // A description of the attributes.
-  string description = 3;
+// Defines a structure for general attribute storage.
+message AttributeSet {
+  // A short displayable name for the attribute set.
+  string display_name = 1;
 
-  // Full resource name of an AttributesDefinition artifact that
-  // describes these attributes.
-  string definition_name = 4 [(google.api.field_behavior) = REQUIRED];
+  // A description of the attribute set.
+  string description = 2;
 
-  // The attribute values, stored using attribute field names as keys.
-  map<string,string> values = 5;
+  // Full resource name of an AttributeSetDefinition artifact that
+  // describes this attribute set.
+  string definition_name = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The attribute values, stored using attribute ids as keys.
+  map<string,string> values = 4;
 }
 
-message AttributesDefinition {
-    // A description of the attribute set being defined.
-    string description = 3;
+message AttributeSetDefinition {
+  // A short displayable name for the attribute set definition.
+  string display_name = 1;
 
-    // The attribute definitions
-    repeated AttributeDefinition attributes = 4;
+  // A description of the attribute set being defined.
+  string description = 2;
+
+  // The attribute definitions
+  repeated AttributeDefinition attributes = 3;
 }
 
 message AttributeDefinition {
-    // The name of the attribute, used as a key in the attributes map.
-    string name = 3;
+    // The id of the attribute, used as a key in the attributes map.
+    string id = 1;
 
-    // The title of the attribute, used when the attribute is displayed.
-    string title = 4;
+    // The display_name of the attribute, used when the attribute is displayed.
+    string display_name = 2;
+
+    // A description of the attribute, possibly displayable as a tooltip.
+    string description = 3;
+
+    // Optional string specifying the attribute format.
+    string format = 4;
 
     // Optional list of allowed values for the attribute.
     repeated string allowed_values = 5;
-
-    // Possible attribute value sizes.
-    enum Size {
-      // The default value, unused.
-      SIZE_UNSPECIFIED = 0;
-      // One line of text or less.
-      SMALL = 1;
-      // A few lines of text.
-      MEDIUM = 2;
-      // Many lines of text.
-      LARGE = 3;
-    }
-
-    // The size of the attribute value.
-    Size size = 6;
 }
