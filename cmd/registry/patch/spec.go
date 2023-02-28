@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -127,6 +128,31 @@ func applyApiSpecPatch(
 			}
 			req.ApiSpec.Contents = body
 		}
+	}
+	// if we didn't find the spec body in a file, and it was supposed to be a zip file, create it.
+	if req.ApiSpec.Contents == nil && strings.HasSuffix(spec.Data.FileName, ".zip") {
+		prefix := filepath.Dir(filename)
+		filenames := []string{}
+		err := filepath.WalkDir(prefix, func(p string, entry fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			} else if entry.IsDir() {
+				return nil // Do nothing for the directory, but still walk its contents.
+			} else if p == filename || strings.HasSuffix(p, ".zip") {
+				return nil // Skip the Registry YAML file and any zip archives.
+			} else {
+				filenames = append(filenames, strings.TrimPrefix(p, prefix+"/"))
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		buf, err := compress.ZipArchiveOfFiles(filenames, prefix+"/")
+		if err != nil {
+			return err
+		}
+		req.ApiSpec.Contents = buf.Bytes()
 	}
 	// if we didn't find the spec body in a file, try to read it from the SourceURI
 	if req.ApiSpec.Contents == nil && spec.Data.SourceURI != "" {
