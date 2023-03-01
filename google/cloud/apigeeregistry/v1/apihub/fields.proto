@@ -73,6 +73,8 @@ message FieldDefinition {
     string description = 3;
 
     // Optional string specifying the field format.
+    // Currently applications are free to define values, 
+    // but we expect to formalize values for this in the future.
     string format = 4;
 
     // Optional list of allowed values for the field.

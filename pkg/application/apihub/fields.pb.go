@@ -215,6 +215,8 @@ type FieldDefinition struct {
 	// A description of the field, possibly displayable as a tooltip.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	// Optional string specifying the field format.
+	// Currently applications are free to define values,
+	// but we expect to formalize values for this in the future.
 	Format string `protobuf:"bytes,4,opt,name=format,proto3" json:"format,omitempty"`
 	// Optional list of allowed values for the field.
 	AllowedValues []string `protobuf:"bytes,5,rep,name=allowed_values,json=allowedValues,proto3" json:"allowed_values,omitempty"`
