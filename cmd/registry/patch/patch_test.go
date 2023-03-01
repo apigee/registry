@@ -577,6 +577,47 @@ func TestMessageArtifactPatches(t *testing.T) {
 		message    proto.Message
 	}{
 		{
+			artifactID: "fieldset",
+			parent:     "apis/a",
+			yamlFile:   "testdata/artifacts/fieldset.yaml",
+			message: &apihub.FieldSet{
+				Id:             "fieldset",
+				Kind:           "FieldSet",
+				DefinitionName: "artifacts/fieldset",
+				Values: map[string]string{
+					"creator":       "Wile E. Coyote",
+					"creator-email": "wiley@acme.com",
+					"hometown":      "Las Vegas, NV",
+					"website":       "[ACME](https://acme.com)",
+				},
+			},
+		},
+		{
+			artifactID: "fieldset",
+			yamlFile:   "testdata/artifacts/fieldset-definition.yaml",
+			message: &apihub.FieldSetDefinition{
+				Id:          "fieldset",
+				Kind:        "FieldSetDefinition",
+				DisplayName: "Interesting Information",
+				Description: "Additional topical information about this API.",
+				Fields: []*apihub.FieldDefinition{
+					{
+						Id:          "creator",
+						DisplayName: "Creator",
+					}, {
+						Id:          "creator-email",
+						DisplayName: "Creator Email",
+					}, {
+						Id:          "hometown",
+						DisplayName: "Hometown",
+					}, {
+						Id:          "website",
+						DisplayName: "Website",
+					},
+				},
+			},
+		},
+		{
 			artifactID: "complexity",
 			parent:     "apis/a/versions/v/specs/s",
 			yamlFile:   "testdata/artifacts/complexity.yaml",

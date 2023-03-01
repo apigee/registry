@@ -1,0 +1,12 @@
+apiVersion: apigeeregistry/v1
+kind: FieldSet
+metadata:
+  name: fieldset
+  parent: apis/a
+data:
+  definitionName: artifacts/fieldset
+  values:
+    creator: Wile E. Coyote
+    creator-email: wiley@acme.com
+    hometown: Las Vegas, NV
+    website: '[ACME](https://acme.com)'

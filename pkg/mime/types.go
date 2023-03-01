@@ -153,6 +153,8 @@ var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(apihub.ApiSpecExtensionList) },
 	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(apihub.DisplaySettings) },
 	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":            func() proto.Message { return new(apihub.Lifecycle) },
+	"google.cloud.apigeeregistry.v1.apihub.FieldSet":             func() proto.Message { return new(apihub.FieldSet) },
+	"google.cloud.apigeeregistry.v1.apihub.FieldSetDefinition":   func() proto.Message { return new(apihub.FieldSetDefinition) },
 	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(apihub.ReferenceList) },
 	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(apihub.TaxonomyList) },
 	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(controller.Manifest) },

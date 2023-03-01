@@ -1,0 +1,82 @@
+// Copyright 2023 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.apihub;
+
+import "google/api/field_behavior.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
+option java_multiple_files = true;
+option java_outer_classname = "FieldSetProto";
+option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
+
+// Defines a structure for general field storage.
+message FieldSet {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // Full resource name of an FieldSetDefinition artifact that
+  // describes this field set.
+  string definition_name = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The field values, stored using field ids as keys.
+  map<string,string> values = 4;
+}
+
+message FieldSetDefinition {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A short displayable name for the field set definition.
+  string display_name = 3;
+
+  // A description of the field set being defined.
+  string description = 4;
+
+  // The field definitions
+  repeated FieldDefinition fields = 5;
+}
+
+message FieldDefinition {
+    // The id of the field, used as a key in the fields map.
+    string id = 1;
+
+    // The display_name of the field, used when the field is displayed.
+    string display_name = 2;
+
+    // A description of the field, possibly displayable as a tooltip.
+    string description = 3;
+
+    // Optional string specifying the field format.
+    // Currently applications are free to define values, 
+    // but we expect to formalize values for this in the future.
+    string format = 4;
+
+    // Optional list of allowed values for the field.
+    repeated string allowed_values = 5;
+}
