@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,6 +30,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/encoding"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"gopkg.in/yaml.v3"
@@ -127,6 +129,32 @@ func applyApiSpecPatch(
 			}
 			req.ApiSpec.Contents = body
 		}
+	}
+	// if we didn't find the spec contents in a file and it was supposed to be a zip archive,
+	// create it from the contents of the directory where we found the YAML file.
+	if req.ApiSpec.Contents == nil && mime.IsZipArchive(spec.Data.MimeType) {
+		container := filepath.Dir(filename)
+		filenames := []string{}
+		err := filepath.WalkDir(container, func(p string, entry fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			} else if entry.IsDir() {
+				return nil // Do nothing for the directory, but still walk its contents.
+			} else if p == filename || strings.HasSuffix(p, ".zip") {
+				return nil // Omit the Registry YAML file and any zip archives.
+			} else {
+				filenames = append(filenames, strings.TrimPrefix(p, container+"/"))
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		buf, err := compress.ZipArchiveOfFiles(filenames, container+"/")
+		if err != nil {
+			return err
+		}
+		req.ApiSpec.Contents = buf.Bytes()
 	}
 	// if we didn't find the spec body in a file, try to read it from the SourceURI
 	if req.ApiSpec.Contents == nil && spec.Data.SourceURI != "" {
