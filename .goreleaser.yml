@@ -13,7 +13,8 @@
 # limitations under the License.
 
 builds:
-- binary: registry
+- id: registry
+  binary: registry
   dir: cmd/registry
   main: main.go
   goos:
@@ -27,7 +28,8 @@ builds:
   ldflags:
   - -s -w -X "github.com/apigee/registry/cmd/registry/cmd.Version={{.Env.RELEASE_VERSION}}"
 
-- binary: registry-lint-api-linter
+- id: registry-lint-api-linter
+  binary: registry-lint-api-linter
   dir: cmd/registry/plugins/registry-lint-api-linter
   main: main.go
   goos:
@@ -39,7 +41,8 @@ builds:
   env:
   - CGO_ENABLED=0
 
-- binary: registry-lint-spectral
+- id: registry-lint-spectral
+  binary: registry-lint-spectral
   dir: cmd/registry/plugins/registry-lint-spectral
   main: main.go
   goos:
@@ -51,7 +54,8 @@ builds:
   env:
   - CGO_ENABLED=0
 
-- binary: registry-server
+- id: registry-server
+  binary: registry-server
   dir: cmd/registry-server
   main: main.go
   goos:
