@@ -64,7 +64,7 @@ FILENAME="registry_${REGISTRY_VERSION##v}_${OSEXT}_${REGISTRY_ARCH}.tar.gz"
 URL="https://github.com/apigee/registry/releases/download/${REGISTRY_VERSION}/${FILENAME}"
 echo $URL
 
-download_cli() {
+download_archive() {
   printf "\nDownloading %s from %s ...\n" "$NAME" "$URL"
   if ! curl -o /dev/null -sIf "$URL"; then
     printf "\n%s is not found, please specify a valid REGISTRY_VERSION and TARGET_ARCH\n" "$URL"
@@ -74,21 +74,22 @@ download_cli() {
   tar xzf "${FILENAME}"
 }
 
-download_cli
+download_archive
 
 printf ""
 printf "\nregistry %s Download Complete!\n" "$REGISTRY_VERSION"
-printf "\n"
-printf "registry has been successfully downloaded into the %s folder on your system.\n" "$tmp"
 printf "\n"
 
 # Setup registry
 cd "$HOME" || exit
 mkdir -p "$HOME/.registry/bin"
 mv "${tmp}/registry" "$HOME/.registry/bin"
-printf "Copied registry into the $HOME/.registry/bin folder.\n"
+mv "${tmp}/registry-lint-*" "$HOME/.registry/bin"
+mv "${tmp}/registry-server" "$HOME/.registry/bin"
+printf "Copied registry and registry-server into the $HOME/.registry/bin folder.\n"
 chmod +x "$HOME/.registry/bin/registry"
-rm -r "${tmp}"
+chmod +x "$HOME/.registry/bin/registry-lint-*"
+chmod +x "$HOME/.registry/bin/registry-server"
 
 # Print message
 printf "\n"
