@@ -4,8 +4,6 @@ metadata:
   name: fieldset
   parent: apis/a
 data:
-  displayName: Origins
-  description: Origins of this API
   definitionName: artifacts/fieldset
   values:
     creator: Wile E. Coyote

@@ -583,8 +583,6 @@ func TestMessageArtifactPatches(t *testing.T) {
 			message: &apihub.FieldSet{
 				Id:             "fieldset",
 				Kind:           "FieldSet",
-				DisplayName:    "Origins",
-				Description:    "Origins of this API",
 				DefinitionName: "artifacts/fieldset",
 				Values: map[string]string{
 					"creator":       "Wile E. Coyote",
