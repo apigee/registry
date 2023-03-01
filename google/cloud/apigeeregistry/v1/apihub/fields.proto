@@ -27,29 +27,45 @@ option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
 
 // Defines a structure for general field storage.
 message FieldSet {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
   // A short displayable name for the field set.
-  string display_name = 1;
+  string display_name = 3;
 
   // A description of the field set.
-  string description = 2;
+  string description = 4;
 
   // Full resource name of an FieldSetDefinition artifact that
   // describes this field set.
-  string definition_name = 3 [(google.api.field_behavior) = REQUIRED];
+  string definition_name = 5 [(google.api.field_behavior) = REQUIRED];
 
   // The field values, stored using field ids as keys.
-  map<string,string> values = 4;
+  map<string,string> values = 6;
 }
 
 message FieldSetDefinition {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
   // A short displayable name for the field set definition.
-  string display_name = 1;
+  string display_name = 3;
 
   // A description of the field set being defined.
-  string description = 2;
+  string description = 4;
 
   // The field definitions
-  repeated FieldDefinition fields = 3;
+  repeated FieldDefinition fields = 5;
 }
 
 message FieldDefinition {

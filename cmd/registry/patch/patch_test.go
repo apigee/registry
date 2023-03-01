@@ -581,6 +581,8 @@ func TestMessageArtifactPatches(t *testing.T) {
 			parent:     "apis/a",
 			yamlFile:   "testdata/artifacts/fieldset.yaml",
 			message: &apihub.FieldSet{
+				Id:             "fieldset",
+				Kind:           "FieldSet",
 				DisplayName:    "Origins",
 				Description:    "Origins of this API",
 				DefinitionName: "artifacts/fieldset",
@@ -596,6 +598,8 @@ func TestMessageArtifactPatches(t *testing.T) {
 			artifactID: "fieldset",
 			yamlFile:   "testdata/artifacts/fieldset-definition.yaml",
 			message: &apihub.FieldSetDefinition{
+				Id:          "fieldset",
+				Kind:        "FieldSetDefinition",
 				DisplayName: "Interesting Information",
 				Description: "Additional topical information about this API.",
 				Fields: []*apihub.FieldDefinition{
