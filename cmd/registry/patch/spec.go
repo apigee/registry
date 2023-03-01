@@ -133,9 +133,9 @@ func applyApiSpecPatch(
 	// if we didn't find the spec contents in a file and it was supposed to be a zip archive,
 	// create it from the contents of the directory where we found the YAML file.
 	if req.ApiSpec.Contents == nil && mime.IsZipArchive(spec.Data.MimeType) {
-		prefix := filepath.Dir(filename)
+		container := filepath.Dir(filename)
 		filenames := []string{}
-		err := filepath.WalkDir(prefix, func(p string, entry fs.DirEntry, err error) error {
+		err := filepath.WalkDir(container, func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			} else if entry.IsDir() {
@@ -143,14 +143,14 @@ func applyApiSpecPatch(
 			} else if p == filename || strings.HasSuffix(p, ".zip") {
 				return nil // Omit the Registry YAML file and any zip archives.
 			} else {
-				filenames = append(filenames, strings.TrimPrefix(p, prefix+"/"))
+				filenames = append(filenames, strings.TrimPrefix(p, container+"/"))
 			}
 			return nil
 		})
 		if err != nil {
 			return err
 		}
-		buf, err := compress.ZipArchiveOfFiles(filenames, prefix+"/")
+		buf, err := compress.ZipArchiveOfFiles(filenames, container+"/")
 		if err != nil {
 			return err
 		}
