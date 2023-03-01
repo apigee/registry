@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+kind: AttributeSet
+metadata:
+  name: attributes
+  parent: apis/a
+data:
+  displayName: Origins
+  description: Origins of this API
+  definitionName: artifacts/attributes
+  values:
+    creator: Wile E. Coyote
+    creator-email: wiley@acme.com
+    hometown: Las Vegas, NV
+    website: '[ACME](https://acme.com)'

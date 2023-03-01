@@ -577,6 +577,45 @@ func TestMessageArtifactPatches(t *testing.T) {
 		message    proto.Message
 	}{
 		{
+			artifactID: "attributes",
+			parent:     "apis/a",
+			yamlFile:   "testdata/artifacts/attributes.yaml",
+			message: &apihub.AttributeSet{
+				DisplayName:    "Origins",
+				Description:    "Origins of this API",
+				DefinitionName: "artifacts/attributes",
+				Values: map[string]string{
+					"creator":       "Wile E. Coyote",
+					"creator-email": "wiley@acme.com",
+					"hometown":      "Las Vegas, NV",
+					"website":       "[ACME](https://acme.com)",
+				},
+			},
+		},
+		{
+			artifactID: "attributes",
+			yamlFile:   "testdata/artifacts/attributes-definition.yaml",
+			message: &apihub.AttributeSetDefinition{
+				DisplayName: "Interesting Information",
+				Description: "Additional topical information about this API.",
+				Attributes: []*apihub.AttributeDefinition{
+					{
+						Id:          "creator",
+						DisplayName: "Creator",
+					}, {
+						Id:          "creator-email",
+						DisplayName: "Creator Email",
+					}, {
+						Id:          "hometown",
+						DisplayName: "Hometown",
+					}, {
+						Id:          "website",
+						DisplayName: "Website",
+					},
+				},
+			},
+		},
+		{
 			artifactID: "complexity",
 			parent:     "apis/a/versions/v/specs/s",
 			yamlFile:   "testdata/artifacts/complexity.yaml",
