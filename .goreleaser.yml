@@ -13,7 +13,7 @@
 # limitations under the License.
 
 builds:
-- id: default
+- id: registry
   dir: cmd/registry
   main: main.go
   binary: registry
@@ -27,6 +27,19 @@ builds:
   - CGO_ENABLED=0
   ldflags:
   - -s -w -X "github.com/apigee/registry/cmd/registry/cmd.Version={{.Env.RELEASE_VERSION}}"
+
+- id: registry-server
+  dir: cmd/registry-server
+  main: main.go
+  binary: registry-server
+  goos:
+  - linux
+  - windows
+  - darwin
+  goarch:
+  - amd64
+  env:
+  - CGO_ENABLED=1
 
 archives:
 - id: default
@@ -43,6 +56,7 @@ archives:
   format_overrides:
   - goos: windows
     format: zip
+
 release:
   draft: true
-  prerelease: true
+  prerelease: "true"
