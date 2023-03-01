@@ -1,11 +1,11 @@
 apiVersion: apigeeregistry/v1
-kind: AttributeSetDefinition
+kind: FieldSetDefinition
 metadata:
-  name: attributes
+  name: fieldset
 data:
   displayName: Interesting Information
   description: Additional topical information about this API.
-  attributes:
+  fields:
     - id: creator
       displayName: Creator
       description: ""

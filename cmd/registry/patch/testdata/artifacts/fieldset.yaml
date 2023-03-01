@@ -1,12 +1,12 @@
 apiVersion: apigeeregistry/v1
-kind: AttributeSet
+kind: FieldSet
 metadata:
-  name: attributes
+  name: fieldset
   parent: apis/a
 data:
   displayName: Origins
   description: Origins of this API
-  definitionName: artifacts/attributes
+  definitionName: artifacts/fieldset
   values:
     creator: Wile E. Coyote
     creator-email: wiley@acme.com

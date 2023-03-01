@@ -577,13 +577,13 @@ func TestMessageArtifactPatches(t *testing.T) {
 		message    proto.Message
 	}{
 		{
-			artifactID: "attributes",
+			artifactID: "fieldset",
 			parent:     "apis/a",
-			yamlFile:   "testdata/artifacts/attributes.yaml",
-			message: &apihub.AttributeSet{
+			yamlFile:   "testdata/artifacts/fieldset.yaml",
+			message: &apihub.FieldSet{
 				DisplayName:    "Origins",
 				Description:    "Origins of this API",
-				DefinitionName: "artifacts/attributes",
+				DefinitionName: "artifacts/fieldset",
 				Values: map[string]string{
 					"creator":       "Wile E. Coyote",
 					"creator-email": "wiley@acme.com",
@@ -593,12 +593,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 			},
 		},
 		{
-			artifactID: "attributes",
-			yamlFile:   "testdata/artifacts/attributes-definition.yaml",
-			message: &apihub.AttributeSetDefinition{
+			artifactID: "fieldset",
+			yamlFile:   "testdata/artifacts/fieldset-definition.yaml",
+			message: &apihub.FieldSetDefinition{
 				DisplayName: "Interesting Information",
 				Description: "Additional topical information about this API.",
-				Attributes: []*apihub.AttributeDefinition{
+				Fields: []*apihub.FieldDefinition{
 					{
 						Id:          "creator",
 						DisplayName: "Creator",
