@@ -77,8 +77,6 @@ archives:
     strip_parent: true
   - auth/HOSTED.sh
   - auth/HOSTED.bat
-  builds:
-  - default
   format_overrides:
   - goos: windows
     format: zip
