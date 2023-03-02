@@ -85,11 +85,9 @@ cd "$HOME" || exit
 mkdir -p "$HOME/.registry/bin"
 mv "${tmp}/registry" "$HOME/.registry/bin"
 mv "${tmp}/registry-lint-*" "$HOME/.registry/bin"
-mv "${tmp}/registry-server" "$HOME/.registry/bin"
-printf "Copied registry and registry-server into the $HOME/.registry/bin folder.\n"
+printf "Copied registry into the $HOME/.registry/bin folder.\n"
 chmod +x "$HOME/.registry/bin/registry"
 chmod +x "$HOME/.registry/bin/registry-lint-*"
-chmod +x "$HOME/.registry/bin/registry-server"
 
 # Print message
 printf "\n"
