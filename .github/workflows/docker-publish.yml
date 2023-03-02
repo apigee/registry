@@ -12,28 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Publish Image to ghcr.io
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+name: Publish docker images
 
 on:
-  schedule:
-    - cron: '40 15 * * *'
   push:
     branches: [ main ]
-    # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
+    tags: [ 'v*.*.*' ] # semver release
   pull_request:
     branches: [ main ]
+
 env:
   REGISTRY: ghcr.io
   USERNAME: ${{ github.actor }}
   PASSWORD: ${{ secrets.GITHUB_TOKEN }}
   DOCKER_REPOSITORY_OWNER: ${{github.repository_owner}}
+
 jobs:
+
   build-registry-server:
     runs-on: ubuntu-22.04
     steps:
