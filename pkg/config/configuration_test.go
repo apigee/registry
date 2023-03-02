@@ -42,7 +42,7 @@ func TestActiveSettings(t *testing.T) {
 	t.Setenv("APG_REGISTRY_ADDRESS", "")
 
 	// missing active file
-	c, err := config.Active()
+	_, err := config.Active()
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -53,7 +53,7 @@ func TestActiveSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, err = config.Active()
+	_, err = config.Active()
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -67,13 +67,13 @@ func TestActiveSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, err = config.Active()
+	_, err = config.Active()
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
 
 	// good config file
-	c = config.Configuration{
+	c := config.Configuration{
 		Registry: config.Registry{
 			Address:  "localhost:8080",
 			Insecure: true,
