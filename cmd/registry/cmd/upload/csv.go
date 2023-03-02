@@ -24,9 +24,9 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -237,7 +237,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		ApiSpecId: specName.SpecID,
 		ApiSpec: &rpc.ApiSpec{
 			// TODO: How do we choose a mime type?
-			MimeType: types.OpenAPIMimeType("+gzip", "3.0.0"),
+			MimeType: mime.OpenAPIMimeType("+gzip", "3.0.0"),
 			Contents: compressed,
 		},
 	})

@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -33,20 +34,20 @@ func TestAddRules(t *testing.T) {
 }
 
 func TestDescription(t *testing.T) {
-	bad := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	bad := []*check.Problem{{
+		Severity:   check.Problem_ERROR,
 		Message:    fmt.Sprintf("%s must contain only UTF-8 characters.", fieldName),
 		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
 
-	tooLong := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	tooLong := []*check.Problem{{
+		Severity:   check.Problem_ERROR,
 		Message:    fmt.Sprintf("%s exceeds limit of 5000 characters.", fieldName),
 		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
 
 	tests := []struct {
 		name     string
 		in       string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"empty", "", nil},
 		{"invalid", string([]byte{0xff}), bad},
@@ -61,7 +62,7 @@ func TestDescription(t *testing.T) {
 			}
 			if description.OnlyIf(a, fieldName) {
 				got := description.ApplyToField(ctx, a, fieldName, test.in)
-				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+				if diff := cmp.Diff(test.expected, got, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 				}
 			}

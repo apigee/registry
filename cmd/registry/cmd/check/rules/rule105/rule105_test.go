@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -31,15 +32,15 @@ func TestAddRules(t *testing.T) {
 }
 
 func Test_sourceUriFormat(t *testing.T) {
-	prob := []*rpc.Problem{{
-		Severity:   rpc.Problem_ERROR,
+	prob := []*check.Problem{{
+		Severity:   check.Problem_ERROR,
 		Message:    `source_uri must be an absolute URI.`,
 		Suggestion: `Ensure source_uri includes a host.`,
 	}}
 
 	for _, tt := range []struct {
 		in       string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"", nil},
 		{"x", prob},
@@ -55,7 +56,7 @@ func Test_sourceUriFormat(t *testing.T) {
 			}
 			if sourceUriFormat.OnlyIf(a) {
 				got := sourceUriFormat.ApplyToApiSpec(context.Background(), a)
-				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

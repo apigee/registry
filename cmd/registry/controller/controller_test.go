@@ -20,10 +20,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/application/controller"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -44,21 +46,21 @@ func TestMain(m *testing.M) {
 const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
 
 var sortActions = cmpopts.SortSlices(func(a, b *Action) bool { return a.Command < b.Command })
-var styleguide = &rpc.StyleGuide{
+var styleguide = &style.StyleGuide{
 	Id:        "registry-styleguide",
 	MimeTypes: []string{gzipOpenAPIv3},
-	Guidelines: []*rpc.Guideline{
+	Guidelines: []*style.Guideline{
 		{
 			Id: "Operation",
-			Rules: []*rpc.Rule{
+			Rules: []*style.Rule{
 				{
 					Id:             "OperationIdValidInURL",
 					Linter:         "spectral",
 					LinterRulename: "operation-operationId-valid-in-url",
-					Severity:       rpc.Rule_WARNING,
+					Severity:       style.Rule_WARNING,
 				},
 			},
-			State: rpc.Guideline_ACTIVE,
+			State: style.Guideline_ACTIVE,
 		},
 	},
 }
@@ -79,14 +81,14 @@ func TestArtifacts(t *testing.T) {
 			desc: "single spec",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 				},
 			},
 		},
@@ -94,30 +96,30 @@ func TestArtifacts(t *testing.T) {
 			desc: "multiple specs",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi --linter gnostic",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 				},
 			},
 		},
@@ -152,12 +154,12 @@ func TestArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 								Filter:  "mime_type.contains('openapi')",
@@ -189,23 +191,23 @@ func TestAggregateArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// test api 1
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi",
 				},
 				// test api 2
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi",
 				},
 			},
 			want: []*Action{
@@ -250,13 +252,13 @@ func TestAggregateArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/artifacts/vocabulary",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.api/versions/-/specs/-",
 							},
@@ -287,47 +289,47 @@ func TestDerivedArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// version 1.0.0
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 				},
 				// version 1.0.1
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity",
 				},
 				// version 1.1.0
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity",
 				},
 			},
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/summary",
 				},
 			},
 		},
@@ -336,27 +338,27 @@ func TestDerivedArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// version 1.0.0
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-gnostic",
 				},
 				// version 1.0.1
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity",
 				},
 				// version 1.1.0
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/complexity",
 				},
 			},
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
 						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/lint-gnostic",
+						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/complexity"),
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/summary",
 				},
 			},
 		},
@@ -391,12 +393,12 @@ func TestDerivedArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/summary",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec/artifacts/lint-gnostic",
 							},
@@ -429,29 +431,29 @@ func TestReceiptArtifacts(t *testing.T) {
 			desc: "create artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "command projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact",
+					Command:           "command projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/custom-artifact",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "command projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/custom-artifact",
+					Command:           "command projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/custom-artifact",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "command projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/custom-artifact",
+					Command:           "command projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/custom-artifact",
 					RequiresReceipt:   true,
 				},
 			},
@@ -487,13 +489,13 @@ func TestReceiptArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/custom-artifact",
 						Receipt: true,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 							},
@@ -523,13 +525,13 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			desc: "create artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			want: []*Action{
@@ -544,17 +546,17 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			desc: "updated artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.Artifact{
 					Name: "projects/controller-test/locations/global/artifacts/search-index",
 				},
 				// Add a new spec to make the artifact outdated
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			want: []*Action{
@@ -596,13 +598,13 @@ func TestReceiptAggArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "artifacts/search-index",
 						Receipt: true,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "apis/-/versions/-/specs/-",
 							},
@@ -633,33 +635,33 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
+					MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 			},
@@ -668,35 +670,35 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			desc: "outdated spec artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-registry-styleguide",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/conformance-registry-styleguide",
 				},
 				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/conformance-registry-styleguide",
 				},
 				//Update styleguide definition to make sure conformance artifacts are outdated
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
+					MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 			},
@@ -706,28 +708,28 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
+					MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiVersion{
 					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 			},
@@ -763,13 +765,13 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-registry-styleguide",
 						Receipt: true,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 							},
@@ -829,13 +831,13 @@ func TestMaxActions(t *testing.T) {
 			desc: "generated more than maxActions",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			maxActions: 2,
@@ -844,13 +846,13 @@ func TestMaxActions(t *testing.T) {
 			desc: "generated less than maxActions",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 				},
 				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 				},
 			},
 			maxActions: 4,
@@ -886,12 +888,12 @@ func TestMaxActions(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			manifest := &rpc.Manifest{
+			manifest := &controller.Manifest{
 				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary",
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 							},

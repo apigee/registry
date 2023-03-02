@@ -20,8 +20,8 @@ import (
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/log"
-	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -29,7 +29,7 @@ import (
 )
 
 // NewApi allows an API to be individually exported as a YAML file.
-func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) (*models.Api, error) {
+func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) (*encoding.Api, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -42,13 +42,13 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 	if err != nil {
 		return nil, err
 	}
-	var versions []*models.ApiVersion
-	var deployments []*models.ApiDeployment
-	var artifacts []*models.Artifact
+	var versions []*encoding.ApiVersion
+	var deployments []*encoding.ApiDeployment
+	var artifacts []*encoding.Artifact
 	if nested {
-		versions = make([]*models.ApiVersion, 0)
+		versions = make([]*encoding.ApiVersion, 0)
 		if err = visitor.ListVersions(ctx, client, apiName.Version("-"), "", func(ctx context.Context, message *rpc.ApiVersion) error {
-			var version *models.ApiVersion
+			var version *encoding.ApiVersion
 			version, err := NewApiVersion(ctx, client, message, true)
 			if err != nil {
 				return err
@@ -62,9 +62,9 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 		}); err != nil {
 			return nil, err
 		}
-		deployments = make([]*models.ApiDeployment, 0)
+		deployments = make([]*encoding.ApiDeployment, 0)
 		if err = visitor.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(ctx context.Context, message *rpc.ApiDeployment) error {
-			var deployment *models.ApiDeployment
+			var deployment *encoding.ApiDeployment
 			deployment, err = NewApiDeployment(ctx, client, message, true)
 			if err != nil {
 				return err
@@ -84,17 +84,17 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 		}
 	}
 
-	return &models.Api{
-		Header: models.Header{
-			ApiVersion: RegistryV1,
+	return &encoding.Api{
+		Header: encoding.Header{
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "API",
-			Metadata: models.Metadata{
+			Metadata: encoding.Metadata{
 				Name:        apiName.ApiID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: models.ApiData{
+		Data: encoding.ApiData{
 			DisplayName:           message.DisplayName,
 			Description:           message.Description,
 			Availability:          message.Availability,
@@ -107,8 +107,8 @@ func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 	}, err
 }
 
-func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, artifactPattern names.Artifact) ([]*models.Artifact, error) {
-	artifacts := make([]*models.Artifact, 0)
+func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, artifactPattern names.Artifact) ([]*encoding.Artifact, error) {
+	artifacts := make([]*encoding.Artifact, 0)
 	if err := visitor.ListArtifacts(ctx, client, artifactPattern, "", true, func(ctx context.Context, message *rpc.Artifact) error {
 		artifact, err := NewArtifact(ctx, client, message)
 		if err != nil {
@@ -189,8 +189,8 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 	return apiName.Deployment(deploymentID).String()
 }
 
-func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
-	var api models.Api
+func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string, filename string) error {
+	var api encoding.Api
 	err := yaml.Unmarshal(bytes, &api)
 	if err != nil {
 		return err
@@ -218,19 +218,19 @@ func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, b
 		return fmt.Errorf("UpdateApi: %s", err)
 	}
 	for _, versionPatch := range api.Data.ApiVersions {
-		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String())
+		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String(), filename)
 		if err != nil {
 			return err
 		}
 	}
 	for _, deploymentPatch := range api.Data.ApiDeployments {
-		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String())
+		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String(), filename)
 		if err != nil {
 			return err
 		}
 	}
 	for _, artifactPatch := range api.Data.Artifacts {
-		err = applyArtifactPatch(ctx, client, artifactPatch, apiName.String())
+		err = applyArtifactPatch(ctx, client, artifactPatch, apiName.String(), filename)
 		if err != nil {
 			return err
 		}

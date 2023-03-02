@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -137,22 +139,22 @@ func TestTimestampCalculateScore(t *testing.T) {
 	tests := []struct {
 		desc            string
 		seed            []seeder.RegistryResource
-		definitionProto *rpc.ScoreDefinition
-		wantScore       *rpc.Score
+		definitionProto *scoring.ScoreDefinition
+		wantScore       *scoring.Score
 	}{
 		{
 			desc: "existing up-to-date score",
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -166,21 +168,21 @@ func TestTimestampCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/artifacts/lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id: "lint-error",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
-						Formula: &rpc.ScoreDefinition_ScoreFormula{
-							ScoreFormula: &rpc.ScoreFormula{
-								Artifact: &rpc.ResourcePattern{
+						Formula: &scoring.ScoreDefinition_ScoreFormula{
+							ScoreFormula: &scoring.ScoreFormula{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/lint-spectral",
 								},
 								ScoreExpression: "size(files[0].problems)",
 							},
 						},
-						Type: &rpc.ScoreDefinition_Integer{
-							Integer: &rpc.IntegerType{
+						Type: &scoring.ScoreDefinition_Integer{
+							Integer: &scoring.IntegerType{
 								MinValue: 0,
 								MaxValue: 10,
 							},
@@ -190,27 +192,27 @@ func TestTimestampCalculateScore(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents:   []byte{},
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 3)),
 				},
 			},
-			wantScore: &rpc.Score{},
+			wantScore: &scoring.Score{},
 		},
 		{
 			desc: "not recent enough score",
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -224,21 +226,21 @@ func TestTimestampCalculateScore(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/artifacts/lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition",
-					Contents: protoMarshal(&rpc.ScoreDefinition{
+					Contents: protoMarshal(&scoring.ScoreDefinition{
 						Id: "lint-error",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
-						Formula: &rpc.ScoreDefinition_ScoreFormula{
-							ScoreFormula: &rpc.ScoreFormula{
-								Artifact: &rpc.ResourcePattern{
+						Formula: &scoring.ScoreDefinition_ScoreFormula{
+							ScoreFormula: &scoring.ScoreFormula{
+								Artifact: &scoring.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/lint-spectral",
 								},
 								ScoreExpression: "size(files[0].problems)",
 							},
 						},
-						Type: &rpc.ScoreDefinition_Integer{
-							Integer: &rpc.IntegerType{
+						Type: &scoring.ScoreDefinition_Integer{
+							Integer: &scoring.IntegerType{
 								MinValue: 0,
 								MaxValue: 10,
 							},
@@ -248,19 +250,19 @@ func TestTimestampCalculateScore(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents:   []byte{},
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 			},
-			wantScore: &rpc.Score{
+			wantScore: &scoring.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
 				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
-				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_SEVERITY_UNSPECIFIED,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    1,
 						MinValue: 0,
 						MaxValue: 10,
@@ -281,7 +283,7 @@ func TestTimestampCalculateScore(t *testing.T) {
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			}
 
@@ -299,12 +301,12 @@ func TestTimestampCalculateScore(t *testing.T) {
 			//fetch score artifact and check the value
 			scoreArtifact, err := getArtifact(
 				ctx, client,
-				"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", true)
+				"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error", true)
 			if err != nil {
 				t.Errorf("failed to get the result scoreArtifact from registry")
 			}
 
-			gotScore := &rpc.Score{}
+			gotScore := &scoring.Score{}
 			err = proto.Unmarshal(scoreArtifact.GetContents(), gotScore)
 			if err != nil {
 				t.Errorf("failed unmarshalling score artifact from registry: %s", err)
@@ -332,20 +334,20 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents: []byte{},
 				},
 				// score  formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -357,7 +359,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -373,14 +375,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -392,7 +394,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					Contents:   []byte{},
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 3)),
@@ -400,7 +402,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -415,19 +417,19 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 				},
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -439,7 +441,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -454,14 +456,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -473,14 +475,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 3)),
 				},
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -495,14 +497,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -514,14 +516,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -536,14 +538,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score formula artifact
 				&rpc.Artifact{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -555,14 +557,14 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -584,13 +586,13 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 			}
 
 			//fetch score artifact
-			scoreArtifact, err := getArtifact(ctx, client, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", false)
+			scoreArtifact, err := getArtifact(ctx, client, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error", false)
 			if err != nil {
 				t.Errorf("failed to fetch the scoreArtifact from setup: %s", err)
 			}
 
-			formula := &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
+			formula := &scoring.ScoreFormula{
+				Artifact: &scoring.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/lint-spectral",
 				},
 				ScoreExpression: "size(files[0].problems)",
@@ -619,19 +621,19 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 				},
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -645,7 +647,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				//  complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -657,7 +659,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -672,14 +674,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -693,12 +695,12 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -710,7 +712,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -725,14 +727,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -747,7 +749,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -759,14 +761,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 3)),
 				},
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
@@ -781,19 +783,19 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 				},
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -807,7 +809,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -819,7 +821,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -834,14 +836,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -855,12 +857,12 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -872,7 +874,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -887,14 +889,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -909,7 +911,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -921,14 +923,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 3)),
 				},
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -943,14 +945,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// lint artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
-					Contents: protoMarshal(&rpc.Lint{
+					Contents: protoMarshal(&style.Lint{
 						Name: "openapi.yaml",
-						Files: []*rpc.LintFile{
+						Files: []*style.LintFile{
 							{
 								FilePath: "openapi.yaml",
-								Problems: []*rpc.LintProblem{
+								Problems: []*style.LintProblem{
 									{
 										Message: "lint-error",
 									},
@@ -965,7 +967,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// complexity artifact
 				&rpc.Artifact{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/complexity",
 					MimeType: "application/octet-stream;type=gnostic.metrics.Complexity",
 					Contents: protoMarshal(&metrics.Complexity{
 						GetCount:    1,
@@ -977,14 +979,14 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 				// score artifact
 				&rpc.Artifact{
-					Name:       "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:       "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
 					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)),
 				},
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -1006,22 +1008,22 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 			}
 
 			//fetch score artifact
-			scoreArtifact, err := getArtifact(ctx, client, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", false)
+			scoreArtifact, err := getArtifact(ctx, client, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error", false)
 			if err != nil {
 				t.Errorf("failed to fetch the scoreArtifact from setup: %s", err)
 			}
 
-			formula := &rpc.RollUpFormula{
-				ScoreFormulas: []*rpc.ScoreFormula{
+			formula := &scoring.RollUpFormula{
+				ScoreFormulas: []*scoring.ScoreFormula{
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/lint-spectral",
 						},
 						ScoreExpression: "size(files[0].problems)",
 						ReferenceId:     "numErrors",
 					},
 					{
-						Artifact: &rpc.ResourcePattern{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/complexity",
 						},
 						ScoreExpression: "getCount + postCount + putCount + deleteCount",
@@ -1054,15 +1056,15 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -1071,15 +1073,15 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -1088,22 +1090,22 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -1112,9 +1114,9 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -1126,7 +1128,7 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
@@ -1141,15 +1143,15 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -1158,15 +1160,15 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -1175,22 +1177,22 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -1199,9 +1201,9 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -1213,25 +1215,25 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
 			wantResult: scoreCardResult{
-				scoreCard: &rpc.ScoreCard{
+				scoreCard: &scoring.ScoreCard{
 					Id:             "scorecard-quality",
 					Kind:           "ScoreCard",
 					DisplayName:    "Quality",
 					Description:    "Quality ScoreCard",
 					DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-					Scores: []*rpc.Score{
+					Scores: []*scoring.Score{
 						{
 							Id:             "score-lint-error",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-							Severity:       rpc.Severity_ALERT,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_ALERT,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 60,
 								},
 							},
@@ -1240,9 +1242,9 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 							Id:             "score-lang-reuse",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-							Severity:       rpc.Severity_OK,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_OK,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 70,
 								},
 							},
@@ -1264,12 +1266,12 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			definition := &rpc.ScoreCardDefinition{
+			definition := &scoring.ScoreCardDefinition{
 				Id:          "quality",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Quality",
 				Description: "Quality ScoreCard",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1279,7 +1281,7 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 			}
 
 			//fetch the ScoreCard artifact
-			scoreCardArtifact, err := getArtifact(ctx, client, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", false)
+			scoreCardArtifact, err := getArtifact(ctx, client, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality", false)
 			if err != nil {
 				t.Errorf("failed to fetch the scoreCardArtifact from setup: %s", err)
 			}

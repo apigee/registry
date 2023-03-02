@@ -23,7 +23,7 @@ import "google/api/field_behavior.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
 option java_multiple_files = true;
 option java_outer_classname = "ReferencesProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
 
 // A ReferenceList message contains a list of references that are associated
 // with a resource. A Reference is a categorized resource name or URI that

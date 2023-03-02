@@ -13,10 +13,10 @@
 # limitations under the License.
 
 builds:
-- id: default
+- id: registry
+  binary: registry
   dir: cmd/registry
   main: main.go
-  binary: registry
   goos:
   - linux
   - windows
@@ -28,6 +28,32 @@ builds:
   ldflags:
   - -s -w -X "github.com/apigee/registry/cmd/registry/cmd.Version={{.Env.RELEASE_VERSION}}"
 
+- id: registry-lint-api-linter
+  binary: registry-lint-api-linter
+  dir: cmd/registry/plugins/registry-lint-api-linter
+  main: main.go
+  goos:
+  - linux
+  - windows
+  - darwin
+  goarch:
+  - amd64
+  env:
+  - CGO_ENABLED=0
+
+- id: registry-lint-spectral
+  binary: registry-lint-spectral
+  dir: cmd/registry/plugins/registry-lint-spectral
+  main: main.go
+  goos:
+  - linux
+  - windows
+  - darwin
+  goarch:
+  - amd64
+  env:
+  - CGO_ENABLED=0
+
 archives:
 - id: default
   format: tar.gz
@@ -38,11 +64,10 @@ archives:
     strip_parent: true
   - auth/HOSTED.sh
   - auth/HOSTED.bat
-  builds:
-  - default
   format_overrides:
   - goos: windows
     format: zip
+
 release:
   draft: true
-  prerelease: true
+  prerelease: "true"

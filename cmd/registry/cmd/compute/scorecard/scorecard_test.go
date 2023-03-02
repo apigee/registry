@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -64,10 +65,10 @@ func deleteProject(
 }
 
 var (
-	scoreCardAll = &rpc.ScoreCardDefinition{
+	scoreCardAll = &scoring.ScoreCardDefinition{
 		Id:   "lint-summary",
 		Kind: "ScoreCardDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &scoring.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 		},
 		ScorePatterns: []string{
@@ -75,10 +76,10 @@ var (
 		},
 	}
 
-	scoreCardOpenAPI = &rpc.ScoreCardDefinition{
+	scoreCardOpenAPI = &scoring.ScoreCardDefinition{
 		Id:   "lint-summary-openapi",
 		Kind: "ScoreCardDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &scoring.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 			Filter:  "mime_type.contains('openapi')",
 		},
@@ -87,10 +88,10 @@ var (
 		},
 	}
 
-	scoreCardProto = &rpc.ScoreCardDefinition{
+	scoreCardProto = &scoring.ScoreCardDefinition{
 		Id:   "lint-summary-proto",
 		Kind: "ScoreCardDefinition",
-		TargetResource: &rpc.ResourcePattern{
+		TargetResource: &scoring.ResourcePattern{
 			Pattern: "apis/-/versions/-/specs/-",
 			Filter:  "mime_type.contains('protobuf')",
 		},
@@ -99,11 +100,11 @@ var (
 		},
 	}
 
-	scoreLintError = &rpc.Score{
+	scoreLintError = &scoring.Score{
 		Id:   "score-lint-error",
 		Kind: "Score",
-		Value: &rpc.Score_IntegerValue{
-			IntegerValue: &rpc.IntegerValue{
+		Value: &scoring.Score_IntegerValue{
+			IntegerValue: &scoring.IntegerValue{
 				Value:    1,
 				MinValue: 0,
 				MaxValue: 10,
@@ -122,20 +123,20 @@ func TestScoreCard(t *testing.T) {
 			desc: "all spec scores",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: scoreType,
 					Contents: protoMarshal(scoreLintError),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi/artifacts/score-lint-error",
 					MimeType: scoreType,
 					Contents: protoMarshal(scoreLintError),
 				},
@@ -146,19 +147,19 @@ func TestScoreCard(t *testing.T) {
 				},
 			},
 			want: []string{
-				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@([a-z0-9-]+)/artifacts/scorecard-lint-summary",
-				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml@([a-z0-9-]+)/artifacts/scorecard-lint-summary",
+				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi@([a-z0-9-]+)/artifacts/scorecard-lint-summary",
+				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi@([a-z0-9-]+)/artifacts/scorecard-lint-summary",
 			},
 		},
 		{
 			desc: "only openapi scores with single definition",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: scoreType,
 					Contents: protoMarshal(scoreLintError),
 				},
@@ -178,18 +179,18 @@ func TestScoreCard(t *testing.T) {
 				},
 			},
 			want: []string{
-				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@([a-z0-9-]+)/artifacts/scorecard-lint-summary-openapi",
+				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi@([a-z0-9-]+)/artifacts/scorecard-lint-summary-openapi",
 			},
 		},
 		{
 			desc: "only proto scores with single definition",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: scoreType,
 					Contents: protoMarshal(scoreLintError),
 				},
@@ -216,11 +217,11 @@ func TestScoreCard(t *testing.T) {
 			desc: "proto and openapi scores with both definitions",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.Artifact{
-					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: scoreType,
 					Contents: protoMarshal(scoreLintError),
 				},
@@ -246,7 +247,7 @@ func TestScoreCard(t *testing.T) {
 				},
 			},
 			want: []string{
-				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@([a-z0-9-]+)/artifacts/scorecard-lint-summary-openapi",
+				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi@([a-z0-9-]+)/artifacts/scorecard-lint-summary-openapi",
 				"projects/scorecard-test/locations/global/apis/petstore/versions/1.0.1/specs/proto.yaml@([a-z0-9-]+)/artifacts/scorecard-lint-summary-proto",
 			},
 		},

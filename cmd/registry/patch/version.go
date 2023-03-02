@@ -20,7 +20,7 @@ import (
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -28,16 +28,16 @@ import (
 )
 
 // NewApiVersion allows an API version to be individually exported as a YAML file.
-func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
+func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*encoding.ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	var specs []*models.ApiSpec
-	var artifacts []*models.Artifact
+	var specs []*encoding.ApiSpec
+	var artifacts []*encoding.Artifact
 	if nested {
-		specs = make([]*models.ApiSpec, 0)
+		specs = make([]*encoding.ApiSpec, 0)
 		if err = visitor.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(ctx context.Context, message *rpc.ApiSpec) error {
 			spec, err := NewApiSpec(ctx, client, message, true)
 			if err != nil {
@@ -57,18 +57,18 @@ func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			return nil, err
 		}
 	}
-	return &models.ApiVersion{
-		Header: models.Header{
-			ApiVersion: RegistryV1,
+	return &encoding.ApiVersion{
+		Header: encoding.Header{
+			ApiVersion: encoding.RegistryV1,
 			Kind:       "Version",
-			Metadata: models.Metadata{
+			Metadata: encoding.Metadata{
 				Name:        versionName.VersionID,
 				Parent:      names.ExportableName(versionName.Parent(), versionName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: models.ApiVersionData{
+		Data: encoding.ApiVersionData{
 			DisplayName: message.DisplayName,
 			Description: message.Description,
 			State:       message.State,
@@ -83,16 +83,17 @@ func applyApiVersionPatchBytes(
 	ctx context.Context,
 	client connection.RegistryClient,
 	bytes []byte,
-	project string) error {
-	var version models.ApiVersion
+	project string,
+	filename string) error {
+	var version encoding.ApiVersion
 	err := yaml.Unmarshal(bytes, &version)
 	if err != nil {
 		return err
 	}
-	return applyApiVersionPatch(ctx, client, &version, project)
+	return applyApiVersionPatch(ctx, client, &version, project, filename)
 }
 
-func versionName(parent string, metadata models.Metadata) (names.Version, error) {
+func versionName(parent string, metadata encoding.Metadata) (names.Version, error) {
 	if metadata.Parent != "" {
 		parent = parent + "/" + metadata.Parent
 	}
@@ -106,8 +107,9 @@ func versionName(parent string, metadata models.Metadata) (names.Version, error)
 func applyApiVersionPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	version *models.ApiVersion,
-	parent string) error {
+	version *encoding.ApiVersion,
+	parent string,
+	filename string) error {
 	name, err := versionName(parent, version.Metadata)
 	if err != nil {
 		return err
@@ -129,13 +131,13 @@ func applyApiVersionPatch(
 		return fmt.Errorf("UpdateApiVersion: %s", err)
 	}
 	for _, specPatch := range version.Data.ApiSpecs {
-		err := applyApiSpecPatch(ctx, client, specPatch, name.String(), "")
+		err := applyApiSpecPatch(ctx, client, specPatch, name.String(), filename)
 		if err != nil {
 			return err
 		}
 	}
 	for _, artifactPatch := range version.Data.Artifacts {
-		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String(), filename)
 		if err != nil {
 			return err
 		}

@@ -26,14 +26,15 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/log"
 	"gopkg.in/yaml.v3"
 )
 
-func Apply(ctx context.Context, client connection.RegistryClient, path, project string, recursive bool, jobs int) error {
+func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, path, project string, recursive bool, jobs int) error {
 	patches := &patchGroup{}
 	if path == "-" {
-		bytes, err := io.ReadAll(os.Stdin)
+		bytes, err := io.ReadAll(in)
 		if err != nil {
 			return err
 		}
@@ -67,6 +68,8 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, project 
 }
 
 type patchGroup struct {
+	filesRead       int
+	filesApplied    int
 	apiTasks        []tasks.Task
 	versionTasks    []tasks.Task
 	specTasks       []tasks.Task
@@ -90,13 +93,14 @@ func (p *patchGroup) add(task *applyBytesTask) {
 }
 
 func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileName, project string) error {
+	p.filesRead++
 	header, items, err := readHeaderWithItems(bytes)
 	if err != nil {
 		return err
-	} else if header.ApiVersion != RegistryV1 {
+	} else if header.ApiVersion != encoding.RegistryV1 {
 		return nil
 	}
-
+	p.filesApplied++
 	if items.Kind != yaml.SequenceNode {
 		p.add(&applyBytesTask{
 			client:  client,
@@ -119,7 +123,7 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 		if err != nil {
 			return err
 		}
-		if itemHeader.ApiVersion != RegistryV1 {
+		if itemHeader.ApiVersion != encoding.RegistryV1 {
 			continue
 		}
 		p.add(&applyBytesTask{
@@ -151,6 +155,13 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 		}
 		wait()
 	}
+	if p.filesRead == 0 {
+		return fmt.Errorf("no YAML files found")
+	}
+	if p.filesApplied == 0 {
+		return fmt.Errorf("no YAML files applied (%d found, none with 'apiVersion: %s')", p.filesRead, encoding.RegistryV1)
+	}
+	log.FromContext(ctx).Infof("%d YAML file(s) applied (%d found, %d with 'apiVersion: %s')", p.filesApplied, p.filesRead, p.filesApplied, encoding.RegistryV1)
 	return nil
 }
 
@@ -193,7 +204,7 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 	header, err := readHeader(task.bytes)
 	if err != nil {
 		return err
-	} else if header.ApiVersion != RegistryV1 {
+	} else if header.ApiVersion != encoding.RegistryV1 {
 		return nil
 	}
 
@@ -207,14 +218,14 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 	log.FromContext(ctx).Infof("Applying %s", task.resource())
 	switch header.Kind {
 	case "API":
-		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Version":
-		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Spec":
 		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Deployment":
-		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	default: // for everything else, try an artifact type
-		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.project)
+		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	}
 }

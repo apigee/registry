@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -46,13 +47,13 @@ func deleteProject(
 func TestControllerErrors(t *testing.T) {
 	tests := []struct {
 		desc              string
-		generatedResource *rpc.GeneratedResource
+		generatedResource *controller.GeneratedResource
 	}{
 		{
 			desc: "Non-existing reference in dependencies",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/lintstats-gnostic",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec", // Correct pattern should be: $resource.version
 					},
@@ -62,9 +63,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect reference keyword",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.apispec", // Correct pattern should be: $resource.spec
 					},
@@ -74,9 +75,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Nonexistent dependency resource",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/lintstats-gnostic",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.version/artifacts/lint-gnostic", // There is no version level lint-gnostic artifact in the registry
 					},
@@ -87,9 +88,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect reference in action",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lintstats-gnostic",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -99,9 +100,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect resource pattern",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/specs/-/artifacts/lintstats-gnostic", // Correct pattern should be: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.spec",
 					},
@@ -111,9 +112,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect matching",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/summary",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.api/versions/-/artifacts/complexity", // Correct pattern should be: $resource.version/artifacts/vocabulary
 					},
@@ -126,9 +127,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Incorrect action reference",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.version/-/artifacts/complexity",
 					},
@@ -139,9 +140,9 @@ func TestControllerErrors(t *testing.T) {
 		},
 		{
 			desc: "Missing reference",
-			generatedResource: &rpc.GeneratedResource{
+			generatedResource: &controller.GeneratedResource{
 				Pattern: "apis/-/artifacts/summary",
-				Dependencies: []*rpc.Dependency{
+				Dependencies: []*controller.Dependency{
 					{
 						Pattern: "$resource.api/versions/-/artifacts/complexity",
 					},
@@ -181,15 +182,15 @@ func TestControllerErrors(t *testing.T) {
 
 			seed := []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
 					MimeType: gzipOpenAPIv3,
 				},
 			}

@@ -20,9 +20,10 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/cmd/registry/types"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -30,7 +31,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", types.MimeTypeForKind("StyleGuide"))
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"))
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
@@ -84,9 +85,9 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 
-			guides := make([]*rpc.StyleGuide, 0)
+			guides := make([]*style.StyleGuide, 0)
 			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
-				guide := new(rpc.StyleGuide)
+				guide := new(style.StyleGuide)
 				if err := proto.Unmarshal(artifact.GetContents(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
 					return nil
@@ -111,7 +112,7 @@ func Command() *cobra.Command {
 
 // processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec, dryRun bool, jobs int) {
+func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *style.StyleGuide, specs []*rpc.ApiSpec, dryRun bool, jobs int) {
 	linterNameToMetadata, err := conformance.GenerateLinterMetadata(styleguide)
 	if err != nil {
 		log.Errorf(ctx, "Failed generating linter metadata, check styleguide definition, Error: %s", err)

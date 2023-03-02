@@ -21,7 +21,7 @@ package google.cloud.apigeeregistry.v1.scoring;
 option java_package = "com.google.cloud.apigeeregistry.v1.scoring";
 option java_multiple_files = true;
 option java_outer_classname = "ScoringSeverityProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/application/scoring;scoring";
 
 // Represents the severity levels to be associated with score values.
 // Severity levels indicates the level of concern for a particular score.

@@ -28,9 +28,9 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -261,7 +261,7 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 	request := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
 			Name:     task.specName(),
-			MimeType: types.ProtobufMimeType("+zip"),
+			MimeType: mime.ProtobufMimeType("+zip"),
 			Filename: task.fileName(),
 			Contents: task.contents,
 			Labels: map[string]string{

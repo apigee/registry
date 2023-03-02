@@ -19,8 +19,10 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/cmd/registry/types"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -54,26 +56,26 @@ func TestRequiredArtifacts(t *testing.T) {
 	})
 	ctx = context.WithValue(ctx, lint.ContextKeyRegistryClient, registryClient)
 
-	bad1 := &rpc.Problem{
+	bad1 := &check.Problem{
 		Message:    `artifact "projects/check-test/locations/global/artifacts/bad1" not found in registry.`,
 		Suggestion: `Initialize API Hub.`,
-		Severity:   rpc.Problem_ERROR,
+		Severity:   check.Problem_ERROR,
 	}
-	bad2 := &rpc.Problem{
+	bad2 := &check.Problem{
 		Message:    `artifact "projects/check-test/locations/global/artifacts/bad2" not found in registry.`,
 		Suggestion: `Initialize API Hub.`,
-		Severity:   rpc.Problem_ERROR,
+		Severity:   check.Problem_ERROR,
 	}
 
 	for _, tt := range []struct {
 		name     string
 		required []string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"good one", []string{"good1"}, nil},
 		{"good two", []string{"good1", "good2"}, nil},
-		{"bad one", []string{"bad1", "good2"}, []*rpc.Problem{bad1}},
-		{"bad two", []string{"bad1", "bad2"}, []*rpc.Problem{bad1, bad2}},
+		{"bad one", []string{"bad1", "good2"}, []*check.Problem{bad1}},
+		{"bad two", []string{"bad1", "bad2"}, []*check.Problem{bad1, bad2}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			oldIds := requiredIDs
@@ -84,7 +86,7 @@ func TestRequiredArtifacts(t *testing.T) {
 			}
 			if requiredArtifacts.OnlyIf(p) {
 				got := requiredArtifacts.ApplyToProject(ctx, p)
-				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}
@@ -97,8 +99,8 @@ func TestRequiredTaxonomies(t *testing.T) {
 	registryClient, _ := grpctest.SetupRegistry(ctx, t, "check-test", nil)
 	ctx = context.WithValue(ctx, lint.ContextKeyRegistryClient, registryClient)
 
-	tl, _ := proto.Marshal(&rpc.TaxonomyList{
-		Taxonomies: []*rpc.TaxonomyList_Taxonomy{
+	tl, _ := proto.Marshal(&apihub.TaxonomyList{
+		Taxonomies: []*apihub.TaxonomyList_Taxonomy{
 			{Id: "good1"},
 			{Id: "good2"},
 		},
@@ -107,7 +109,7 @@ func TestRequiredTaxonomies(t *testing.T) {
 		ArtifactId: "apihub-taxonomies",
 		Parent:     "projects/check-test/locations/global",
 		Artifact: &rpc.Artifact{
-			MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.apihub.TaxonomyList"),
+			MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.apihub.TaxonomyList"),
 			Contents: tl,
 		},
 	})
@@ -118,19 +120,19 @@ func TestRequiredTaxonomies(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		required []string
-		expected []*rpc.Problem
+		expected []*check.Problem
 	}{
 		{"good", []string{"good1"}, nil},
 		{"good2", []string{"good1", "good2"}, nil},
-		{"bad", []string{"bad1"}, []*rpc.Problem{{
+		{"bad", []string{"bad1"}, []*check.Problem{{
 			Message:    `TaxonomyList "projects/check-test/locations/global/artifacts/apihub-taxonomies" must include items: bad1.`,
 			Suggestion: `Initialize API Hub.`,
-			Severity:   rpc.Problem_ERROR,
+			Severity:   check.Problem_ERROR,
 		}}},
-		{"bad2", []string{"bad1", "bad2"}, []*rpc.Problem{{
+		{"bad2", []string{"bad1", "bad2"}, []*check.Problem{{
 			Message:    `TaxonomyList "projects/check-test/locations/global/artifacts/apihub-taxonomies" must include items: bad1, bad2.`,
 			Suggestion: `Initialize API Hub.`,
-			Severity:   rpc.Problem_ERROR,
+			Severity:   check.Problem_ERROR,
 		}}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -143,7 +145,7 @@ func TestRequiredTaxonomies(t *testing.T) {
 			}
 			if requiredArtifacts.OnlyIf(p) {
 				got := requiredArtifacts.ApplyToProject(ctx, p)
-				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+				if diff := cmp.Diff(got, tt.expected, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}
 			}

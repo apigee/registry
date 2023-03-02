@@ -23,7 +23,7 @@ import "google/api/field_behavior.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
 option java_multiple_files = true;
 option java_outer_classname = "ExtensionsProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/application/apihub;apihub";
 
 // An ApiSpecExtensionList contains a list of extensions applicable to specs
 // stored in the registry

@@ -23,7 +23,7 @@ import (
 
 	"github.com/apex/log"
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/style"
 	"gopkg.in/yaml.v3"
 )
 
@@ -41,8 +41,8 @@ type sampleOpenApiLinterRunner struct{}
 const descriptionLessThan1000CharsRuleId = "description-less-than-1000-chars"
 const descriptionContainsNoTagsRuleId = "description-contains-no-tags"
 
-func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
-	lintFiles := make([]*rpc.LintFile, 0)
+func (linter *sampleOpenApiLinterRunner) Run(req *style.LinterRequest) (*style.LinterResponse, error) {
+	lintFiles := make([]*style.LintFile, 0)
 
 	// Traverse the files in the directory
 	err := filepath.Walk(req.GetSpecDirectory(), func(path string, info os.FileInfo, err error) error {
@@ -62,7 +62,7 @@ func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.Linte
 		}
 
 		// Formulate the response.
-		lintFiles = append(lintFiles, &rpc.LintFile{
+		lintFiles = append(lintFiles, &style.LintFile{
 			FilePath: path,
 			Problems: problems,
 		})
@@ -74,15 +74,15 @@ func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.Linte
 		return nil, err
 	}
 
-	return &rpc.LinterResponse{
-		Lint: &rpc.Lint{
+	return &style.LinterResponse{
+		Lint: &style.Lint{
 			Name:  "registry-lint-openapi-sample",
 			Files: lintFiles,
 		},
 	}, nil
 }
 
-func lintFile(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
+func lintFile(specPath string, ruleIds []string) ([]*style.LintProblem, error) {
 	specFile, err := os.ReadFile(specPath)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func lintFile(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
 		log.Fatalf("Unmarshal node: %v", err)
 	}
 
-	problems := make([]*rpc.LintProblem, 0)
+	problems := make([]*style.LintProblem, 0)
 	for _, ruleId := range ruleIds {
 		lintProblems, err := lintWithRule(&parsedNode, ruleId)
 		if err != nil {
@@ -141,20 +141,20 @@ func getDescriptionsFromSpecHelper(node *yaml.Node, results *[]*DescriptionField
 	}
 }
 
-func enforceDescriptionLessThan1000Chars(descriptions *[]*DescriptionField) []*rpc.LintProblem {
-	problems := make([]*rpc.LintProblem, 0)
+func enforceDescriptionLessThan1000Chars(descriptions *[]*DescriptionField) []*style.LintProblem {
+	problems := make([]*style.LintProblem, 0)
 	for _, description := range *descriptions {
 		if len(description.Description) >= 1000 {
-			problems = append(problems, &rpc.LintProblem{
+			problems = append(problems, &style.LintProblem{
 				Message:    "Description field should be less than 1000 chars.",
 				RuleId:     descriptionLessThan1000CharsRuleId,
 				Suggestion: "Ensure that your description field is less than 1000 chars in length.",
-				Location: &rpc.LintLocation{
-					StartPosition: &rpc.LintPosition{
+				Location: &style.LintLocation{
+					StartPosition: &style.LintPosition{
 						LineNumber:   int32(description.StartLineNumber),
 						ColumnNumber: int32(description.StartColumnNumber),
 					},
-					EndPosition: &rpc.LintPosition{
+					EndPosition: &style.LintPosition{
 						LineNumber:   int32(description.EndLineNumber),
 						ColumnNumber: int32(description.EndColumnNumber),
 					},
@@ -165,24 +165,24 @@ func enforceDescriptionLessThan1000Chars(descriptions *[]*DescriptionField) []*r
 	return problems
 }
 
-func enforceDescriptionContainsNoTagsRuleId(descriptions *[]*DescriptionField) []*rpc.LintProblem {
-	problems := make([]*rpc.LintProblem, 0)
+func enforceDescriptionContainsNoTagsRuleId(descriptions *[]*DescriptionField) []*style.LintProblem {
+	problems := make([]*style.LintProblem, 0)
 	for _, description := range *descriptions {
 		r, err := regexp.Compile(".*<[^>]*>.*")
 		if err != nil {
 			continue
 		}
 		if r.MatchString(description.Description) {
-			problems = append(problems, &rpc.LintProblem{
+			problems = append(problems, &style.LintProblem{
 				Message:    "Description field should not contain any tags.",
 				RuleId:     descriptionContainsNoTagsRuleId,
 				Suggestion: "Ensure that your description field does not contain any tags (regex <[^>]*>)",
-				Location: &rpc.LintLocation{
-					StartPosition: &rpc.LintPosition{
+				Location: &style.LintLocation{
+					StartPosition: &style.LintPosition{
 						LineNumber:   int32(description.StartLineNumber),
 						ColumnNumber: int32(description.StartColumnNumber),
 					},
-					EndPosition: &rpc.LintPosition{
+					EndPosition: &style.LintPosition{
 						LineNumber:   int32(description.EndLineNumber),
 						ColumnNumber: int32(description.EndColumnNumber),
 					},
@@ -193,7 +193,7 @@ func enforceDescriptionContainsNoTagsRuleId(descriptions *[]*DescriptionField) [
 	return problems
 }
 
-func lintWithRule(node *yaml.Node, ruleId string) ([]*rpc.LintProblem, error) {
+func lintWithRule(node *yaml.Node, ruleId string) ([]*style.LintProblem, error) {
 	descriptions := getDescriptionsFromSpec(node)
 
 	if ruleId == descriptionLessThan1000CharsRuleId {

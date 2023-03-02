@@ -1531,7 +1531,7 @@ type RollbackApiSpecRequest struct {
 	// Required. The revision ID to roll back to.
 	// It must be a revision of the same spec.
 	//
-	//	Example: c7cfa2a8
+	//   Example: c7cfa2a8
 	RevisionId string `protobuf:"bytes,2,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
 }
 
@@ -1591,7 +1591,7 @@ type DeleteApiSpecRevisionRequest struct {
 	// with a revision ID explicitly included.
 	//
 	// Example:
-	// projects/sample/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
+	// projects/sample/locations/global/apis/petstore/versions/1.0.0/specs/openapi@c7cfa2a8
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
@@ -2253,7 +2253,7 @@ type RollbackApiDeploymentRequest struct {
 	// Required. The revision ID to roll back to.
 	// It must be a revision of the same deployment.
 	//
-	//	Example: c7cfa2a8
+	//   Example: c7cfa2a8
 	RevisionId string `protobuf:"bytes,2,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
 }
 

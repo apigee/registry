@@ -19,6 +19,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -37,7 +39,7 @@ func TestInternalMimeTypeContents(t *testing.T) {
 		name     string
 		mimeType string
 		bytes    []byte
-		problems []*rpc.Problem
+		problems []*check.Problem
 	}{
 		{
 			"empty contents",
@@ -49,7 +51,7 @@ func TestInternalMimeTypeContents(t *testing.T) {
 			"good contents",
 			"application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle",
 			marshalMessage(t,
-				&rpc.Lifecycle{
+				&apihub.Lifecycle{
 					Description: "Lifecycle",
 				},
 			),
@@ -59,40 +61,40 @@ func TestInternalMimeTypeContents(t *testing.T) {
 			"unknown type",
 			"application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.UnknownType",
 			marshalMessage(t,
-				&rpc.Lifecycle{
+				&apihub.Lifecycle{
 					Description: "Lifecycle",
 				},
 			),
-			[]*rpc.Problem{{
+			[]*check.Problem{{
 				Message:    `Error loading contents into proto type Lifecycle.`,
 				Suggestion: `Fix mime_type.`,
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			}},
 		},
 		{
 			"not a message",
 			"application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle",
 			[]byte("not a score"),
-			[]*rpc.Problem{{
+			[]*check.Problem{{
 				Message:    `Unknown internal mime_type: "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle".`,
 				Suggestion: `Fix mime_type or contents.`,
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			}},
 		},
 		{
 			"wrong mime type",
 			"application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.ReferenceList",
 			marshalMessage(t,
-				&rpc.Lifecycle{
+				&apihub.Lifecycle{
 					Description: "Lifecycle",
 				},
 			),
 			// TODO: Would like a Problem, but Unmarshal is too lenient and this verification is impossible?
 			nil,
-			// []*rpc.Problem{{
+			// []*check.Problem{{
 			// 	Message:    `Error loading contents into proto type Lifecycle.`,
 			// 	Suggestion: `Fix mime_type or contents.`,
-			// 	Severity:   rpc.Problem_ERROR,
+			// 	Severity:   check.Problem_ERROR,
 			// 	Location:   "Artifact::MimeType",
 			// }},
 		},
@@ -112,8 +114,8 @@ func TestInternalMimeTypeContents(t *testing.T) {
 			}
 
 			opts := []cmp.Option{
-				cmpopts.IgnoreFields(rpc.Problem{}, "Message", "Location"),
-				cmpopts.IgnoreUnexported(rpc.Problem{}),
+				cmpopts.IgnoreFields(check.Problem{}, "Message", "Location"),
+				cmpopts.IgnoreUnexported(check.Problem{}),
 			}
 			if internalMimeTypeContents.OnlyIf(artifact, "MimeType") {
 				result := internalMimeTypeContents.Apply(context.Background(), spec)

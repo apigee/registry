@@ -19,9 +19,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/types"
+	"github.com/apigee/registry/pkg/application/apihub"
+	"github.com/apigee/registry/pkg/application/controller"
+	"github.com/apigee/registry/pkg/application/scoring"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/encoding"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -105,9 +110,9 @@ func TestProjectPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -200,7 +205,7 @@ func TestApiPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiPatchBytes(ctx, registryClient, b, root)
+			err = applyApiPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -228,9 +233,9 @@ func TestApiPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -303,7 +308,7 @@ func TestVersionPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiVersionPatchBytes(ctx, registryClient, b, root)
+			err = applyApiVersionPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -331,9 +336,9 @@ func TestVersionPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -434,9 +439,9 @@ func TestSpecPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -512,7 +517,7 @@ func TestDeploymentPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiDeploymentPatchBytes(ctx, registryClient, b, root)
+			err = applyApiDeploymentPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -540,9 +545,9 @@ func TestDeploymentPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -572,6 +577,47 @@ func TestMessageArtifactPatches(t *testing.T) {
 		message    proto.Message
 	}{
 		{
+			artifactID: "fieldset",
+			parent:     "apis/a",
+			yamlFile:   "testdata/artifacts/fieldset.yaml",
+			message: &apihub.FieldSet{
+				Id:             "fieldset",
+				Kind:           "FieldSet",
+				DefinitionName: "artifacts/fieldset",
+				Values: map[string]string{
+					"creator":       "Wile E. Coyote",
+					"creator-email": "wiley@acme.com",
+					"hometown":      "Las Vegas, NV",
+					"website":       "[ACME](https://acme.com)",
+				},
+			},
+		},
+		{
+			artifactID: "fieldset",
+			yamlFile:   "testdata/artifacts/fieldset-definition.yaml",
+			message: &apihub.FieldSetDefinition{
+				Id:          "fieldset",
+				Kind:        "FieldSetDefinition",
+				DisplayName: "Interesting Information",
+				Description: "Additional topical information about this API.",
+				Fields: []*apihub.FieldDefinition{
+					{
+						Id:          "creator",
+						DisplayName: "Creator",
+					}, {
+						Id:          "creator-email",
+						DisplayName: "Creator Email",
+					}, {
+						Id:          "hometown",
+						DisplayName: "Hometown",
+					}, {
+						Id:          "website",
+						DisplayName: "Website",
+					},
+				},
+			},
+		},
+		{
 			artifactID: "complexity",
 			parent:     "apis/a/versions/v/specs/s",
 			yamlFile:   "testdata/artifacts/complexity.yaml",
@@ -588,31 +634,31 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "conformancereport",
 			yamlFile:   "testdata/artifacts/conformancereport.yaml",
-			message: &rpc.ConformanceReport{
+			message: &style.ConformanceReport{
 				Id:         "conformancereport",
 				Kind:       "ConformanceReport",
 				Styleguide: "projects/demo/locations/global/artifacts/styleguide",
-				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+				GuidelineReportGroups: []*style.GuidelineReportGroup{
 					{
-						State: rpc.Guideline_ACTIVE,
-						GuidelineReports: []*rpc.GuidelineReport{
+						State: style.Guideline_ACTIVE,
+						GuidelineReports: []*style.GuidelineReport{
 							{
 								GuidelineId: "sample-guideline",
-								RuleReportGroups: []*rpc.RuleReportGroup{
+								RuleReportGroups: []*style.RuleReportGroup{
 									{
-										Severity: rpc.Rule_ERROR,
-										RuleReports: []*rpc.RuleReport{
+										Severity: style.Rule_ERROR,
+										RuleReports: []*style.RuleReport{
 											{
 												RuleId:     "no-ref-siblings",
-												Spec:       "projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi.yaml",
+												Spec:       "projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi",
 												File:       "openapi.yaml",
 												Suggestion: "",
-												Location: &rpc.LintLocation{
-													StartPosition: &rpc.LintPosition{
+												Location: &style.LintLocation{
+													StartPosition: &style.LintPosition{
 														LineNumber:   10,
 														ColumnNumber: 5,
 													},
-													EndPosition: &rpc.LintPosition{
+													EndPosition: &style.LintPosition{
 														LineNumber:   10,
 														ColumnNumber: 25,
 													},
@@ -633,7 +679,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "display-settings",
 			yamlFile:   "testdata/artifacts/displaysettings.yaml",
-			message: &rpc.DisplaySettings{
+			message: &apihub.DisplaySettings{
 				Id:              "display-settings", // deprecated field
 				Kind:            "DisplaySettings",  // deprecated field
 				Description:     "Defines display settings",
@@ -645,12 +691,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "extensions",
 			yamlFile:   "testdata/artifacts/extensions.yaml",
-			message: &rpc.ApiSpecExtensionList{
+			message: &apihub.ApiSpecExtensionList{
 				Id:          "extensions",           // deprecated field
 				Kind:        "ApiSpecExtensionList", // deprecated field
 				DisplayName: "Sample Extensions",
 				Description: "Extensions connect external tools to registry applications",
-				Extensions: []*rpc.ApiSpecExtensionList_ApiSpecExtension{
+				Extensions: []*apihub.ApiSpecExtensionList_ApiSpecExtension{
 					{
 						Id:          "sample",
 						DisplayName: "Sample",
@@ -664,12 +710,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "lifecycle",
 			yamlFile:   "testdata/artifacts/lifecycle.yaml",
-			message: &rpc.Lifecycle{
+			message: &apihub.Lifecycle{
 				Id:          "lifecycle", // deprecated field
 				Kind:        "Lifecycle", // deprecated field
 				DisplayName: "Lifecycle",
 				Description: "A series of stages that an API typically moves through in its lifetime",
-				Stages: []*rpc.Lifecycle_Stage{
+				Stages: []*apihub.Lifecycle_Stage{
 					{
 						Id:           "concept",
 						DisplayName:  "Concept",
@@ -697,17 +743,17 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "manifest",
 			yamlFile:   "testdata/artifacts/manifest.yaml",
-			message: &rpc.Manifest{
+			message: &controller.Manifest{
 				Id:          "manifest", // deprecated field
 				Kind:        "Manifest", // deprecated field
 				DisplayName: "Sample Manifest",
 				Description: "A sample manifest",
-				GeneratedResources: []*rpc.GeneratedResource{
+				GeneratedResources: []*controller.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
 						Filter:  "invalid-filter",
 						Receipt: false,
-						Dependencies: []*rpc.Dependency{
+						Dependencies: []*controller.Dependency{
 							{
 								Pattern: "$resource.spec",
 								Filter:  "mime_type.contains('openapi')",
@@ -723,7 +769,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 			artifactID: "receipt",
 			parent:     "apis/a/versions/v/specs/s",
 			yamlFile:   "testdata/artifacts/receipt.yaml",
-			message: &rpc.Receipt{
+			message: &controller.Receipt{
 				Id:          "receipt", // deprecated field
 				Kind:        "Receipt", // deprecated field
 				DisplayName: "Sample Receipt",
@@ -736,12 +782,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 			artifactID: "references",
 			parent:     "apis/a",
 			yamlFile:   "testdata/artifacts/references.yaml",
-			message: &rpc.ReferenceList{
+			message: &apihub.ReferenceList{
 				Id:          "references",    // deprecated field
 				Kind:        "ReferenceList", // deprecated field
 				DisplayName: "Related References",
 				Description: "References related to this API",
-				References: []*rpc.ReferenceList_Reference{
+				References: []*apihub.ReferenceList_Reference{
 					{
 						Id:          "github",
 						DisplayName: "GitHub Repo",
@@ -762,7 +808,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "score",
 			yamlFile:   "testdata/artifacts/score.yaml",
-			message: &rpc.Score{
+			message: &scoring.Score{
 				Id:             "score",
 				Kind:           "Score",
 				DisplayName:    "Sample Score",
@@ -770,9 +816,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 				Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 				UriDisplayName: "Spectral rules",
 				DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
-				Severity:       rpc.Severity_ALERT,
-				Value: &rpc.Score_IntegerValue{
-					IntegerValue: &rpc.IntegerValue{
+				Severity:       scoring.Severity_ALERT,
+				Value: &scoring.Score_IntegerValue{
+					IntegerValue: &scoring.IntegerValue{
 						Value:    10,
 						MinValue: 0,
 						MaxValue: 100,
@@ -783,13 +829,13 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "scorecard",
 			yamlFile:   "testdata/artifacts/scorecard.yaml",
-			message: &rpc.ScoreCard{
+			message: &scoring.ScoreCard{
 				Id:             "scorecard",
 				Kind:           "ScoreCard",
 				DisplayName:    "Sample ScoreCard",
 				Description:    "Represents sample ScoreCard artifact",
 				DefinitionName: "projects/demo/locations/global/artifacts/sample-scorecard-definition",
-				Scores: []*rpc.Score{
+				Scores: []*scoring.Score{
 					{
 						Id:             "score1",
 						Kind:           "Score",
@@ -798,9 +844,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 						Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 						UriDisplayName: "Spectral rules",
 						DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_IntegerValue{
-							IntegerValue: &rpc.IntegerValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_IntegerValue{
+							IntegerValue: &scoring.IntegerValue{
 								Value:    10,
 								MinValue: 0,
 								MaxValue: 100,
@@ -815,9 +861,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 						Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 						UriDisplayName: "Spectral rules",
 						DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
-						Severity:       rpc.Severity_WARNING,
-						Value: &rpc.Score_IntegerValue{
-							IntegerValue: &rpc.IntegerValue{
+						Severity:       scoring.Severity_WARNING,
+						Value: &scoring.Score_IntegerValue{
+							IntegerValue: &scoring.IntegerValue{
 								Value:    20,
 								MinValue: 0,
 								MaxValue: 100,
@@ -830,12 +876,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "scorecarddefinition",
 			yamlFile:   "testdata/artifacts/scorecarddefinition.yaml",
-			message: &rpc.ScoreCardDefinition{
+			message: &scoring.ScoreCardDefinition{
 				Id:          "scorecarddefinition",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Sample ScoreCard definition",
 				Description: "Represents sample ScoreCard definition artifact",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 					Filter:  "mime_type.contains('openapi')",
 				},
@@ -848,47 +894,47 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "scoredefinition",
 			yamlFile:   "testdata/artifacts/scoredefinition.yaml",
-			message: &rpc.ScoreDefinition{
+			message: &scoring.ScoreDefinition{
 				Id:             "scoredefinition",
 				Kind:           "ScoreDefinition",
 				DisplayName:    "Sample Score definition",
 				Description:    "Represents sample Score definition artifact",
 				Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
 				UriDisplayName: "Spectral rules",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 					Filter:  "mime_type.contains('openapi')",
 				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
+				Formula: &scoring.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &scoring.ScoreFormula{
+						Artifact: &scoring.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-styleguide",
 						},
 						ScoreExpression: "sample expression",
 					},
 				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
+				Type: &scoring.ScoreDefinition_Integer{
+					Integer: &scoring.IntegerType{
 						MinValue: 0,
 						MaxValue: 100,
-						Thresholds: []*rpc.NumberThreshold{
+						Thresholds: []*scoring.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_ALERT,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 30,
 								},
 							},
 							{
-								Severity: rpc.Severity_WARNING,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_WARNING,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 31,
 									Max: 60,
 								},
 							},
 							{
-								Severity: rpc.Severity_OK,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Severity: scoring.Severity_OK,
+								Range: &scoring.NumberThreshold_NumberRange{
 									Min: 61,
 									Max: 100,
 								},
@@ -901,33 +947,33 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "styleguide",
 			yamlFile:   "testdata/artifacts/styleguide.yaml",
-			message: &rpc.StyleGuide{
+			message: &style.StyleGuide{
 				Id:          "styleguide", // deprecated field
 				Kind:        "StyleGuide", // deprecated field
 				DisplayName: "Sample Style Guide",
 				MimeTypes: []string{
 					"application/x.openapi+gzip;version=2",
 				},
-				Guidelines: []*rpc.Guideline{
+				Guidelines: []*style.Guideline{
 					{
 						Id:          "refproperties",
 						DisplayName: "Govern Ref Properties",
 						Description: "This guideline governs properties for ref fields on specs.",
-						Rules: []*rpc.Rule{
+						Rules: []*style.Rule{
 							{
 								Id:             "norefsiblings",
 								DisplayName:    "No Ref Siblings",
 								Description:    "An object exposing a $ref property cannot be further extended with additional properties.",
 								Linter:         "spectral",
 								LinterRulename: "no-$ref-siblings",
-								Severity:       rpc.Rule_ERROR,
+								Severity:       style.Rule_ERROR,
 								DocUri:         "https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings",
 							},
 						},
-						State: rpc.Guideline_ACTIVE,
+						State: style.Guideline_ACTIVE,
 					},
 				},
-				Linters: []*rpc.Linter{
+				Linters: []*style.Linter{
 					{
 						Name: "spectral",
 						Uri:  "https://github.com/stoplightio/spectral",
@@ -938,12 +984,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		{
 			artifactID: "taxonomies",
 			yamlFile:   "testdata/artifacts/taxonomies.yaml",
-			message: &rpc.TaxonomyList{
+			message: &apihub.TaxonomyList{
 				Id:          "taxonomies",   // deprecated field
 				Kind:        "TaxonomyList", // deprecated field
 				DisplayName: "TaxonomyList",
 				Description: "A list of taxonomies that can be used to classify resources in the registry",
-				Taxonomies: []*rpc.TaxonomyList_Taxonomy{
+				Taxonomies: []*apihub.TaxonomyList_Taxonomy{
 					{
 						Id:              "target-users",
 						DisplayName:     "Target users",
@@ -953,7 +999,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 						SearchExcluded:  false,
 						SystemManaged:   true,
 						DisplayOrder:    0,
-						Elements: []*rpc.TaxonomyList_Taxonomy_Element{
+						Elements: []*apihub.TaxonomyList_Taxonomy_Element{
 							{
 								Id:          "team",
 								DisplayName: "Team",
@@ -985,7 +1031,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 						SearchExcluded:  false,
 						SystemManaged:   true,
 						DisplayOrder:    1,
-						Elements: []*rpc.TaxonomyList_Taxonomy_Element{
+						Elements: []*apihub.TaxonomyList_Taxonomy_Element{
 							{
 								Id:          "openapi",
 								DisplayName: "OpenAPI",
@@ -1056,7 +1102,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -1090,9 +1136,9 @@ func TestMessageArtifactPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.artifactID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -1154,7 +1200,7 @@ func TestYamlArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
@@ -1183,9 +1229,9 @@ func TestYamlArtifactPatches(t *testing.T) {
 					if model.Header.Metadata.Name != test.artifactID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
 					}
-					out, err := Encode(model)
+					out, err := encoding.EncodeYAML(model)
 					if err != nil {
-						t.Errorf("Encode(%+v) returned an error: %s", model, err)
+						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out))
@@ -1209,7 +1255,8 @@ func TestInvalidArtifactPatches(t *testing.T) {
 		},
 		{
 			artifactID: "lifecycle-invalid-parent",
-		}, {
+		},
+		{
 			artifactID: "references-no-data",
 		},
 		{
@@ -1247,7 +1294,7 @@ func TestInvalidArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 			if err == nil {
 				t.Fatalf("expected error, received none")
 			}
@@ -1256,7 +1303,7 @@ func TestInvalidArtifactPatches(t *testing.T) {
 }
 
 func getArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
-	message, err := types.MessageForMimeType(artifact.GetMimeType())
+	message, err := mime.MessageForMimeType(artifact.GetMimeType())
 	if err != nil {
 		return nil, err
 	}
@@ -1268,4 +1315,33 @@ func unmarshal(value []byte, message proto.Message) (proto.Message, error) {
 		return nil, err
 	}
 	return message, nil
+}
+
+func TestEmptyArtifactPatches(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "empty directory",
+			path: "testdata/empty",
+		},
+		{
+			name: "unrecognized yaml",
+			path: "testdata/sample-hierarchical/apis/registry/versions/v1/specs/openapi/openapi.yaml",
+		},
+	}
+	ctx := context.Background()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
+		&rpc.Project{
+			Name: "projects/patch-empty-test",
+		},
+	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := Apply(ctx, registryClient, nil, test.path, "projects/patch-empty-test/locations/global", true, 10); err == nil {
+				t.Errorf("Apply() succeeded and should have failed")
+			}
+		})
+	}
 }

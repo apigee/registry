@@ -19,9 +19,10 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/cmd/registry/types"
+	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -118,8 +119,8 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		return err
 	}
 	var relation string
-	var lint *rpc.Lint
-	if types.IsOpenAPIv2(spec.GetMimeType()) || types.IsOpenAPIv3(spec.GetMimeType()) {
+	var lint *style.Lint
+	if mime.IsOpenAPIv2(spec.GetMimeType()) || mime.IsOpenAPIv3(spec.GetMimeType()) {
 		// the default openapi linter is gnostic
 		if task.linter == "" {
 			task.linter = "gnostic"
@@ -130,9 +131,9 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
-	} else if types.IsDiscovery(spec.GetMimeType()) {
+	} else if mime.IsDiscovery(spec.GetMimeType()) {
 		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)
-	} else if types.IsProto(spec.GetMimeType()) && types.IsZipArchive(spec.GetMimeType()) {
+	} else if mime.IsProto(spec.GetMimeType()) && mime.IsZipArchive(spec.GetMimeType()) {
 		// the default proto linter is the aip linter
 		if task.linter == "" {
 			task.linter = "aip"
@@ -156,7 +157,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	messageData, _ := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
+		MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
 	return visitor.SetArtifact(ctx, task.client, artifact)

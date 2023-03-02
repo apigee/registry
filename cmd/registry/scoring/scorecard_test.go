@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -32,7 +33,7 @@ func TestCalculateScoreCard(t *testing.T) {
 	tests := []struct {
 		desc          string
 		seed          []seeder.RegistryResource
-		wantScoreCard *rpc.ScoreCard
+		wantScoreCard *scoring.ScoreCard
 	}{
 		{
 			desc: "nonexistent ScoreCard artifact",
@@ -41,12 +42,12 @@ func TestCalculateScoreCard(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-card-test/locations/global/artifacts/quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCardDefinition",
-					Contents: protoMarshal(&rpc.ScoreCardDefinition{
+					Contents: protoMarshal(&scoring.ScoreCardDefinition{
 						Id:          "quality",
 						Kind:        "ScoreCardDefinition",
 						DisplayName: "Quality",
 						Description: "Quality ScoreCard",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
 						ScorePatterns: []string{
@@ -57,15 +58,15 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -73,35 +74,35 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
 					}),
 				},
 			},
-			wantScoreCard: &rpc.ScoreCard{
+			wantScoreCard: &scoring.ScoreCard{
 				Id:             "scorecard-quality",
 				Kind:           "ScoreCard",
 				DisplayName:    "Quality",
 				Description:    "Quality ScoreCard",
 				DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-				Scores: []*rpc.Score{
+				Scores: []*scoring.Score{
 					{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -110,9 +111,9 @@ func TestCalculateScoreCard(t *testing.T) {
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -125,15 +126,15 @@ func TestCalculateScoreCard(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -141,15 +142,15 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -157,22 +158,22 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -181,9 +182,9 @@ func TestCalculateScoreCard(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -195,12 +196,12 @@ func TestCalculateScoreCard(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-card-test/locations/global/artifacts/quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCardDefinition",
-					Contents: protoMarshal(&rpc.ScoreCardDefinition{
+					Contents: protoMarshal(&scoring.ScoreCardDefinition{
 						Id:          "quality",
 						Kind:        "ScoreCardDefinition",
 						DisplayName: "Quality",
 						Description: "Quality ScoreCard",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
 						ScorePatterns: []string{
@@ -210,20 +211,20 @@ func TestCalculateScoreCard(t *testing.T) {
 					}),
 				},
 			},
-			wantScoreCard: &rpc.ScoreCard{
+			wantScoreCard: &scoring.ScoreCard{
 				Id:             "scorecard-quality",
 				Kind:           "ScoreCard",
 				DisplayName:    "Quality",
 				Description:    "Quality ScoreCard",
 				DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-				Scores: []*rpc.Score{
+				Scores: []*scoring.Score{
 					{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -232,9 +233,9 @@ func TestCalculateScoreCard(t *testing.T) {
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -249,12 +250,12 @@ func TestCalculateScoreCard(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-card-test/locations/global/artifacts/quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCardDefinition",
-					Contents: protoMarshal(&rpc.ScoreCardDefinition{
+					Contents: protoMarshal(&scoring.ScoreCardDefinition{
 						Id:          "quality",
 						Kind:        "ScoreCardDefinition",
 						DisplayName: "Quality",
 						Description: "Quality ScoreCard",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
 						ScorePatterns: []string{
@@ -265,22 +266,22 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -289,9 +290,9 @@ func TestCalculateScoreCard(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -301,15 +302,15 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -317,35 +318,35 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
 					}),
 				},
 			},
-			wantScoreCard: &rpc.ScoreCard{
+			wantScoreCard: &scoring.ScoreCard{
 				Id:             "scorecard-quality",
 				Kind:           "ScoreCard",
 				DisplayName:    "Quality",
 				Description:    "Quality ScoreCard",
 				DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-				Scores: []*rpc.Score{
+				Scores: []*scoring.Score{
 					{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -354,9 +355,9 @@ func TestCalculateScoreCard(t *testing.T) {
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -369,22 +370,22 @@ func TestCalculateScoreCard(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -393,9 +394,9 @@ func TestCalculateScoreCard(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -405,15 +406,15 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -421,15 +422,15 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -439,12 +440,12 @@ func TestCalculateScoreCard(t *testing.T) {
 				&rpc.Artifact{
 					Name:     "projects/score-card-test/locations/global/artifacts/quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCardDefinition",
-					Contents: protoMarshal(&rpc.ScoreCardDefinition{
+					Contents: protoMarshal(&scoring.ScoreCardDefinition{
 						Id:          "quality",
 						Kind:        "ScoreCardDefinition",
 						DisplayName: "Quality",
 						Description: "Quality ScoreCard",
-						TargetResource: &rpc.ResourcePattern{
+						TargetResource: &scoring.ResourcePattern{
 							Pattern: "apis/-/versions/-/specs/-",
 						},
 						ScorePatterns: []string{
@@ -454,20 +455,20 @@ func TestCalculateScoreCard(t *testing.T) {
 					}),
 				},
 			},
-			wantScoreCard: &rpc.ScoreCard{
+			wantScoreCard: &scoring.ScoreCard{
 				Id:             "scorecard-quality",
 				Kind:           "ScoreCard",
 				DisplayName:    "Quality",
 				Description:    "Quality ScoreCard",
 				DefinitionName: "projects/score-card-test/locations/global/artifacts/quality",
-				Scores: []*rpc.Score{
+				Scores: []*scoring.Score{
 					{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -476,9 +477,9 @@ func TestCalculateScoreCard(t *testing.T) {
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-card-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -517,7 +518,7 @@ func TestCalculateScoreCard(t *testing.T) {
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			}
 
@@ -537,12 +538,12 @@ func TestCalculateScoreCard(t *testing.T) {
 			//fetch score artifact and check the value
 			scoreCardArtifact, err := getArtifact(
 				ctx, artifactClient,
-				"projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", true)
+				"projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality", true)
 			if err != nil {
 				t.Errorf("failed to get the result scoreCardArtifact from registry")
 			}
 
-			gotScoreCard := &rpc.ScoreCard{}
+			gotScoreCard := &scoring.ScoreCard{}
 			err = proto.Unmarshal(scoreCardArtifact.GetContents(), gotScoreCard)
 			if err != nil {
 				t.Errorf("failed unmarshalling ScoreCard artifact from registry: %s", err)
@@ -572,15 +573,15 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -588,15 +589,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -604,22 +605,22 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -628,9 +629,9 @@ func TestProcessScorePatterns(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -641,25 +642,25 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
 			wantResult: scoreCardResult{
-				scoreCard: &rpc.ScoreCard{
+				scoreCard: &scoring.ScoreCard{
 					Id:             "scorecard-quality",
 					Kind:           "ScoreCard",
 					DisplayName:    "Quality",
 					Description:    "Quality ScoreCard",
 					DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-					Scores: []*rpc.Score{
+					Scores: []*scoring.Score{
 						{
 							Id:             "score-lint-error",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-							Severity:       rpc.Severity_ALERT,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_ALERT,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 60,
 								},
 							},
@@ -668,9 +669,9 @@ func TestProcessScorePatterns(t *testing.T) {
 							Id:             "score-lang-reuse",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-							Severity:       rpc.Severity_OK,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_OK,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 70,
 								},
 							},
@@ -686,22 +687,22 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -710,9 +711,9 @@ func TestProcessScorePatterns(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -722,15 +723,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -738,15 +739,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -755,25 +756,25 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: true,
 			wantResult: scoreCardResult{
-				scoreCard: &rpc.ScoreCard{
+				scoreCard: &scoring.ScoreCard{
 					Id:             "scorecard-quality",
 					Kind:           "ScoreCard",
 					DisplayName:    "Quality",
 					Description:    "Quality ScoreCard",
 					DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-					Scores: []*rpc.Score{
+					Scores: []*scoring.Score{
 						{
 							Id:             "score-lint-error",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-							Severity:       rpc.Severity_ALERT,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_ALERT,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 60,
 								},
 							},
@@ -782,9 +783,9 @@ func TestProcessScorePatterns(t *testing.T) {
 							Id:             "score-lang-reuse",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-							Severity:       rpc.Severity_OK,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_OK,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 70,
 								},
 							},
@@ -800,22 +801,22 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -824,9 +825,9 @@ func TestProcessScorePatterns(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -836,15 +837,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -852,15 +853,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -869,25 +870,25 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
 			wantResult: scoreCardResult{
-				scoreCard: &rpc.ScoreCard{
+				scoreCard: &scoring.ScoreCard{
 					Id:             "scorecard-quality",
 					Kind:           "ScoreCard",
 					DisplayName:    "Quality",
 					Description:    "Quality ScoreCard",
 					DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-					Scores: []*rpc.Score{
+					Scores: []*scoring.Score{
 						{
 							Id:             "score-lint-error",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-							Severity:       rpc.Severity_ALERT,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_ALERT,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 60,
 								},
 							},
@@ -896,9 +897,9 @@ func TestProcessScorePatterns(t *testing.T) {
 							Id:             "score-lang-reuse",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-							Severity:       rpc.Severity_OK,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_OK,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 70,
 								},
 							},
@@ -914,15 +915,15 @@ func TestProcessScorePatterns(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -930,22 +931,22 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// ScoreCard artifact
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
+					Contents: protoMarshal(&scoring.ScoreCard{
 						Id:             "scorecard-quality",
 						Kind:           "ScoreCard",
 						DisplayName:    "Quality",
 						Description:    "Quality ScoreCard",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
+						Scores: []*scoring.Score{
 							{
 								Id:             "score-lint-error",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_ALERT,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 50,
 									},
 								},
@@ -954,9 +955,9 @@ func TestProcessScorePatterns(t *testing.T) {
 								Id:             "score-lang-reuse",
 								Kind:           "Score",
 								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
+								Severity:       scoring.Severity_OK,
+								Value: &scoring.Score_PercentValue{
+									PercentValue: &scoring.PercentValue{
 										Value: 60,
 									},
 								},
@@ -966,15 +967,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 				// Score lang-reuse
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lang-reuse",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lang-reuse",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_OK,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 70,
 							},
 						},
@@ -983,25 +984,25 @@ func TestProcessScorePatterns(t *testing.T) {
 			},
 			resource: patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			},
 			takeAction: false,
 			wantResult: scoreCardResult{
-				scoreCard: &rpc.ScoreCard{
+				scoreCard: &scoring.ScoreCard{
 					Id:             "scorecard-quality",
 					Kind:           "ScoreCard",
 					DisplayName:    "Quality",
 					Description:    "Quality ScoreCard",
 					DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-					Scores: []*rpc.Score{
+					Scores: []*scoring.Score{
 						{
 							Id:             "score-lint-error",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-							Severity:       rpc.Severity_ALERT,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_ALERT,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 60,
 								},
 							},
@@ -1010,9 +1011,9 @@ func TestProcessScorePatterns(t *testing.T) {
 							Id:             "score-lang-reuse",
 							Kind:           "Score",
 							DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-							Severity:       rpc.Severity_OK,
-							Value: &rpc.Score_PercentValue{
-								PercentValue: &rpc.PercentValue{
+							Severity:       scoring.Severity_OK,
+							Value: &scoring.Score_PercentValue{
+								PercentValue: &scoring.PercentValue{
 									Value: 70,
 								},
 							},
@@ -1052,12 +1053,12 @@ func TestProcessScorePatterns(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
-			definition := &rpc.ScoreCardDefinition{
+			definition := &scoring.ScoreCardDefinition{
 				Id:          "quality",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Quality",
 				Description: "Quality ScoreCard",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1069,7 +1070,7 @@ func TestProcessScorePatterns(t *testing.T) {
 			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
 
 			//fetch the ScoreCard artifact
-			scoreCardArtifact, err := getArtifact(ctx, artifactClient, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", false)
+			scoreCardArtifact, err := getArtifact(ctx, artifactClient, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/scorecard-quality", false)
 			if err != nil {
 				t.Errorf("failed to fetch the scoreCardArtifact from setup: %s", err)
 			}
@@ -1094,18 +1095,18 @@ func TestProcessScorePatternsError(t *testing.T) {
 		desc       string
 		seed       []seeder.RegistryResource
 		takeAction bool
-		definition *rpc.ScoreCardDefinition
+		definition *scoring.ScoreCardDefinition
 	}{
 		{
 			desc:       "Invalid reference pattern in ScoreCardDefinition",
 			seed:       []seeder.RegistryResource{},
 			takeAction: true,
-			definition: &rpc.ScoreCardDefinition{
+			definition: &scoring.ScoreCardDefinition{
 				Id:          "quality",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Quality",
 				Description: "Quality ScoreCard",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1119,15 +1120,15 @@ func TestProcessScorePatternsError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -1135,12 +1136,12 @@ func TestProcessScorePatternsError(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			definition: &rpc.ScoreCardDefinition{
+			definition: &scoring.ScoreCardDefinition{
 				Id:          "quality",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Quality",
 				Description: "Quality ScoreCard",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1154,15 +1155,15 @@ func TestProcessScorePatternsError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// Score lint-error
 				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/score-lint-error",
 					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
+					Contents: protoMarshal(&scoring.Score{
 						Id:             "score-lint-error",
 						Kind:           "Score",
 						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
+						Severity:       scoring.Severity_ALERT,
+						Value: &scoring.Score_PercentValue{
+							PercentValue: &scoring.PercentValue{
 								Value: 60,
 							},
 						},
@@ -1170,12 +1171,12 @@ func TestProcessScorePatternsError(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			definition: &rpc.ScoreCardDefinition{
+			definition: &scoring.ScoreCardDefinition{
 				Id:          "quality",
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "Quality",
 				Description: "Quality ScoreCard",
-				TargetResource: &rpc.ResourcePattern{
+				TargetResource: &scoring.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
@@ -1215,7 +1216,7 @@ func TestProcessScorePatternsError(t *testing.T) {
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
-					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
 				},
 			}
 

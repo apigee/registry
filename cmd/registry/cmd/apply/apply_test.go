@@ -230,7 +230,7 @@ func TestApply_Stdin(t *testing.T) {
 			cmd.SetArgs(test.args)
 			cmd.SetIn(r)
 			if err := cmd.Execute(); err != nil {
-				t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
+				t.Fatalf("Execute() with args %+v returned error: %s", test.args, err)
 			}
 		})
 	}

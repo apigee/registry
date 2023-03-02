@@ -19,6 +19,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/application/check"
+	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -36,7 +38,7 @@ func TestMimeTypeContents(t *testing.T) {
 		name     string
 		mimeType string
 		contents []byte
-		problems []*rpc.Problem
+		problems []*check.Problem
 	}{
 		{
 			"empty content",
@@ -60,29 +62,29 @@ func TestMimeTypeContents(t *testing.T) {
 			"wrong type",
 			"text/html",
 			[]byte("string"),
-			[]*rpc.Problem{{
+			[]*check.Problem{{
 				Message:    `Unexpected mime_type "text/html" for contents.`,
 				Suggestion: `Detected mime_type: "text/plain; charset=utf-8".`,
-				Severity:   rpc.Problem_WARNING,
+				Severity:   check.Problem_WARNING,
 			}},
 		},
 		{
 			"empty type",
 			"",
 			[]byte("string"),
-			[]*rpc.Problem{{
+			[]*check.Problem{{
 				Message:    `Empty mime_type.`,
 				Suggestion: `Detected mime_type: "text/plain; charset=utf-8".`,
-				Severity:   rpc.Problem_ERROR,
+				Severity:   check.Problem_ERROR,
 			}},
 		},
 		{
 			"bad type",
 			"bad/",
 			[]byte("string"),
-			[]*rpc.Problem{{
+			[]*check.Problem{{
 				Message:  `Unable to parse mime_type "bad/": mime: expected token after slash.`,
-				Severity: rpc.Problem_ERROR,
+				Severity: check.Problem_ERROR,
 			}},
 		},
 		{
@@ -115,7 +117,7 @@ func TestMimeTypeContents(t *testing.T) {
 					for i := range test.problems {
 						test.problems[i].Location = resource.GetName() + "::MimeType"
 					}
-					if diff := cmp.Diff(test.problems, got, cmpopts.IgnoreUnexported(rpc.Problem{})); diff != "" {
+					if diff := cmp.Diff(test.problems, got, cmpopts.IgnoreUnexported(check.Problem{})); diff != "" {
 						t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 					}
 				})
@@ -125,10 +127,10 @@ func TestMimeTypeContents(t *testing.T) {
 }
 
 func createScore() []byte {
-	s := &rpc.Score{
+	s := &scoring.Score{
 		Id:    "score",
 		Kind:  "Score",
-		Value: &rpc.Score_IntegerValue{},
+		Value: &scoring.Score_IntegerValue{},
 	}
 	b, _ := proto.Marshal(s)
 	return b

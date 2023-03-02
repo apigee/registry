@@ -178,8 +178,7 @@ func (x *MigrateDatabaseResponse) GetMessage() string {
 
 // Request message for ListProjects.
 // (-- api-linter: core::0132::request-parent-required=disabled
-//
-//	aip.dev/not-precedent: the parent of Project is implicit. --)
+//     aip.dev/not-precedent: the parent of Project is implicit. --)
 type ListProjectsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -375,8 +374,7 @@ func (x *GetProjectRequest) GetName() string {
 
 // Request message for CreateProject.
 // (-- api-linter: core::0133::request-parent-required=disabled
-//
-//	aip.dev/not-precedent: the parent of Project is implicit. --)
+//     aip.dev/not-precedent: the parent of Project is implicit. --)
 type CreateProjectRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

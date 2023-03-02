@@ -30,7 +30,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/check"
 )
 
 const ruleNum = 112
@@ -52,18 +52,18 @@ var labels = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*rpc.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		labels := value.(map[string]string)
 		if len(labels) == 0 {
 			return nil
 		}
-		var probs []*rpc.Problem
+		var probs []*check.Problem
 		for k, v := range labels {
 			probs = append(probs, checkLabel(k, v)...)
 		}
 		if len(labels) > 64 {
-			probs = append(probs, &rpc.Problem{
-				Severity:   rpc.Problem_ERROR,
+			probs = append(probs, &check.Problem{
+				Severity:   check.Problem_ERROR,
 				Message:    `Maximum number of labels is 64.`,
 				Suggestion: `Delete some entries.`,
 			})
@@ -73,38 +73,38 @@ var labels = &lint.FieldRule{
 	},
 }
 
-func checkLabel(k string, v string) []*rpc.Problem {
-	var probs []*rpc.Problem
+func checkLabel(k string, v string) []*check.Problem {
+	var probs []*check.Problem
 	if r, _ := utf8.DecodeRuneInString(k); r == utf8.RuneError || !unicode.In(r, unicode.Ll, unicode.Lo) {
-		probs = append(probs, &rpc.Problem{
-			Severity:   rpc.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q has illegal first character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
 	} else if ok, r := validLabelRunes(k); !ok {
-		probs = append(probs, &rpc.Problem{
-			Severity:   rpc.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q contains illegal character %q.`, k, r),
 			Suggestion: `Fix key.`,
 		})
 	}
 	if count := utf8.RuneCountInString(k); count > 64 {
-		probs = append(probs, &rpc.Problem{
-			Severity:   rpc.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, k),
 			Suggestion: `Fix key.`,
 		})
 	}
 	if ok, r := validLabelRunes(v); !ok {
-		probs = append(probs, &rpc.Problem{
-			Severity:   rpc.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Value for key %q contains illegal character %q.`, k, r),
 			Suggestion: `Fix value.`,
 		})
 	}
 	if count := utf8.RuneCountInString(v); count > 64 {
-		probs = append(probs, &rpc.Problem{
-			Severity:   rpc.Problem_ERROR,
+		probs = append(probs, &check.Problem{
+			Severity:   check.Problem_ERROR,
 			Message:    fmt.Sprintf(`Value for key %q exceeds max length of 64 characters.`, k),
 			Suggestion: `Fix value.`,
 		})

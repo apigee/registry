@@ -146,7 +146,7 @@ func GetReferenceEntityValue(resourcePattern string, referred ResourceName) (str
 	// Reads the sourcePattern and returns the entity value for the $resource reference
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
-	// resource: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
+	// resource: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi"
 	// returns "projects/demo/locations/global/apis/petstore"
 
 	_, entityType, err := GetReferenceEntityType(resourcePattern)
@@ -189,12 +189,12 @@ func GetReferenceEntityValue(resourcePattern string, referred ResourceName) (str
 func FullResourceNameFromParent(resourcePattern string, parent string) (ResourceName, error) {
 	// Derives the resource name from the provided resourcePattern and it's parent.
 	// Example:
-	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml
+	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/openapi
 	//    parent: projects/demo/locations/global/apis/petstore/versions/1.0.0
-	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
+	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi
 	// 2) resourcePattern: projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/custom-artifact
-	//    parent: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
-	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
+	//    parent: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi
+	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/custom-artifact
 
 	parsedResourcePattern, err := ParseResourcePattern(resourcePattern)
 	if err != nil {

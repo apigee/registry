@@ -26,7 +26,9 @@ import (
 )
 
 // This is equivalent to running
-//  base64 --decode | gunzip
+//
+//	base64 --decode | gunzip
+//
 // to decode specs returned by the `registry rpc` subcommands, with an additional effort to
 // handle the hex-encoded inputs produced by registry-encode-spec.
 func main() {

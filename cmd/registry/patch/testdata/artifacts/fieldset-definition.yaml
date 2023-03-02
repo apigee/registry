@@ -1,0 +1,28 @@
+apiVersion: apigeeregistry/v1
+kind: FieldSetDefinition
+metadata:
+  name: fieldset
+data:
+  displayName: Interesting Information
+  description: Additional topical information about this API.
+  fields:
+    - id: creator
+      displayName: Creator
+      description: ""
+      format: ""
+      allowedValues: []
+    - id: creator-email
+      displayName: Creator Email
+      description: ""
+      format: ""
+      allowedValues: []
+    - id: hometown
+      displayName: Hometown
+      description: ""
+      format: ""
+      allowedValues: []
+    - id: website
+      displayName: Website
+      description: ""
+      format: ""
+      allowedValues: []

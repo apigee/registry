@@ -23,61 +23,18 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/models"
+	"github.com/apigee/registry/pkg/encoding"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
-// styleForYAML sets the style field on a tree of yaml.Nodes for YAML export.
-func styleForYAML(node *yaml.Node) {
-	node.Style = 0
-	for _, n := range node.Content {
-		styleForYAML(n)
-	}
-}
-
-// styleForYAML sets the style field on a tree of yaml.Nodes for JSON export.
-func styleForJSON(node *yaml.Node) {
-	switch node.Kind {
-	case yaml.DocumentNode, yaml.SequenceNode, yaml.MappingNode:
-		node.Style = yaml.FlowStyle
-	case yaml.ScalarNode:
-		switch node.Tag {
-		case "!!str":
-			node.Style = yaml.DoubleQuotedStyle
-		default:
-			node.Style = 0
-		}
-	case yaml.AliasNode:
-	default:
-	}
-	for _, n := range node.Content {
-		styleForJSON(n)
-	}
-}
-
-func removeIdAndKind(node *yaml.Node) *yaml.Node {
-	if node.Kind == yaml.MappingNode {
-		content := make([]*yaml.Node, 0)
-		for i := 0; i < len(node.Content); i += 2 {
-			k := node.Content[i]
-			if k.Value != "id" && k.Value != "kind" {
-				content = append(content, node.Content[i])
-				content = append(content, node.Content[i+1])
-			}
-		}
-		node.Content = content
-	}
-	return node
-}
-
 // NewArtifact allows an artifact to be individually exported as a YAML file.
-func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, error) {
+func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*encoding.Artifact, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -102,7 +59,7 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 		// The top-level node is a "document" node. We need to marshal the node below it.
 		node = doc.Content[0]
 	} else {
-		m, err := types.MessageForMimeType(message.MimeType)
+		m, err := mime.MessageForMimeType(message.MimeType)
 		if err != nil {
 			return nil, err
 		}
@@ -110,36 +67,16 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 		if err = proto.Unmarshal(message.Contents, m); err != nil {
 			return nil, err
 		}
-		// Marshal the artifact content as JSON using the protobuf marshaller.
-		var s []byte
-		s, err = protojson.MarshalOptions{
-			UseEnumNumbers:  false,
-			EmitUnpopulated: true,
-			Indent:          "  ",
-			UseProtoNames:   false,
-		}.Marshal(m)
-		if err != nil {
+		if node, err = encoding.NodeForMessage(m); err != nil {
 			return nil, err
 		}
-		// Unmarshal the JSON with yaml.v3 so that we can re-marshal it as YAML.
-		var doc yaml.Node
-		err = yaml.Unmarshal([]byte(s), &doc)
-		if err != nil {
-			return nil, err
-		}
-		// The top-level node is a "document" node. We need to marshal the node below it.
-		node = doc.Content[0]
-		// Restyle the YAML representation so that it will be serialized with YAML defaults.
-		styleForYAML(node)
-		// We exclude the id and kind fields from YAML serializations.
-		node = removeIdAndKind(node)
 	}
 	// Wrap the artifact for YAML export.
-	return &models.Artifact{
-		Header: models.Header{
-			ApiVersion: RegistryV1,
-			Kind:       types.KindForMimeType(message.MimeType),
-			Metadata: models.Metadata{
+	return &encoding.Artifact{
+		Header: encoding.Header{
+			ApiVersion: encoding.RegistryV1,
+			Kind:       mime.KindForMimeType(message.MimeType),
+			Metadata: encoding.Metadata{
 				Name:        artifactName.ArtifactID(),
 				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
 				Labels:      message.Labels,
@@ -150,25 +87,25 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 	}, nil
 }
 
-func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string) error {
-	var artifact models.Artifact
+func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, project string, filename string) error {
+	var artifact encoding.Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
 	}
-	return applyArtifactPatch(ctx, client, &artifact, project)
+	return applyArtifactPatch(ctx, client, &artifact, project, filename)
 }
 
-func artifactName(parent string, metadata models.Metadata) (names.Artifact, error) {
+func artifactName(parent string, metadata encoding.Metadata) (names.Artifact, error) {
 	if metadata.Parent != "" {
 		parent = parent + "/" + metadata.Parent
 	}
 	return names.ParseArtifact(parent + "/artifacts/" + metadata.Name)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *encoding.Artifact, parent string, filename string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
-	styleForJSON(&content.Data)
+	encoding.StyleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.
 	j, err := yaml.Marshal(content.Data)
 	if err != nil {
@@ -182,7 +119,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
-	m, err = types.MessageForKind(content.Kind)
+	m, err = mime.MessageForKind(content.Kind)
 	if err == nil {
 		err = protojson.Unmarshal(jWithIdAndKind, m)
 		if err != nil {
@@ -201,7 +138,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 		}
 	} else {
 		// If there was no struct defined for the type, marshal it struct as YAML
-		styleForYAML(&content.Data)
+		encoding.StyleForYAML(&content.Data)
 		bytes, err = yaml.Marshal(content.Data)
 		if err != nil {
 			return err
@@ -213,7 +150,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	}
 	artifact := &rpc.Artifact{
 		Name:        name.String(),
-		MimeType:    types.MimeTypeForKind(content.Kind),
+		MimeType:    mime.MimeTypeForKind(content.Kind),
 		Contents:    bytes,
 		Labels:      content.Metadata.Labels,
 		Annotations: content.Metadata.Annotations,

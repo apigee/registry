@@ -23,7 +23,7 @@ import "google/api/field_behavior.proto";
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
 option java_outer_classname = "LintProto";
-option go_package = "github.com/apigee/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/pkg/application/style;style";
 
 // Lint wraps the result of a linter run for an API.
 // (-- api-linter: core::0123::resource-annotation=disabled

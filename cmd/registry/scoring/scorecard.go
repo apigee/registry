@@ -19,8 +19,9 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/cmd/registry/types"
+	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
@@ -43,10 +44,10 @@ func FetchScoreCardDefinitions(
 	if err != nil {
 		return nil, err
 	}
-	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreCardDefinition"))
+	listFilter := fmt.Sprintf("mime_type == %q", mime.MimeTypeForKind("ScoreCardDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(ctx context.Context, artifact *rpc.Artifact) error {
-			definition := &rpc.ScoreCardDefinition{}
+			definition := &scoring.ScoreCardDefinition{}
 			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
 				log.Debugf(ctx, "Skipping definition %q: %s", artifact.GetName(), err1)
@@ -73,7 +74,7 @@ func CalculateScoreCard(
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// Extract definition
-	definition := &rpc.ScoreCardDefinition{}
+	definition := &scoring.ScoreCardDefinition{}
 	if err := proto.Unmarshal(defArtifact.GetContents(), definition); err != nil {
 		return err
 	}
@@ -119,7 +120,7 @@ func CalculateScoreCard(
 // Response returned after fetching all the scoreArtifacts to form a ScoreCard.
 type scoreCardResult struct {
 	// Represents the ScoreCard generated after fetching all the score artifacts from the score_patterns.
-	scoreCard *rpc.ScoreCard
+	scoreCard *scoring.ScoreCard
 	// Represents if the final scoreCardArtifact needs an update
 	// This is determined based on the timestamps of the existing scoreCardArtifact and the dependent scoreArtifacts fetched from score_patterns.
 	needsUpdate bool
@@ -130,13 +131,13 @@ type scoreCardResult struct {
 func processScorePatterns(
 	ctx context.Context,
 	client artifactClient,
-	definition *rpc.ScoreCardDefinition,
+	definition *scoring.ScoreCardDefinition,
 	resource patterns.ResourceInstance,
 	scoreCardArtifact *rpc.Artifact,
 	takeAction bool,
 	project string) scoreCardResult {
 	var needsUpdate bool
-	scoreArtifacts := make([]*rpc.Score, 0)
+	scoreArtifacts := make([]*scoring.Score, 0)
 
 	for _, scorePattern := range definition.GetScorePatterns() {
 		extendedPattern, err := patterns.SubstituteReferenceEntity(scorePattern, resource.ResourceName())
@@ -162,7 +163,7 @@ func processScorePatterns(
 		// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
 		needsUpdate = needsUpdate || takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThreshold).After(scoreCardArtifact.GetUpdateTime().AsTime())
 		// Extract Score from the fetched artifact
-		score := &rpc.Score{}
+		score := &scoring.Score{}
 		if err := proto.Unmarshal(artifact.GetContents(), score); err != nil {
 			return scoreCardResult{
 				scoreCard:   nil,
@@ -176,7 +177,7 @@ func processScorePatterns(
 
 	if needsUpdate {
 		// Build the final ScoreCard proto
-		scoreCard := &rpc.ScoreCard{
+		scoreCard := &scoring.ScoreCard{
 			Id:             scoreCardID(definition.GetId()),
 			Kind:           "ScoreCard",
 			DisplayName:    definition.GetDisplayName(),
@@ -199,7 +200,7 @@ func processScorePatterns(
 	}
 }
 
-func uploadScoreCard(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, scoreCard *rpc.ScoreCard) error {
+func uploadScoreCard(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, scoreCard *scoring.ScoreCard) error {
 	artifactBytes, err := proto.Marshal(scoreCard)
 	if err != nil {
 		return err
@@ -207,7 +208,7 @@ func uploadScoreCard(ctx context.Context, client artifactClient, resource patter
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", resource.ResourceName().String(), scoreCard.GetId()),
 		Contents: artifactBytes,
-		MimeType: types.MimeTypeForKind("ScoreCard"),
+		MimeType: mime.MimeTypeForKind("ScoreCard"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
 	if err = client.SetArtifact(ctx, artifact); err != nil {

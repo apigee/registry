@@ -19,7 +19,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/util"
-	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/pkg/application/check"
 )
 
 var ruleNum = 109
@@ -41,7 +41,7 @@ var displayName = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == fieldName
 	},
-	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*rpc.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
 		return util.CheckUTF(fieldName, value, 65)
 	},
 }
