@@ -54,19 +54,6 @@ builds:
   env:
   - CGO_ENABLED=0
 
-- id: registry-server
-  binary: registry-server
-  dir: cmd/registry-server
-  main: main.go
-  goos:
-  - linux
-  - windows
-  - darwin
-  goarch:
-  - amd64
-  env:
-  - CGO_ENABLED=1
-
 archives:
 - id: default
   format: tar.gz
@@ -77,8 +64,6 @@ archives:
     strip_parent: true
   - auth/HOSTED.sh
   - auth/HOSTED.bat
-  builds:
-  - default
   format_overrides:
   - goos: windows
     format: zip
