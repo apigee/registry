@@ -26,8 +26,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/encoding"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -39,7 +39,7 @@ import (
 
 const openAPISpecID = "openapi"
 
-var list models.List
+var list encoding.List
 
 func openAPICommand() *cobra.Command {
 	var baseURI string
@@ -130,11 +130,11 @@ func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClie
 			if err != nil {
 				return err
 			}
-			spec := &models.ApiSpec{
-				Header: models.Header{
+			spec := &encoding.ApiSpec{
+				Header: encoding.Header{
 					ApiVersion: "apigeeregistry/v1",
 					Kind:       "Spec",
-					Metadata: models.Metadata{
+					Metadata: encoding.Metadata{
 						Name:   "openapi",
 						Parent: "apis/" + task.apiID + "/versions/" + task.versionID,
 						Labels: map[string]string{
@@ -143,7 +143,7 @@ func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClie
 						},
 					},
 				},
-				Data: models.ApiSpecData{
+				Data: encoding.ApiSpecData{
 					SourceURI: fmt.Sprintf("%s/%s", task.baseURI, task.apiPath()),
 				},
 			}
