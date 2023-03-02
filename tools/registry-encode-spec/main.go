@@ -25,7 +25,9 @@ import (
 )
 
 // This is equivalent to running
-//  gzip --stdout | xxd -p | tr -d '\n'
+//
+//	gzip --stdout | xxd -p | tr -d '\n'
+//
 // but with a platform-independent gzip encoding to provide more stable results.
 func main() {
 	// gzip the spec
