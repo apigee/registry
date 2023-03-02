@@ -32,7 +32,7 @@ tell us about your experience if you use it.
 ## The Registry Tool
 
 The Registry Tool (`registry`) is a command-line tool that simplifies setup and
-operation of a registry. See [cmd/registry-server](cmd/registry-server) and
+operation of a registry. See [cmd/registry](cmd/registry) and
 [the Registry wiki](https://github.com/apigee/registry/wiki/registry) for more
 information. The `registry` tool can be built from sources here or installed
 with this script on Linux or Darwin:
