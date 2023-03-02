@@ -84,10 +84,12 @@ printf "\n"
 cd "$HOME" || exit
 mkdir -p "$HOME/.registry/bin"
 mv "${tmp}/registry" "$HOME/.registry/bin"
-mv "${tmp}/registry-lint-*" "$HOME/.registry/bin"
+mv "${tmp}/registry-lint-api-linter" "$HOME/.registry/bin"
+mv "${tmp}/registry-lint-spectral" "$HOME/.registry/bin"
 printf "Copied registry into the $HOME/.registry/bin folder.\n"
 chmod +x "$HOME/.registry/bin/registry"
-chmod +x "$HOME/.registry/bin/registry-lint-*"
+chmod +x "$HOME/.registry/bin/registry-lint-api-linter"
+chmod +x "$HOME/.registry/bin/registry-lint-spectral"
 
 # Print message
 printf "\n"
