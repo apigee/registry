@@ -27,9 +27,9 @@ import (
 // Deployment is the storage-side representation of a deployment.
 type Deployment struct {
 	Key                string    `gorm:"primaryKey"`
-	ProjectID          string    // Uniquely identifies a project.
-	ApiID              string    // Uniquely identifies an api within a project.
-	DeploymentID       string    // Uniquely identifies a deployment within an api.
+	ProjectID          string    `gorm:"index:deployment"` // Uniquely identifies a project.
+	ApiID              string    `gorm:"index:deployment"` // Uniquely identifies an api within a project.
+	DeploymentID       string    `gorm:"index:deployment"` // Uniquely identifies a deployment within an api.
 	RevisionID         string    // Uniquely identifies a revision of a deployment.
 	DisplayName        string    // A human-friendly name.
 	Description        string    // A detailed description.
