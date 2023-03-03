@@ -220,6 +220,27 @@ func TestGetValidResources(t *testing.T) {
 			}
 		})
 	}
+	patternsThatDontMatchAnything := []string{
+		"projects/my-project/locations/global/apis/-/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/versions/-/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/versions/-/specs/-/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/deployments/-/artifacts/xx",
+	}
+	for _, r := range patternsThatDontMatchAnything {
+		t.Run(r+"+nothing", func(t *testing.T) {
+			cmd := Command()
+			args := []string{r, "-o", "name"}
+			cmd.SetArgs(args)
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOut(out)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v returned error: %s", args, err)
+			}
+			if len(out.Bytes()) != 0 {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
+	}
 }
 
 func TestGetInvalidResources(t *testing.T) {
@@ -258,10 +279,6 @@ func TestGetInvalidResources(t *testing.T) {
 	invalid := []string{
 		"projects/my-project/locations/global/invalid",
 		"projects/my-project/locations/global/apis/-/invalid",
-		"projects/my-project/locations/global/apis/-/artifacts/xx",
-		"projects/my-project/locations/global/apis/-/versions/-/artifacts/xx",
-		"projects/my-project/locations/global/apis/-/versions/-/specs/-/artifacts/xx",
-		"projects/my-project/locations/global/apis/-/deployments/-/artifacts/xx",
 		"projects/my-project/locations/global/apis/a/invalid",
 		"projects/my-project/locations/global/apis/a/versions/v/invalid",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/invalid",

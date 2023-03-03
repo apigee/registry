@@ -273,7 +273,7 @@ func newOutputTypeError(resourceType, outputType string) error {
 
 func (v *getVisitor) write() error {
 	if len(v.results) == 0 {
-		return fmt.Errorf("no matching results found")
+		return nil
 	}
 	if v.output == "yaml" {
 		var result interface{}
