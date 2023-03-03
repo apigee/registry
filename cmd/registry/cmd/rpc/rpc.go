@@ -30,13 +30,11 @@ func Command() *cobra.Command {
 	generated.AdminServiceCmd.Use = "admin"
 	generated.AdminServiceCmd.Short = "Make direct calls to Admin RPC methods (self-hosted installations only)"
 	generated.AdminServiceCmd.Long = generated.AdminServiceCmd.Short
-	generated.AdminServiceCmd.Hidden = true
 	cmd.AddCommand(generated.AdminServiceCmd)
 
 	generated.ProvisioningServiceCmd.Use = "provisioning"
 	generated.ProvisioningServiceCmd.Short = "Make direct calls to Provisioning RPC methods (Google-hosted installations only)"
 	generated.ProvisioningServiceCmd.Long = generated.ProvisioningServiceCmd.Short
-	generated.ProvisioningServiceCmd.Hidden = true
 	cmd.AddCommand(generated.ProvisioningServiceCmd)
 
 	return cmd
