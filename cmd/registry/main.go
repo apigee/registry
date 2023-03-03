@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/google/uuid"
+	"github.com/spf13/cobra"
 )
 
 func main() {
@@ -32,10 +33,21 @@ func main() {
 	})
 
 	cmd := cmd.Command()
+
+	// Customize UsageFunc() so that SilenceUsage will hide our extra help info.
+	uf := cmd.UsageFunc()
+	cmd.SetUsageFunc(func(c *cobra.Command) error {
+		if err := uf(c); err != nil {
+			return err
+		}
+		_, err := fmt.Fprint(c.OutOrStderr(), `----
+Need more help?
+https://github.com/apigee/registry/wiki
+`)
+		return err
+	})
+
 	if err := cmd.ExecuteContext(ctx); err != nil {
-		fmt.Println("----")
-		fmt.Println("Need more help?")
-		fmt.Println("https://github.com/apigee/registry/wiki")
 		os.Exit(1)
 	}
 }

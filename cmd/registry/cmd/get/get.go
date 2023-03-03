@@ -29,6 +29,8 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -75,6 +77,9 @@ func Command() *cobra.Command {
 				Pattern:        pattern,
 				Filter:         filter,
 			}); err != nil {
+				if status.Code(err) == codes.NotFound {
+					cmd.SilenceUsage = true
+				}
 				return err
 			}
 			return v.write()
