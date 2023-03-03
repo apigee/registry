@@ -56,25 +56,57 @@ func (task *seedArtifactsTask) Run(ctx context.Context) error {
 	client := task.client
 	for i := 0; i < task.count; i++ {
 		apiName := task.projectName.Api(fmt.Sprintf("a%d", task.start+i))
-		createApi(b, ctx, client, apiName)
-		createArtifact(b, ctx, client, apiName.Artifact("a"))
-		createArtifact(b, ctx, client, apiName.Artifact("b"))
-		createArtifact(b, ctx, client, apiName.Artifact("c"))
+		if err := createApi(b, ctx, client, apiName); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, apiName.Artifact("a")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, apiName.Artifact("b")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, apiName.Artifact("c")); err != nil {
+			return err
+		}
 		versionName := apiName.Version("v")
-		createApiVersion(b, ctx, client, versionName)
-		createArtifact(b, ctx, client, versionName.Artifact("a"))
-		createArtifact(b, ctx, client, versionName.Artifact("b"))
-		createArtifact(b, ctx, client, versionName.Artifact("c"))
+		if err := createApiVersion(b, ctx, client, versionName); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, versionName.Artifact("a")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, versionName.Artifact("b")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, versionName.Artifact("c")); err != nil {
+			return err
+		}
 		specName := versionName.Spec("s")
-		createApiSpecRevisions(b, ctx, client, specName, 3)
-		createArtifact(b, ctx, client, specName.Artifact("a"))
-		createArtifact(b, ctx, client, specName.Artifact("b"))
-		createArtifact(b, ctx, client, specName.Artifact("c"))
+		if err := createApiSpecRevisions(b, ctx, client, specName, 3); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, specName.Artifact("a")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, specName.Artifact("b")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, specName.Artifact("c")); err != nil {
+			return err
+		}
 		deploymentName := apiName.Deployment("d")
-		createApiDeploymentRevisions(b, ctx, client, deploymentName, 3)
-		createArtifact(b, ctx, client, deploymentName.Artifact("a"))
-		createArtifact(b, ctx, client, deploymentName.Artifact("b"))
-		createArtifact(b, ctx, client, deploymentName.Artifact("c"))
+		if err := createApiDeploymentRevisions(b, ctx, client, deploymentName, 3); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, deploymentName.Artifact("a")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, deploymentName.Artifact("b")); err != nil {
+			return err
+		}
+		if err := createArtifact(b, ctx, client, deploymentName.Artifact("c")); err != nil {
+			return err
+		}
 	}
 	return nil
 }
