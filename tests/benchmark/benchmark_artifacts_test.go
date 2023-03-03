@@ -84,7 +84,7 @@ func BenchmarkListArtifacts(b *testing.B) {
 	// Try to speed up creation with a worker pool (this might not help much but seemed worth a try).
 	taskQueue, wait := tasks.WorkerPool(ctx, 5)
 	projectName := names.Project{ProjectID: projectID}
-	total := 100
+	total := 1000
 	step := 5
 	for i := 0; i < total; i += step {
 		taskQueue <- &seedArtifactsTask{
@@ -184,10 +184,11 @@ func createApiDeploymentRevisions(b *testing.B, ctx context.Context, client conn
 	for r := 0; r < revisions; r++ {
 		_, err := client.UpdateApiDeployment(ctx, &rpc.UpdateApiDeploymentRequest{
 			ApiDeployment: &rpc.ApiDeployment{
-				Name:        deployment.String(),
-				DisplayName: deployment.DeploymentID,
-				Description: fmt.Sprintf("Description for %s", deployment.DeploymentID),
-				EndpointUri: fmt.Sprintf("https://r%d.example.com", r),
+				Name:            deployment.String(),
+				DisplayName:     deployment.DeploymentID,
+				Description:     fmt.Sprintf("Description for %s", deployment.DeploymentID),
+				EndpointUri:     fmt.Sprintf("https://r%d.example.com", r),
+				ApiSpecRevision: fmt.Sprintf(deployment.Project().String()+"/apis/a/versions/v/specs/s@%d", r),
 			},
 			AllowMissing: true,
 		})
