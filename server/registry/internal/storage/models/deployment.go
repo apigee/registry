@@ -28,7 +28,7 @@ import (
 type Deployment struct {
 	Key                string    `gorm:"primaryKey"`
 	ProjectID          string    // Uniquely identifies a project.
-	ApiID              string    // Uniquely identifies an api within a project.
+	ApiID              string    `gorm:"index"` // Uniquely identifies an api within a project.
 	DeploymentID       string    // Uniquely identifies a deployment within an api.
 	RevisionID         string    // Uniquely identifies a revision of a deployment.
 	DisplayName        string    // A human-friendly name.

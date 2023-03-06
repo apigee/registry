@@ -33,7 +33,7 @@ import (
 type Spec struct {
 	Key                string    `gorm:"primaryKey"`
 	ProjectID          string    // Uniquely identifies a project.
-	ApiID              string    // Uniquely identifies an api within a project.
+	ApiID              string    `gorm:"index"` // Uniquely identifies an api within a project.
 	VersionID          string    // Uniquely identifies a version within an api.
 	SpecID             string    // Uniquely identifies a spec within a version.
 	RevisionID         string    // Uniquely identifies a revision of a spec.
