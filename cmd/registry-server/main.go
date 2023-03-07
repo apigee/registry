@@ -86,7 +86,8 @@ type MonitoringConfig struct {
 	// Enable request time histograms.
 	// Values: [ true, false ], default: false
 	EnableRequestTimes bool `yaml:"request_timing"`
-	// Monitoring address. If unset or zero, an open port will be assigned.
+	// Listener address if enabled.
+	// If unset or zero, an open port will be assigned.
 	// Example: ":9090" or ""
 	Address string `yaml:"address"`
 }
@@ -107,8 +108,8 @@ var config = ServerConfig{
 		Project: "",
 	},
 	Monitoring: MonitoringConfig{
-		Enable:             true, // TODO: actual s/b false
-		EnableRequestTimes: true, // TODO: actual s/b false
+		Enable:             false,
+		EnableRequestTimes: false,
 		Address:            ":9090",
 	},
 }
