@@ -17,10 +17,10 @@ package benchmark
 import (
 	"context"
 	"flag"
-	"fmt"
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/wipeout"
 )
 
@@ -36,8 +36,8 @@ func init() {
 	flag.StringVar(&projectID, "project_id", "bench", "registry project ID")
 }
 
-func root() string {
-	return fmt.Sprintf("projects/%s/locations/global", projectID)
+func root() names.Project {
+	return names.Project{ProjectID: projectID}
 }
 
 func setup(b *testing.B) (context.Context, connection.RegistryClient) {
