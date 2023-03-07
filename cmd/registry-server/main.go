@@ -83,9 +83,6 @@ type MonitoringConfig struct {
 	// Values: [ true, false ], default: false
 	// Prometheus stats available at /metrics.
 	Enable bool `yaml:"enable"`
-	// Enable request time histograms.
-	// Values: [ true, false ], default: false
-	EnableRequestTimes bool `yaml:"request_timing"`
 	// Listener address if enabled.
 	// If unset or zero, an open port will be assigned.
 	// Example: ":9090" or ""
@@ -108,9 +105,8 @@ var config = ServerConfig{
 		Project: "",
 	},
 	Monitoring: MonitoringConfig{
-		Enable:             false,
-		EnableRequestTimes: false,
-		Address:            ":9090",
+		Enable:  false,
+		Address: ":9090",
 	},
 }
 
@@ -186,9 +182,7 @@ func main() {
 	logger.Infof("Listening on %s", listener.Addr())
 
 	if config.Monitoring.Enable {
-		if config.Monitoring.EnableRequestTimes {
-			grpc_prometheus.EnableHandlingTimeHistogram()
-		}
+		grpc_prometheus.EnableHandlingTimeHistogram()
 		metricsListener, err := net.Listen("tcp", config.Monitoring.Address)
 		if err != nil {
 			logger.WithError(err).Fatalf("Failed to create TCP listener")
