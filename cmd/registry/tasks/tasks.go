@@ -49,23 +49,6 @@ func WorkerPool(ctx context.Context, n int) (chan<- Task, func()) {
 	return taskQueue, wait
 }
 
-// Similar to WorkerPool except it creates workers which log task errors as "Warnings"
-func WorkerPoolWithWarnings(ctx context.Context, n int) (chan<- Task, func()) {
-	var wg sync.WaitGroup
-	taskQueue := make(chan Task, 1024)
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go worker(ctx, &wg, taskQueue, true)
-	}
-
-	wait := func() {
-		close(taskQueue)
-		wg.Wait()
-	}
-
-	return taskQueue, wait
-}
-
 // A worker which pulls tasks from the taskQueue, executes them and logs errors if any.
 func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task, warnOnError bool) {
 	defer wg.Done()
@@ -75,11 +58,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task, warn
 			return
 		default:
 			if err := task.Run(ctx); err != nil {
-				if warnOnError {
-					log.FromContext(ctx).WithError(err).Warnf("Task failed: %s", task)
-				} else {
-					log.FromContext(ctx).WithError(err).Fatalf("Task failed: %s", task)
-				}
+				log.FromContext(ctx).WithError(err).Warnf("Task failed: %s", task)
 			}
 		}
 	}

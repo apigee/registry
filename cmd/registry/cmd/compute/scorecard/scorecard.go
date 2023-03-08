@@ -56,7 +56,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := tasks.WorkerPoolWithWarnings(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
 			defer wait()
 
 			inputPattern, err := patterns.ParseResourcePattern(args[0])
