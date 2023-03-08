@@ -49,7 +49,7 @@ func TestWorkerPoolWithWarnings(t *testing.T) {
 	ctx := context.Background()
 	jobs := 1
 
-	taskQueue, wait := WorkerPoolWithWarnings(ctx, jobs)
+	taskQueue, wait := WorkerPool(ctx, jobs)
 	defer wait()
 
 	for i := 0; i < 10; i++ {
