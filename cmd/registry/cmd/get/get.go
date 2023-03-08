@@ -29,6 +29,8 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -75,9 +77,19 @@ func Command() *cobra.Command {
 				Pattern:        pattern,
 				Filter:         filter,
 			}); err != nil {
+				if status.Code(err) == codes.NotFound {
+					fmt.Fprintln(cmd.ErrOrStderr(), "Not Found")
+					return nil
+				}
 				return err
 			}
-			return v.write()
+			// Write any accumulated output.
+			err = v.write()
+			if err != nil && status.Code(err) == codes.NotFound {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Not Found")
+				return nil
+			}
+			return err
 		},
 	}
 
@@ -273,7 +285,7 @@ func newOutputTypeError(resourceType, outputType string) error {
 
 func (v *getVisitor) write() error {
 	if len(v.results) == 0 {
-		return fmt.Errorf("no matching results found")
+		return status.Error(codes.NotFound, "no matching results found")
 	}
 	if v.output == "yaml" {
 		var result interface{}
