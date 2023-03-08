@@ -283,6 +283,23 @@ func TestGetInvalidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/versions/v/invalid",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/invalid",
 		"projects/my-project/locations/global/apis/a/deployments/d/invalid",
+	}
+	for i, r := range invalid {
+		t.Run(r, func(t *testing.T) {
+			// cycle through output types
+			format := []string{"name", "yaml", "contents"}[i%3]
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "-o", format}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+	// Verify that "not found" is not treated an error.
+	notfound := []string{
 		"projects/my-project/locations/global/artifacts/xx",
 		"projects/my-project/locations/global/apis/a/versions/vv",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
@@ -296,17 +313,22 @@ func TestGetInvalidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/xx",
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/xx",
 	}
-	for i, r := range invalid {
+	for i, r := range notfound {
 		t.Run(r, func(t *testing.T) {
 			// cycle through output types
 			format := []string{"name", "yaml", "contents"}[i%3]
 			cmd := Command()
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetErr(out)
 			args := []string{r, "-o", format}
 			cmd.SetArgs(args)
-			if err := cmd.Execute(); err == nil {
-				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v failed %s", args, err)
+			}
+			if out.String() != "Not Found\n" {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
 			}
 		})
 	}

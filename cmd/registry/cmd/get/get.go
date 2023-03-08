@@ -78,11 +78,18 @@ func Command() *cobra.Command {
 				Filter:         filter,
 			}); err != nil {
 				if status.Code(err) == codes.NotFound {
-					cmd.SilenceUsage = true
+					fmt.Fprintln(cmd.ErrOrStderr(), "Not Found")
+					return nil
 				}
 				return err
 			}
-			return v.write()
+			// Write any accumulated output.
+			err = v.write()
+			if err != nil && status.Code(err) == codes.NotFound {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Not Found")
+				return nil
+			}
+			return err
 		},
 	}
 
@@ -278,7 +285,7 @@ func newOutputTypeError(resourceType, outputType string) error {
 
 func (v *getVisitor) write() error {
 	if len(v.results) == 0 {
-		return nil
+		return status.Error(codes.NotFound, "no matching results found")
 	}
 	if v.output == "yaml" {
 		var result interface{}
