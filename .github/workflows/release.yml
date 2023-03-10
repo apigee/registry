@@ -27,6 +27,8 @@ jobs:
         with:
           fetch-depth: 0
       - run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - run: |
           echo ::set-output name=version::${GITHUB_REF#refs/tags/}
       - uses: actions/setup-go@v3
         with:
@@ -39,4 +41,3 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ steps.prep.outputs.version }}
