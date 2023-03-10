@@ -38,12 +38,29 @@ func relativeSpecRevisionName(apiName names.Api, spec string) string {
 	return spec
 }
 
-// optionalSpecRevisionName returns a spec revision name if the subpath is not empty
-func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) string {
+// resolveSpecRevisionName returns a "full-resolved" spec revision name
+// that is relative to the root ("/") and includes a revision ID.
+func resolveSpecRevisionName(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, subpath string) (string, error) {
 	if subpath == "" {
-		return ""
+		return "", nil
 	}
-	return deploymentName.Api().String() + "/versions/" + subpath
+	specName := deploymentName.Api().String() + "/versions/" + subpath
+	specRevisionName, err := names.ParseSpecRevision(specName)
+	if err == nil && specRevisionName.RevisionID != "" {
+		// this already includes a revision, we're good
+		return specName, nil
+	}
+	_, err = names.ParseSpec(specName)
+	if err != nil {
+		// this isn't a valid spec name, so filter it out
+		return "", err
+	}
+	// Get the latest revision of this spec
+	spec, err := client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{Name: specName})
+	if err != nil {
+		return "", err
+	}
+	return spec.Name + "@" + spec.RevisionId, nil
 }
 
 // NewApiDeployment allows an API deployment to be individually exported as a YAML file.
@@ -128,7 +145,7 @@ func applyApiDeploymentPatch(
 		},
 		AllowMissing: true,
 	}
-	req.ApiDeployment.ApiSpecRevision = optionalSpecRevisionName(name, deployment.Data.ApiSpecRevision)
+	req.ApiDeployment.ApiSpecRevision, err = resolveSpecRevisionName(ctx, client, name, deployment.Data.ApiSpecRevision)
 	if err != nil {
 		return err
 	}
