@@ -34,6 +34,7 @@ import (
 	"github.com/apigee/registry/server/registry/test/seeder"
 	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
@@ -1341,6 +1342,57 @@ func TestEmptyArtifactPatches(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if err := Apply(ctx, registryClient, nil, test.path, "projects/patch-empty-test/locations/global", true, 10); err == nil {
 				t.Errorf("Apply() succeeded and should have failed")
+			}
+		})
+	}
+}
+
+func TestDeploymentImports(t *testing.T) {
+	tests := []struct {
+		desc string
+		root string
+	}{
+		{
+			desc: "sample-nested",
+			root: "testdata/deployments-nested",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			project := names.Project{ProjectID: "patch-deployments-test"}
+
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
+				&rpc.Project{
+					Name: project.String(),
+				},
+			})
+
+			// set the configured registry.project to the test project
+			config, err := connection.ActiveConfig()
+			if err != nil {
+				t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+			}
+			config.Project = project.ProjectID
+			connection.SetConfig(config)
+
+			// apply the api and deployments
+			if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 10); err != nil {
+				t.Fatalf("Apply() returned error: %s", err)
+			}
+
+			// verify that all the spec references are to specific revisions
+			it := registryClient.ListApiDeployments(ctx, &rpc.ListApiDeploymentsRequest{
+				Parent: project.Api("registry").String(),
+			})
+			for d, err := it.Next(); err != iterator.Done; d, err = it.Next() {
+				specName, err := names.ParseSpecRevision(d.ApiSpecRevision)
+				if err != nil {
+					t.Errorf("failed to parse spec name %s", d.ApiSpecRevision)
+				}
+				if specName.RevisionID == "" {
+					t.Errorf("spec revision ID should not be empty: %s", d.ApiSpecRevision)
+				}
 			}
 		})
 	}

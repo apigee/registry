@@ -1,0 +1,9 @@
+apiVersion: apigeeregistry/v1
+kind: Deployment
+metadata:
+  name: prod-separate
+  parent: apis/registry
+data:
+  displayName: Production
+  description: The hosted deployment of the Registry API
+  apiSpecRevision: v1/specs/openapi      

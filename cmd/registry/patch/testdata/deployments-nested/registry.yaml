@@ -1,0 +1,37 @@
+apiVersion: apigeeregistry/v1
+kind: API
+metadata:
+  name: registry
+data:
+  displayName: Apigee Registry API
+  description: The Registry API allows teams to track and manage machine-readable descriptions of APIs.
+  availability: Preview
+  recommendedVersion: v1
+  recommendedDeployment: prod
+  versions:
+    - metadata:
+        name: v1
+      data:
+        displayName: v1
+        description: New in 2022
+        state: Staging
+        primarySpec: apis/registry/versions/v1/specs/openapi
+        specs:
+          - metadata:
+              name: openapi
+            data:
+              filename: openapi.yaml
+              description: OpenAPI description of the Registry API
+              mimeType: application/x.openapi+gzip;version=3
+              sourceURI: https://raw.githubusercontent.com/apigee/registry/main/openapi.yaml
+  deployments:
+    - metadata:
+        name: specific-revision
+      data:
+        apiSpecRevision: v1/specs/openapi@latest
+        endpointURI: https://apigeeregistry.googleapis.com
+    - metadata:
+        name: inferred-revision
+      data:
+        apiSpecRevision: v1/specs/openapi
+        endpointURI: https://apigeeregistry.googleapis.com
