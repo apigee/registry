@@ -38,8 +38,9 @@ func relativeSpecRevisionName(apiName names.Api, spec string) string {
 	return spec
 }
 
-// optionalSpecRevisionName returns a spec revision name if the subpath is not empty
-func optionalSpecRevisionName(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, subpath string) (string, error) {
+// resolveSpecRevisionName returns a "full-resolved" spec revision name
+// that is relative to the root ("/") and includes a revision ID.
+func resolveSpecRevisionName(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, subpath string) (string, error) {
 	if subpath == "" {
 		return "", nil
 	}
@@ -144,7 +145,7 @@ func applyApiDeploymentPatch(
 		},
 		AllowMissing: true,
 	}
-	req.ApiDeployment.ApiSpecRevision, err = optionalSpecRevisionName(ctx, client, name, deployment.Data.ApiSpecRevision)
+	req.ApiDeployment.ApiSpecRevision, err = resolveSpecRevisionName(ctx, client, name, deployment.Data.ApiSpecRevision)
 	if err != nil {
 		return err
 	}
