@@ -29,7 +29,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
 	"github.com/apigee/registry/cmd/registry/cmd/rpc"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
-	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
 	pkgconf "github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
@@ -59,7 +58,6 @@ func Command() *cobra.Command {
 	cmd.AddCommand(get.Command())
 	cmd.AddCommand(label.Command())
 	cmd.AddCommand(upload.Command())
-	cmd.AddCommand(vocabulary.Command())
 	cmd.AddCommand(rpc.Command())
 	return cmd
 }
