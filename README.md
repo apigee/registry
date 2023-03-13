@@ -5,8 +5,8 @@
 
 # Registry API Core Implementation
 
-This repository contains the core implementation of the Registry API. Please
-see the [wiki](https://github.com/apigee/registry/wiki) for more information.
+This repository contains the core implementation of the Registry API. Please see
+the [wiki](https://github.com/apigee/registry/wiki) for more information.
 
 ## The Registry API
 
@@ -19,9 +19,8 @@ and the
 [Protocol Buffers Language](https://developers.google.com/protocol-buffers).
 These API specifications can be used by tools like linters, browsers,
 documentation generators, test runners, proxies, and API client and server
-generators. The Registry API itself can be seen as a machine-readable
-enterprise API catalog designed to back online directories, portals, and
-workflow managers.
+generators. The Registry API itself can be seen as a machine-readable enterprise
+API catalog designed to back online directories, portals, and workflow managers.
 
 The Registry API is formally described by the Protocol Buffer source files in
 [google/cloud/apigeeregistry/v1](google/cloud/apigeeregistry/v1). It closely
@@ -47,8 +46,7 @@ This implementation is a [gRPC](https://grpc.io) service written in Go. It can
 be run locally or deployed in a container using services including
 [Google Cloud Run](https://cloud.google.com/run). It stores data using a
 configurable relational interface layer that currently supports
-[PostgreSQL](https://www.postgresql.org/) and
-[SQLite](https://www.sqlite.org/).
+[PostgreSQL](https://www.postgresql.org/) and [SQLite](https://www.sqlite.org/).
 
 The Registry API service is annotated to support
 [gRPC HTTP/JSON transcoding](https://aip.dev/127), which allows it to be
@@ -62,9 +60,7 @@ The Registry API protos also include configuration to support
 [generated API clients (GAPICS)](https://googleapis.github.io/gapic-generators/),
 which allow idiomatic API usage from a variety of languages. A Go GAPIC library
 is generated as part of the build process using
-[gapic-generator-go](https://github.com/googleapis/gapic-generator-go). A
-sample Go GAPIC-based client is in
-[examples/gapic-client](examples/gapic-client).
+[gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
 
 A command-line interface is in [cmd/registry](cmd/registry) and provides a
 mixture of hand-written high-level features and automatically generated
@@ -96,8 +92,8 @@ default, the server is configured to use a SQLite database.
 
 `registry-server`
 
-Next, in a separate terminal, configure your environment to point to this
-server with the following:
+Next, in a separate terminal, configure your environment to point to this server
+with the following:
 
 `. auth/LOCAL.sh`
 
@@ -111,30 +107,29 @@ more demonstrations, see the [demos](demos) directory.
 
 ## Tests
 
-This repository includes tests that verify `registry-server`. These server
-tests focus on correctness at the API level and compliance with the API design
-guidelines described at [aip.dev](https://aip.dev). Server tests are included
-in runs of `make test` and `go test ./...`, and the server tests can be run by
-themselves with `go test ./server/registry`. By default, server tests verify
-the local code in `./server/registry`, but to allow **API conformance
-testing**, the tests can be run to verify remote servers using the following
-options:
+This repository includes tests that verify `registry-server`. These server tests
+focus on correctness at the API level and compliance with the API design
+guidelines described at [aip.dev](https://aip.dev). Server tests are included in
+runs of `make test` and `go test ./...`, and the server tests can be run by
+themselves with `go test ./server/registry`. By default, server tests verify the
+local code in `./server/registry`, but to allow **API conformance testing**, the
+tests can be run to verify remote servers using the following options:
 
 - With the `-remote` flag, tests are run against a remote server according to
   the configuration used by the `registry` tool. This runs the entire suite of
   tests. **WARNING**: These tests are destructive and will overwrite everything
   in the remote server.
-- With the `-hosted PROJECT_ID` flag, tests are run against a remote server in
-  a hosted environment within a single project that is expected to already
-  exist. The server is identified and authenticated with the configuration used
-  by the `registry` tool. Only the methods of the Registry service are tested
-  (Admin service methods are excluded). **WARNING**: These tests are
-  destructive and will overwrite everything in the specified project.
+- With the `-hosted PROJECT_ID` flag, tests are run against a remote server in a
+  hosted environment within a single project that is expected to already exist.
+  The server is identified and authenticated with the configuration used by the
+  `registry` tool. Only the methods of the Registry service are tested (Admin
+  service methods are excluded). **WARNING**: These tests are destructive and
+  will overwrite everything in the specified project.
 
 A small set of **performance benchmarks** is in
 [tests/benchmark](/tests/benchmark). These tests run against remote servers
-specified by the `registry` tool configuration and test a single project that
-is expected to already exist. **WARNING**: These tests are destructive and will
+specified by the `registry` tool configuration and test a single project that is
+expected to already exist. **WARNING**: These tests are destructive and will
 overwrite everything in the specified project. Benchmarks can be run with the
 following invocation:
 
@@ -142,8 +137,8 @@ following invocation:
 go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
 ```
 
-All of the test configurations described above are verified in this
-repository's [CI tests](.github/workflows/go.yml).
+All of the test configurations described above are verified in this repository's
+[CI tests](.github/workflows/go.yml).
 
 ## License
 
