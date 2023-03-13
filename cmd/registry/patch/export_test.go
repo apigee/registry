@@ -202,6 +202,7 @@ func TestExport(t *testing.T) {
 }
 
 func compareExportedDirectories(t *testing.T, root, top, tempDir, projectID string) {
+	t.Helper()
 	if err := filepath.Walk(filepath.Join(root, top), func(refFilename string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -218,6 +219,7 @@ func compareExportedDirectories(t *testing.T, root, top, tempDir, projectID stri
 		if err != nil {
 			return err
 		}
+		newBytes = deleteReadonlyFields(newBytes)
 		if diff := cmp.Diff(newBytes, refBytes); diff != "" {
 			return fmt.Errorf("mismatched export %s %+v", newFilename, diff)
 		}
@@ -228,6 +230,7 @@ func compareExportedDirectories(t *testing.T, root, top, tempDir, projectID stri
 }
 
 func compareExportedFiles(t *testing.T, root, file, tempDir, projectID string) {
+	t.Helper()
 	refFilename := filepath.Join(root, file)
 	refBytes, err := os.ReadFile(refFilename)
 	if err != nil {
@@ -235,6 +238,7 @@ func compareExportedFiles(t *testing.T, root, file, tempDir, projectID string) {
 	}
 	newFilename := filepath.Join(tempDir, projectID, file)
 	newBytes, err := os.ReadFile(newFilename)
+	newBytes = deleteReadonlyFields(newBytes)
 	if err != nil {
 		t.Errorf("Failed to read file %s", newFilename)
 	}

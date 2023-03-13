@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -81,6 +82,8 @@ func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc
 				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
+				CreateTime:  message.CreateTime.AsTime().Format(time.RFC3339),
+				UpdateTime:  message.UpdateTime.AsTime().Format(time.RFC3339),
 			},
 		},
 		Data: *node,

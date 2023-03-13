@@ -17,6 +17,7 @@ package patch
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
@@ -66,6 +67,8 @@ func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 				Parent:      names.ExportableName(versionName.Parent(), versionName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
+				CreateTime:  message.CreateTime.AsTime().Format(time.RFC3339),
+				UpdateTime:  message.UpdateTime.AsTime().Format(time.RFC3339),
 			},
 		},
 		Data: encoding.ApiVersionData{

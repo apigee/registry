@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
@@ -58,6 +59,8 @@ func NewApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 				Parent:      names.ExportableName(specName.Parent(), specName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
+				CreateTime:  message.CreateTime.AsTime().Format(time.RFC3339),
+				UpdateTime:  message.RevisionUpdateTime.AsTime().Format(time.RFC3339),
 			},
 		},
 		Data: encoding.ApiSpecData{
@@ -66,6 +69,8 @@ func NewApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 			MimeType:    message.MimeType,
 			SourceURI:   message.SourceUri,
 			Artifacts:   artifacts,
+			Hash:        message.Hash,
+			SizeBytes:   message.SizeBytes,
 		},
 	}, nil
 }

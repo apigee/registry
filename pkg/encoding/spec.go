@@ -25,4 +25,6 @@ type ApiSpecData struct {
 	MimeType    string      `yaml:"mimeType,omitempty"`
 	SourceURI   string      `yaml:"sourceURI,omitempty"`
 	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	Hash        string      `yaml:"hash,omitempty"`
+	SizeBytes   int32       `yaml:"sizeBytes,omitempty"`
 }

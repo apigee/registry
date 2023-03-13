@@ -15,8 +15,11 @@
 package patch
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/pkg/application/apihub"
@@ -115,6 +118,7 @@ func TestProjectPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
 					}
@@ -238,6 +242,7 @@ func TestApiPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
 					}
@@ -255,6 +260,30 @@ func TestApiPatches(t *testing.T) {
 			}
 		})
 	}
+}
+
+// only processes registry yaml
+func deleteReadonlyFields(yaml []byte) []byte {
+	readOnlyFields := []string{"createTime", "updateTime", "hash", "sizeBytes"}
+	scanner := bufio.NewScanner(bytes.NewReader(yaml))
+	out := bytes.Buffer{}
+	firstLine := true
+scan:
+	for scanner.Scan() {
+		ln := scanner.Text()
+		if firstLine && ln != "apiVersion: apigeeregistry/v1" {
+			return yaml
+		}
+		firstLine = false
+		trimmed := strings.TrimSpace(ln)
+		for _, f := range readOnlyFields {
+			if strings.HasPrefix(trimmed, f+":") {
+				continue scan
+			}
+		}
+		out.WriteString(ln + "\n")
+	}
+	return out.Bytes()
 }
 
 func TestVersionPatches(t *testing.T) {
@@ -341,6 +370,7 @@ func TestVersionPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
 					}
@@ -444,6 +474,7 @@ func TestSpecPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
 					}
@@ -550,6 +581,7 @@ func TestDeploymentPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
 					}
@@ -1141,6 +1173,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
 					}
@@ -1234,6 +1267,7 @@ func TestYamlArtifactPatches(t *testing.T) {
 					if err != nil {
 						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
 					}
+					out = deleteReadonlyFields(out)
 					if !cmp.Equal(b, out) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out))
 					}

@@ -25,6 +25,8 @@ type Metadata struct {
 	Parent      string            `yaml:"parent,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty"`
+	CreateTime  string            `yaml:"createTime,omitempty"`
+	UpdateTime  string            `yaml:"updateTime,omitempty"`
 }
 
 const RegistryV1 = "apigeeregistry/v1"

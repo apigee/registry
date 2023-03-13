@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
@@ -86,6 +87,8 @@ func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 				Parent:      names.ExportableName(deploymentName.Parent(), deploymentName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
+				CreateTime:  message.CreateTime.AsTime().Format(time.RFC3339),
+				UpdateTime:  message.RevisionUpdateTime.AsTime().Format(time.RFC3339),
 			},
 		},
 		Data: encoding.ApiDeploymentData{
