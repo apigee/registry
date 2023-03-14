@@ -94,6 +94,18 @@ func TestActiveSettings(t *testing.T) {
 	if diff := cmp.Diff(c, got); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
+
+	t.Setenv("APG_REGISTRY_ADDRESS", "ignore")
+	name, raw, err := config.ActiveRaw()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if name != "good" {
+		t.Errorf("want: %s, got: %s", "good", name)
+	}
+	if diff := cmp.Diff(raw, got); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
 }
 
 func TestSettingsEnvVars(t *testing.T) {
@@ -273,10 +285,29 @@ func TestManipulations(t *testing.T) {
 		t.Fatalf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
+	if err = c.Set("location", "new location"); err != nil {
+		t.Fatal(err)
+	}
+	if m, err = c.FlatMap(); err != nil {
+		t.Fatal(err)
+	}
+	want["registry.location"] = "new location"
+	if diff := cmp.Diff(want, m); diff != "" {
+		t.Fatalf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	l, err := c.Get("location")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l != "new location" {
+		t.Errorf("want: %s, got: %s", "new location", l)
+	}
+
 	if err = c.Unset("registry.address"); err != nil {
 		t.Fatal(err)
 	}
-	if err = c.Unset("registry.insecure"); err != nil {
+	if err = c.Unset("insecure"); err != nil {
 		t.Fatal(err)
 	}
 	if m, err = c.FlatMap(); err != nil {
@@ -393,5 +424,37 @@ func TestWriteInvalidNames(t *testing.T) {
 	err = config.Configuration{}.Write(filepath.Join("foo", "bar"))
 	if err == nil {
 		t.Errorf("expected error: %v", config.ErrReservedConfigName)
+	}
+}
+
+func TestProperies(t *testing.T) {
+	c := config.Configuration{}
+
+	got := c.Properties()
+	want := []string{
+		"registry.address",
+		"registry.insecure",
+		"registry.location",
+		"registry.project",
+		"registry.token",
+		"token-source",
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+}
+
+func TestResolve(t *testing.T) {
+	c := config.Configuration{
+		TokenSource: "echo hello",
+	}
+
+	err := c.Resolve()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Registry.Token != "hello" {
+		t.Errorf("want: %s, got: %s", "hello", c.Registry.Token)
 	}
 }
