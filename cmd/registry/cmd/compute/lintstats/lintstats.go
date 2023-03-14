@@ -45,7 +45,7 @@ func lintStatsRelation(linter string) string {
 func Command() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
-		Use:   "lintstats",
+		Use:   "lintstats RESOURCE",
 		Short: "Compute summaries of linter runs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

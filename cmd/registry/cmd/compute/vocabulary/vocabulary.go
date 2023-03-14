@@ -38,7 +38,7 @@ import (
 
 func Command() *cobra.Command {
 	return &cobra.Command{
-		Use:   "vocabulary",
+		Use:   "vocabulary SPEC_REVISION",
 		Short: "Compute vocabularies of API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

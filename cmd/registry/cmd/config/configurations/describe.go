@@ -24,7 +24,7 @@ import (
 
 func describeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "describe CONFIGURATION_NAME",
+		Use:   "describe CONFIGURATION",
 		Short: "Describes a named configuration by listing its properties",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

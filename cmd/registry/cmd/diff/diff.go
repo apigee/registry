@@ -36,7 +36,7 @@ import (
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "diff",
+		Use:   "diff RESOURCE_1 RESOURCE_2",
 		Short: "Compare resources in the API Registry",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
