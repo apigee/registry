@@ -58,7 +58,7 @@ func Command() *cobra.Command {
 	var jobs int
 	var maxActions int
 	cmd := &cobra.Command{
-		Use:   "resolve MANIFEST_RESOURCE",
+		Use:   "resolve MANIFEST_ARTIFACT",
 		Short: "Resolve dependencies by performing actions in a specified manifest",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

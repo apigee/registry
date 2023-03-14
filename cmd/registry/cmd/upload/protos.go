@@ -58,7 +58,7 @@ func protosCommand() *cobra.Command {
 	var baseURI string
 	var root string
 	cmd := &cobra.Command{
-		Use:   "protos PATH",
+		Use:   "protos DIRECTORY",
 		Short: "Upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

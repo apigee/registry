@@ -39,7 +39,7 @@ import (
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "complexity",
+		Use:   "complexity SPEC_REVISION",
 		Short: "Compute complexity metrics of API specs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
