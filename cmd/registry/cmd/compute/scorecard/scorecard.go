@@ -36,6 +36,12 @@ func Command() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
@@ -45,7 +51,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
 			}
 
-			client, err := connection.NewRegistryClient(ctx)
+			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
