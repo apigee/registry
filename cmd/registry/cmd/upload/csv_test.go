@@ -32,6 +32,7 @@ import (
 )
 
 const (
+	gzipOpenAPIv2 = "application/x.openapi+gzip;version=2.0"
 	gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
 )
 
@@ -52,6 +53,11 @@ func TestUploadCSV(t *testing.T) {
 	}
 
 	datastoreBeta, err := os.ReadFile(filepath.Join("testdata", "csv", "datastore", "v1beta1", "openapi.yaml"))
+	if err != nil {
+		t.Fatalf("Setup: Failed to read spec contents: %s", err)
+	}
+
+	swagger, err := os.ReadFile(filepath.Join("testdata", "openapi", "petstore", "2.0", "swagger.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
@@ -89,6 +95,11 @@ func TestUploadCSV(t *testing.T) {
 					Name:     fmt.Sprintf("projects/%s/locations/global/apis/datastore/versions/v1/specs/openapi", testProject),
 					MimeType: gzipOpenAPIv3,
 					Contents: datastoreGA,
+				},
+				{
+					Name:     fmt.Sprintf("projects/%s/locations/global/apis/swagger/versions/v1/specs/openapi", testProject),
+					MimeType: gzipOpenAPIv2,
+					Contents: swagger,
 				},
 			},
 		},
