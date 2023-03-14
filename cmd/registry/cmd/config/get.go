@@ -41,12 +41,12 @@ func getCommand() *cobra.Command {
 				return UnknownPropertyError{args[0]}
 			}
 
-			m, err := c.FlatMap()
+			v, err := c.Get(args[0])
 			if err != nil {
 				return fmt.Errorf("Cannot decode config: %v", err)
 			}
 
-			cmd.Println(m[args[0]])
+			cmd.Println(v)
 			return nil
 		},
 	}

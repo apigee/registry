@@ -23,7 +23,7 @@ import (
 
 func activateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "activate CONFIGURATION_NAME",
+		Use:   "activate CONFIGURATION",
 		Short: "Activates an existing named configuration",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
