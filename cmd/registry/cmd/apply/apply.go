@@ -30,9 +30,9 @@ func Command() *cobra.Command {
 	var recursive bool
 	var jobs int
 	cmd := &cobra.Command{
-		Use:   "apply (-f FILENAME | -f -)",
-		Short: "Apply an object to the API Registry",
-		Long:  "Apply an object to the API Registry by file name or stdin. Resources will be created if they don't exist yet.\n\nMore info and example usage at https://github.com/apigee/registry/wiki/registry-apply",
+		Use:   "apply (-f FILE | -f -)",
+		Short: "Apply YAML to the API Registry",
+		Long:  "Apply YAML to the API Registry by file name or stdin. Resources will be created if they don't exist yet.\n\nMore info and example usage at https://github.com/apigee/registry/wiki/registry-apply",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

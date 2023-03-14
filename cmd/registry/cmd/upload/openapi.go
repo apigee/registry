@@ -41,7 +41,7 @@ const openAPISpecID = "openapi"
 func openAPICommand() *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
-		Use:   "openapi",
+		Use:   "openapi DIRECTORY",
 		Short: "Upload OpenAPI descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

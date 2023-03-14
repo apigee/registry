@@ -23,7 +23,7 @@ import (
 
 func createCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create CONFIGURATION_NAME",
+		Use:   "create CONFIGURATION",
 		Short: "Creates and activates a new named configuration",
 		Long: "Creates and activates a new named configuration. Values will be populated from active " +
 			"configuration (if any) and any passed property flags.",
