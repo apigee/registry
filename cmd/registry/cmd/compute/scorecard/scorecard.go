@@ -31,7 +31,7 @@ import (
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "scorecard RESOURCE",
+		Use:   "scorecard PATTERN",
 		Short: "Compute score cards for APIs and API specs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
