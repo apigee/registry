@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -119,33 +120,7 @@ func TestUploadCSV(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			client, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
-
-			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/" + testProject,
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Setup: Failed to delete test project: %s", err)
-			}
-
-			_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: testProject,
-				Project: &rpc.Project{
-					DisplayName: "Test",
-					Description: "A test catalog",
-				},
-			})
-			if err != nil {
-				t.Fatalf("Error creating project %s", err)
-			}
+			client, _ := grpctest.SetupRegistry(ctx, t, testProject, nil)
 
 			args := append([]string{"csv"}, test.args...)
 

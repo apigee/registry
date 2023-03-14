@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/application/style"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
@@ -129,30 +128,8 @@ func TestArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 				Id: "controller-test",
@@ -227,30 +204,8 @@ func TestAggregateArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 
@@ -368,30 +323,8 @@ func TestDerivedArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 				Id: "controller-test",
@@ -464,30 +397,8 @@ func TestReceiptArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 				Id: "controller-test",
@@ -573,30 +484,8 @@ func TestReceiptAggArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 				Id: "controller-test",
@@ -740,30 +629,8 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 				Id: "controller-test",
@@ -863,30 +730,8 @@ func TestMaxActions(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, test.seed)
 			lister := &RegistryLister{RegistryClient: registryClient}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
 
 			manifest := &controller.Manifest{
 				Id: "controller-test",

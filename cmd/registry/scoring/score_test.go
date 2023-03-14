@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	metrics "github.com/google/gnostic/metrics"
@@ -403,29 +404,7 @@ func TestCalculateScore(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "score-formula-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-formula-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-formula-test", test.seed)
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
@@ -470,27 +449,7 @@ func TestCalculateScore(t *testing.T) {
 
 func TestProcessScoreFormula(t *testing.T) {
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-
-	deleteProject(ctx, adminClient, t, "score-formula-test")
-	t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-formula-test") })
-
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-
-	seed := []seeder.RegistryResource{
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-formula-test", []seeder.RegistryResource{
 		&rpc.Artifact{
 			Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
 			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
@@ -508,11 +467,7 @@ func TestProcessScoreFormula(t *testing.T) {
 				},
 			}),
 		},
-	}
-
-	if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
-		t.Fatalf("Setup: failed to seed registry: %s", err)
-	}
+	})
 
 	// arguments
 	formula := &scoring.ScoreFormula{
@@ -699,29 +654,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "score-formula-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-formula-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-formula-test", test.seed)
 
 			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
 
@@ -735,27 +668,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 
 func TestProcessRollUpFormula(t *testing.T) {
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-
-	deleteProject(ctx, adminClient, t, "rollup-formula-test")
-	t.Cleanup(func() { deleteProject(ctx, adminClient, t, "rollup-formula-test") })
-
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-
-	seed := []seeder.RegistryResource{
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-formula-test", []seeder.RegistryResource{
 		// lint artifact
 		&rpc.Artifact{
 			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi/artifacts/lint-spectral",
@@ -788,11 +701,7 @@ func TestProcessRollUpFormula(t *testing.T) {
 				DeleteCount: 1,
 			}),
 		},
-	}
-
-	if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
-		t.Fatalf("Setup: failed to seed registry: %s", err)
-	}
+	})
 
 	// arguments
 	formula := &scoring.RollUpFormula{
@@ -1049,29 +958,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "rollup-formula-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "rollup-formula-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "rollup-formula-test", test.seed)
 
 			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
 

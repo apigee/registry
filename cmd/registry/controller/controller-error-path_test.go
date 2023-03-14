@@ -19,32 +19,32 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/application/controller"
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
-
-func deleteProject(
-	ctx context.Context,
-	client connection.AdminClient,
-	t *testing.T,
-	projectID string) {
-	t.Helper()
-	req := &rpc.DeleteProjectRequest{
-		Name:  "projects/" + projectID,
-		Force: true,
-	}
-	err := client.DeleteProject(ctx, req)
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Failed DeleteProject(%v): %s", req, err.Error())
-	}
-}
 
 // Tests for error paths in the controller
 
 func TestControllerErrors(t *testing.T) {
+	const projectID = "controller-error-demo"
+	ctx := context.Background()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, []seeder.RegistryResource{
+		&rpc.ApiSpec{
+			Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
+			MimeType: gzipOpenAPIv3,
+		},
+		&rpc.ApiSpec{
+			Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
+			MimeType: gzipOpenAPIv3,
+		},
+		&rpc.ApiSpec{
+			Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
+			MimeType: gzipOpenAPIv3,
+		},
+	})
+	lister := &RegistryLister{RegistryClient: registryClient}
+
 	tests := []struct {
 		desc              string
 		generatedResource *controller.GeneratedResource
@@ -155,52 +155,8 @@ func TestControllerErrors(t *testing.T) {
 		},
 	}
 
-	const projectID = "controller-error-demo"
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			// Setup
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			seed := []seeder.RegistryResource{
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi",
-					MimeType: gzipOpenAPIv3,
-				},
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
-
-			lister := &RegistryLister{RegistryClient: registryClient}
-
 			// Test GeneratedResource pattern
 			actions, err := processManifestResource(ctx, lister, projectID, test.generatedResource)
 			if err == nil {

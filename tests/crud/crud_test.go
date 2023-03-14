@@ -76,47 +76,9 @@ func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 }
 
 func TestCRUD(t *testing.T) {
-	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer registryClient.Close()
-	// Create an admin client.
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer adminClient.Close()
-	// Clear the test project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name:  "projects/test",
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		if status.Code(err) != codes.NotFound {
-			check(t, "Failed to delete test project: %+v", err)
-		}
-	}
-	// Create the test project.
-	{
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "test",
-			Project: &rpc.Project{
-				DisplayName: "Test",
-				Description: "A test catalog",
-			},
-		}
-		project, err := adminClient.CreateProject(ctx, req)
-		check(t, "error creating project %s", err)
-		if project.GetName() != "projects/test" {
-			t.Errorf("Invalid project name %s", project.GetName())
-		}
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "test", nil)
+
 	// Create a map to use for labels and annotations.
 	sampleMap := map[string]string{"one": "1", "two": "2", "three": "3"}
 	// Create the sample api.
@@ -279,15 +241,6 @@ func TestCRUD(t *testing.T) {
 	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample")
 	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0")
 	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi")
-	// Delete the test project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name:  "projects/test",
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete test project: %+v", err)
-	}
 }
 
 func hashForBytes(b []byte) string {

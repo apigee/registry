@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/encoding"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
@@ -52,39 +52,8 @@ func TestProjectImports(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: failed to create client: %+v", err)
-			}
-			defer adminClient.Close()
 			project := names.Project{ProjectID: "patch-project-test"}
-			if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  project.String(),
-				Force: true,
-			}); err != nil && status.Code(err) != codes.NotFound {
-				t.Errorf("Setup: failed to delete test project: %s", err)
-			}
-
-			if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: project.ProjectID,
-				Project:   &rpc.Project{},
-			}); err != nil {
-				t.Fatalf("Setup: Failed to create test project: %s", err)
-			}
-
-			// set the configured registry.project to the test project
-			config, err := connection.ActiveConfig()
-			if err != nil {
-				t.Fatalf("Setup: Failed to get registry configuration: %s", err)
-			}
-			config.Project = project.ProjectID
-			connection.SetConfig(config)
-
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create registry client: %s", err)
-			}
-			defer registryClient.Close()
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
 
 			if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 10); err != nil {
 				t.Fatalf("Apply() returned error: %s", err)

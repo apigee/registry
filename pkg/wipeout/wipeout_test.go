@@ -19,14 +19,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/registry/test/seeder"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -43,31 +41,7 @@ func TestWipeout(t *testing.T) {
 	parentName, nil := names.ParseProjectWithLocation(parent)
 
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-
-	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  project.String(),
-		Force: true,
-	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Setup: failed to delete test project: %s", err)
-	}
-
-	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: project.ProjectID,
-		Project:   &rpc.Project{},
-	}); err != nil {
-		t.Fatalf("Setup: Failed to create test project: %s", err)
-	}
-
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, []seeder.RegistryResource{})
 
 	for k := 0; k < 2; k++ {
 		_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{

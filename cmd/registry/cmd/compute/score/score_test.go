@@ -301,36 +301,14 @@ func TestScore(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "score-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-test", test.seed)
 
 			// setup the score command
 			scoreCmd := Command()
 			args := []string{"projects/score-test/locations/global/apis/-/versions/-/specs/-"}
 			scoreCmd.SetArgs(args)
 
-			if err = scoreCmd.Execute(); err != nil {
+			if err := scoreCmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
 

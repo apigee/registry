@@ -25,7 +25,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/pkg/application/style"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -388,34 +387,11 @@ func TestConformance(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			client, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
 
 			testProject := "conformance-test"
-
-			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/" + testProject,
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Setup: Failed to delete test project: %s", err)
-			}
-
-			project, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: testProject,
-				Project: &rpc.Project{
-					DisplayName: "Demo",
-					Description: "A demo catalog",
-				},
-			})
-			if err != nil {
-				t.Fatalf("Failed to create project %s: %s", testProject, err.Error())
+			client, adminClient := grpctest.SetupRegistry(ctx, t, testProject, nil)
+			project := rpc.Project{
+				Name: "projects/" + testProject,
 			}
 
 			// Setup some resources in the project

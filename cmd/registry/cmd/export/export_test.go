@@ -19,7 +19,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -36,31 +35,15 @@ func TestMain(m *testing.M) {
 func TestExportYAML(t *testing.T) {
 	// Seed a registry with a list of leaf-level artifacts.
 	const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
-	artifacts := []*rpc.Artifact{
-		{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
+	artifacts := []seeder.RegistryResource{
+		&rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
 	}
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	if err := seeder.SeedArtifacts(ctx, client, artifacts...); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "my-project", artifacts)
 
 	// Verify that export runs for each supported resource.
 	resources := []string{
@@ -177,35 +160,15 @@ func TestExportYAML(t *testing.T) {
 func TestExportValidResourcesWithFilter(t *testing.T) {
 	// Seed a registry with a list of leaf-level artifacts.
 	const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
-	artifacts := []*rpc.Artifact{
-		{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
+	artifacts := []seeder.RegistryResource{
+		&rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
 	}
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	t.Cleanup(func() {
-		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	})
-	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	if err := seeder.SeedArtifacts(ctx, client, artifacts...); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	grpctest.SetupRegistry(ctx, t, "my-project", artifacts)
 
 	// Verify that a filter specified on a get of a collection is ok.
 	valid_collections := []string{

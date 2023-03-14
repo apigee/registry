@@ -24,11 +24,9 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestExport(t *testing.T) {
@@ -43,24 +41,9 @@ func TestExport(t *testing.T) {
 	}
 	for _, test := range tests {
 		project := names.Project{ProjectID: "patch-export-test"}
-		// Make an admin client and use it to create the project.
 		ctx := context.Background()
-		adminClient, err := connection.NewAdminClient(ctx)
-		if err != nil {
-			t.Fatalf("Setup: failed to create client: %+v", err)
-		}
-		if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-			Name:  project.String(),
-			Force: true,
-		}); err != nil && status.Code(err) != codes.NotFound {
-			t.Fatalf("Setup: failed to delete test project: %s", err)
-		}
-		if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-			ProjectId: project.ProjectID,
-			Project:   &rpc.Project{},
-		}); err != nil {
-			t.Fatalf("Setup: Failed to create test project: %s", err)
-		}
+		registryClient, _ := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
+
 		// Set the configured registry.project to the test project.
 		config, err := connection.ActiveConfig()
 		if err != nil {
@@ -68,25 +51,10 @@ func TestExport(t *testing.T) {
 		}
 		config.Project = project.ProjectID
 		connection.SetConfig(config)
-		// Make a registry client and use it to apply the test data.
-		registryClient, err := connection.NewRegistryClient(ctx)
-		if err != nil {
-			t.Fatalf("Setup: Failed to create registry client: %s", err)
-		}
+
 		if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 1); err != nil {
 			t.Fatalf("Apply() returned error: %s", err)
 		}
-
-		t.Cleanup(func() {
-			if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  project.String(),
-				Force: true,
-			}); err != nil {
-				t.Logf("Cleanup: Failed to delete test project: %s", err)
-			}
-			adminClient.Close()
-			registryClient.Close()
-		})
 
 		t.Run(test.desc+"-project", func(t *testing.T) {
 			tempDir := t.TempDir()

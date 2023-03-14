@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -86,45 +85,8 @@ func TestFilters(t *testing.T) {
 	}
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer registryClient.Close()
-	// Create an admin client.
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer adminClient.Close()
-	// Clear the filters project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name:  "projects/filters",
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		if status.Code(err) != codes.NotFound {
-			check(t, "Failed to delete filters project: %+v", err)
-		}
-	}
-	// Create the filters project.
-	{
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "filters",
-			Project: &rpc.Project{
-				DisplayName: "Test Filters",
-				Description: "A project for testing filtering",
-			},
-		}
-		project, err := adminClient.CreateProject(ctx, req)
-		check(t, "error creating project %s", err)
-		if project.GetName() != "projects/filters" {
-			t.Errorf("Invalid project name %s", project.GetName())
-		}
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "filters", nil)
+
 	// Create some sample apis.
 	apiParent := "projects/filters/locations/global"
 	for i := 0; i < len(testLabels); i++ {
@@ -257,13 +219,6 @@ func TestFilters(t *testing.T) {
 			t.Errorf("Incorrect count for filter %s: %d, expected %d", testFilter.filter, count, testFilter.expectedCount)
 		}
 	}
-	// Delete the test project.
-	req := &rpc.DeleteProjectRequest{
-		Name:  "projects/filters",
-		Force: true,
-	}
-	err = adminClient.DeleteProject(ctx, req)
-	check(t, "Failed to delete filters project: %+v", err)
 }
 
 func countApis(it *gapic.ApiIterator) (int, error) {

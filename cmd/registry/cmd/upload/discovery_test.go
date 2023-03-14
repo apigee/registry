@@ -21,11 +21,9 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func startTestServer() *http.Server {
@@ -54,40 +52,12 @@ func TestDiscoveryUpload(t *testing.T) {
 	// Start a test server to mock the Discovery Service.
 	testServer := startTestServer()
 	defer func() { _ = testServer.Shutdown(ctx) }()
-	// Create a registry client.
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer registryClient.Close()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer adminClient.Close()
-	// Clear the test project.
-	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  projectName,
-		Force: true,
-	})
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Error deleting test project: %+v", err)
-	}
-	// Create the test project.
-	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: projectID,
-		Project: &rpc.Project{
-			DisplayName: "Test",
-			Description: "A test catalog",
-		},
-	})
-	if err != nil {
-		t.Fatalf("Error creating project %s", err)
-	}
+	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, projectID, nil)
+
 	// Run the upload command.
 	cmd := Command()
 	cmd.SetArgs(args)
-	err = cmd.Execute()
+	err := cmd.Execute()
 	if err != nil {
 		t.Errorf("Error running upload %v", err)
 	}

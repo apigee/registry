@@ -20,7 +20,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -36,28 +35,13 @@ func TestMain(m *testing.M) {
 
 func TestCheck(t *testing.T) {
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	spec := &rpc.ApiSpec{
-		Name:     "projects/my-project/locations/global/apis/a/versions/v/specs/bad",
-		MimeType: "application/html",
-		Contents: []byte("some text"),
-	}
-	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	grpctest.SetupRegistry(ctx, t, "my-project", []seeder.RegistryResource{
+		&rpc.ApiSpec{
+			Name:     "projects/my-project/locations/global/apis/a/versions/v/specs/bad",
+			MimeType: "application/html",
+			Contents: []byte("some text"),
+		},
+	})
 
 	buf := &bytes.Buffer{}
 	cmd := Command()

@@ -20,6 +20,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/gapic"
@@ -93,6 +94,8 @@ func TestMain(m *testing.M, rc registry.Config) {
 // test to close the connections and delete the project.
 func SetupRegistry(ctx context.Context, t *testing.T, projectID string, seeds []seeder.RegistryResource) (*gapic.RegistryClient, *gapic.AdminClient) {
 	t.Helper()
+	projectID = strings.TrimPrefix(projectID, "projects/")
+
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create client: %+v", err)

@@ -22,10 +22,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/compress"
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestProtos(t *testing.T) {
@@ -36,35 +34,8 @@ func TestProtos(t *testing.T) {
 	)
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer registryClient.Close()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer adminClient.Close()
-	// Clear the test project.
-	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  projectName,
-		Force: true,
-	})
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Error deleting test project: %+v", err)
-	}
-	// Create the test project.
-	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: projectID,
-		Project: &rpc.Project{
-			DisplayName: "Test",
-			Description: "A test catalog",
-		},
-	})
-	if err != nil {
-		t.Fatalf("Error creating project %s", err)
-	}
+	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, projectID, nil)
+
 	cmd := Command()
 	args := []string{"protos", "testdata/protos", "--parent", parent}
 	cmd.SetArgs(args)
@@ -140,7 +111,7 @@ func TestProtos(t *testing.T) {
 		Name:  projectName,
 		Force: true,
 	}
-	err = adminClient.DeleteProject(ctx, req)
+	err := adminClient.DeleteProject(ctx, req)
 	if err != nil {
 		t.Fatalf("Failed to delete test project: %s", err)
 	}

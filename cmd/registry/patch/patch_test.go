@@ -67,18 +67,11 @@ func TestProjectPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
+
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, test.resourceID, nil)
+
 			b, err := os.ReadFile(test.yamlFile)
 			if err != nil {
 				t.Fatalf("%s", err)
@@ -180,26 +173,8 @@ func TestApiPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	project := &rpc.Project{
-		Name: "projects/patch-api-test",
-	}
-	if err := seeder.SeedProjects(ctx, client, project); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "projects/patch-api-test", nil)
+
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
@@ -283,26 +258,12 @@ func TestVersionPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	api := &rpc.Api{
-		Name: root + "/apis/registry",
-	}
-	if err := seeder.SeedApis(ctx, client, api); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-version-test", []seeder.RegistryResource{
+		&rpc.Api{
+			Name: root + "/apis/registry",
+		},
+	})
+
 	for _, test := range tests {
 		t.Run(test.resourceID, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
@@ -386,26 +347,12 @@ func TestSpecPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	version := &rpc.ApiVersion{
-		Name: root + "/apis/registry/versions/v1",
-	}
-	if err := seeder.SeedVersions(ctx, client, version); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-spec-test", []seeder.RegistryResource{
+		&rpc.ApiVersion{
+			Name: root + "/apis/registry/versions/v1",
+		},
+	})
+
 	for _, test := range tests {
 		t.Run(test.resourceID, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
@@ -492,26 +439,12 @@ func TestDeploymentPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	api := &rpc.Api{
-		Name: root + "/apis/registry",
-	}
-	if err := seeder.SeedApis(ctx, client, api); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-deployment-test", []seeder.RegistryResource{
+		&rpc.Api{
+			Name: root + "/apis/registry",
+		},
+	})
+
 	for _, test := range tests {
 		t.Run(test.resourceID, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
@@ -1077,26 +1010,12 @@ func TestMessageArtifactPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	spec := &rpc.ApiSpec{
-		Name: root + "/apis/a/versions/v/specs/s",
-	}
-	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-message-artifact-test", []seeder.RegistryResource{
+		&rpc.ApiSpec{
+			Name: root + "/apis/a/versions/v/specs/s",
+		},
+	})
+
 	for _, test := range tests {
 		t.Run(test.artifactID, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
@@ -1175,26 +1094,12 @@ func TestYamlArtifactPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	spec := &rpc.ApiSpec{
-		Name: root + "/apis/a/versions/v/specs/s",
-	}
-	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-message-artifact-test", []seeder.RegistryResource{
+		&rpc.ApiSpec{
+			Name: root + "/apis/a/versions/v/specs/s",
+		},
+	})
+
 	for _, test := range tests {
 		t.Run(test.artifactID, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
@@ -1268,26 +1173,12 @@ func TestInvalidArtifactPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	spec := &rpc.ApiSpec{
-		Name: root + "/apis/a/versions/v/specs/s",
-	}
-	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-message-artifact-test", []seeder.RegistryResource{
+		&rpc.ApiSpec{
+			Name: root + "/apis/a/versions/v/specs/s",
+		},
+	})
+
 	for _, test := range tests {
 		t.Run(test.artifactID, func(t *testing.T) {
 			yamlFile := "testdata/invalid-artifacts/" + test.artifactID + ".yaml"
