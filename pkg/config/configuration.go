@@ -15,6 +15,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,6 +40,9 @@ type Registry struct {
 	Project  string `mapstructure:"project" yaml:"project"`
 	Token    string `mapstructure:"token" yaml:"-"` // generated from TokenSource
 }
+
+// if a name is unqualified, attempt this namespace
+const default_namespace = "registry"
 
 // Write stores the Configuration in the passed file name.
 func (c Configuration) Write(name string) error {
@@ -85,18 +89,38 @@ func (c Configuration) FlatMap() (map[string]interface{}, error) {
 	return flat, err
 }
 
-// Set sets a property from a qualified name.
+// Set sets a property from a qualified or default namespace name.
 func (c *Configuration) Set(k string, v interface{}) error {
+	if !strings.Contains(k, ".") {
+		k = default_namespace + "." + k
+	}
 	return c.FromMap(map[string]interface{}{
 		k: v,
 	})
 }
 
-// Unset removed a property by qualified name.
+// Unset removed a property by qualified or default namespace name.
 func (c *Configuration) Unset(k string) error {
+	if !strings.Contains(k, ".") {
+		k = default_namespace + "." + k
+	}
 	return c.FromMap(map[string]interface{}{
 		k: "",
 	})
+}
+
+// Get gets a property from a qualified or default namespace name.
+func (c *Configuration) Get(k string) (interface{}, error) {
+	m, err := c.FlatMap()
+	if err != nil {
+		return "", fmt.Errorf("Cannot decode config: %v", err)
+	}
+
+	if !strings.Contains(k, ".") {
+		k = default_namespace + "." + k
+	}
+
+	return m[k], nil
 }
 
 // FromMap populates a Configuration from a flat Map.
