@@ -159,7 +159,7 @@ func (task *ComputeConformanceTask) invokeLinter(
 		RuleIds:       metadata.rules,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed marshaling linterRequest, Error: %s ", err)
+		return nil, fmt.Errorf("failed marshaling linterRequest, Error: %s ", err)
 	}
 
 	executableName := getLinterBinaryName(metadata.name)
@@ -171,7 +171,7 @@ func (task *ComputeConformanceTask) invokeLinter(
 	// Run the linter.
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("Running the plugin %s return error: %s", executableName, err)
+		return nil, fmt.Errorf("running the plugin %s return error: %s", executableName, err)
 	}
 
 	pluginElapsedTime := time.Since(pluginStartTime)
@@ -181,12 +181,12 @@ func (task *ComputeConformanceTask) invokeLinter(
 	linterResponse := &style.LinterResponse{}
 	err = proto.Unmarshal(output, linterResponse)
 	if err != nil {
-		return nil, fmt.Errorf("Failed unmarshalling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
+		return nil, fmt.Errorf("failed unmarshalling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
 	}
 
 	// Check if there were any errors in the plugin.
 	if len(linterResponse.GetErrors()) > 0 {
-		return nil, fmt.Errorf("Plugin %s encountered errors: %v", executableName, linterResponse.GetErrors())
+		return nil, fmt.Errorf("plugin %s encountered errors: %v", executableName, linterResponse.GetErrors())
 	}
 
 	return linterResponse, nil

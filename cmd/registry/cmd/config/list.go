@@ -32,14 +32,14 @@ func listCommand() *cobra.Command {
 			target, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
-					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+					return fmt.Errorf(`no active configuration, use 'registry config configurations' to manage`)
 				}
-				return fmt.Errorf("Cannot read config: %v", err)
+				return fmt.Errorf("cannot read config: %v", err)
 			}
 
 			m, err := c.FlatMap()
 			if err != nil {
-				return fmt.Errorf("Cannot decode config: %v", err)
+				return fmt.Errorf("cannot decode config: %v", err)
 			}
 			for _, p := range c.Properties() {
 				if m[p] != nil {

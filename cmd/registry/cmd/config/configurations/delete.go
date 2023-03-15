@@ -48,7 +48,7 @@ func deleteCommand() *cobra.Command {
 				if yn == "" || yn == "y" || yn == "yes" {
 					break
 				} else if yn == "n" || yn == "no" {
-					return fmt.Errorf("Aborted by user.")
+					return fmt.Errorf("aborted by user")
 				}
 				cmd.Print("Please enter 'y' or 'n': ")
 			}
@@ -56,7 +56,7 @@ func deleteCommand() *cobra.Command {
 			for _, name := range args {
 				err := config.Delete(name)
 				if err != nil {
-					return fmt.Errorf("Cannot delete config %q: %v.", name, err)
+					return fmt.Errorf("cannot delete config %q: %v", name, err)
 				}
 				cmd.Printf("Deleted %q.\n", name)
 			}

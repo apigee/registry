@@ -214,7 +214,7 @@ func generateUpdateActions(
 		if takeAction {
 			cmd, err := generateCommand(generatedResource.Action, targetResource.ResourceName().String())
 			if err != nil {
-				return nil, nil, fmt.Errorf("Cannot generate command: %s", err)
+				return nil, nil, fmt.Errorf("cannot generate command: %s", err)
 			}
 			a := &Action{
 				Command:           cmd,

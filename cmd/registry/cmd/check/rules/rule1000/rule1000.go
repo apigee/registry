@@ -65,7 +65,7 @@ var requiredArtifacts = &lint.ProjectRule{
 			found[a.GetName()] = true
 
 			name, _ := names.ParseArtifact(a.GetName())
-			if "apihub-taxonomies" == name.ArtifactID() {
+			if name.ArtifactID() == "apihub-taxonomies" {
 				probs = append(probs, checkTaxonomies(a)...)
 			}
 
