@@ -3,3 +3,4 @@ cloudtasks,v2beta2,openapi,testdata/csv/cloudtasks/v2beta2/openapi.yaml
 cloudtasks,v2,openapi,testdata/csv/cloudtasks/v2/openapi.yaml
 datastore,v1beta1,openapi,testdata/csv/datastore/v1beta1/openapi.yaml
 datastore,v1,openapi,testdata/csv/datastore/v1/openapi.yaml
+swagger,v1,openapi,testdata/openapi/petstore/2.0/swagger.yaml

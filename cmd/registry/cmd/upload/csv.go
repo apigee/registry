@@ -30,6 +30,8 @@ import (
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
+	oas2 "github.com/google/gnostic/openapiv2"
+	oas3 "github.com/google/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -226,6 +228,14 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return err
 	}
 
+	oasVer := "unknown"
+	if doc, err := oas3.ParseDocument(contents); err == nil {
+		oasVer = doc.Openapi
+	} else if doc, err := oas2.ParseDocument(contents); err == nil {
+		oasVer = doc.Swagger
+	}
+	oasMimeType := mime.OpenAPIMimeType("+gzip", oasVer)
+
 	compressed, err := compress.GZippedBytes(contents)
 	if err != nil {
 		return err
@@ -236,8 +246,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		Parent:    specName.Parent(),
 		ApiSpecId: specName.SpecID,
 		ApiSpec: &rpc.ApiSpec{
-			// TODO: How do we choose a mime type?
-			MimeType: mime.OpenAPIMimeType("+gzip", "3.0.0"),
+			MimeType: oasMimeType,
 			Contents: compressed,
 		},
 	})
