@@ -59,7 +59,11 @@ func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, 
 			if err != nil {
 				return err
 			}
-			return patches.parse(client, bytes, fileName, project)
+			err = patches.parse(client, bytes, fileName, project)
+			if err != nil {
+				err = fmt.Errorf("parsing %s: %w", fileName, err)
+			}
+			return err
 		})
 	if err != nil {
 		return err
