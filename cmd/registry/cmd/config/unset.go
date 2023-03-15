@@ -32,17 +32,17 @@ func unsetCommand() *cobra.Command {
 			target, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
-					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+					return fmt.Errorf(`no active configuration, use 'registry config configurations' to manage`)
 				}
-				return fmt.Errorf("Cannot read config: %v", err)
+				return fmt.Errorf("cannot read config: %v", err)
 			}
 
 			if err = c.Unset(args[0]); err != nil {
-				return fmt.Errorf("Cannot unset property: %v", err)
+				return fmt.Errorf("cannot unset property: %v", err)
 			}
 
 			if err = c.Write(target); err != nil {
-				return fmt.Errorf("Cannot write config: %v", err)
+				return fmt.Errorf("cannot write config: %v", err)
 			}
 
 			cmd.Printf("Unset property %q.\n", args[0])

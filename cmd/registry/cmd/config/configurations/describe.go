@@ -33,16 +33,16 @@ func describeCommand() *cobra.Command {
 			name := args[0]
 			s, err := config.Read(name)
 			if err != nil {
-				return fmt.Errorf("Cannot read config %q: %v", name, err)
+				return fmt.Errorf("cannot read config %q: %v", name, err)
 			}
 			settingsMap, err := s.FlatMap()
 			if err != nil {
-				return fmt.Errorf("Cannot decode config %q: %v", name, err)
+				return fmt.Errorf("cannot decode config %q: %v", name, err)
 			}
 
 			activeName, err := config.ActiveName()
 			if err != nil {
-				return fmt.Errorf("Cannot read active config %q: %v", name, err)
+				return fmt.Errorf("cannot read active config %q: %v", name, err)
 			}
 
 			sortedNames := make([]string, 0, len(settingsMap))

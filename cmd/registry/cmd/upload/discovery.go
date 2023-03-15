@@ -155,7 +155,7 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 		// Returning this error ends all tasks, which seems appropriate to
 		// handle situations where all might fail due to a common problem
 		// (a missing project or incorrect project-id).
-		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
+		return fmt.Errorf("failed to create %s, %s", task.apiName(), err)
 	}
 
 	return nil

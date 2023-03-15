@@ -198,7 +198,7 @@ func FullResourceNameFromParent(resourcePattern string, parent string) (Resource
 
 	parsedResourcePattern, err := ParseResourcePattern(resourcePattern)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid target Pattern: %s", err)
+		return nil, fmt.Errorf("invalid target Pattern: %s", err)
 	}
 
 	// Replace the parent pattern in the resourcePattern with the supplied pattern name

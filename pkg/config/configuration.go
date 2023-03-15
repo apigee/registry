@@ -113,7 +113,7 @@ func (c *Configuration) Unset(k string) error {
 func (c *Configuration) Get(k string) (interface{}, error) {
 	m, err := c.FlatMap()
 	if err != nil {
-		return "", fmt.Errorf("Cannot decode config: %v", err)
+		return "", fmt.Errorf("cannot decode config: %v", err)
 	}
 
 	if !strings.Contains(k, ".") {

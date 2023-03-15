@@ -38,12 +38,12 @@ func listCommand() *cobra.Command {
 				cmd.Println("You don't have any configurations. Run 'registry config configurations create' to create a configuration.")
 				return nil
 			} else if err != nil {
-				return fmt.Errorf("Cannot read configs: %v", err)
+				return fmt.Errorf("cannot read configs: %v", err)
 			}
 
 			activeName, err := config.ActiveName()
 			if err != nil {
-				return fmt.Errorf("Cannot read active config: %v", err)
+				return fmt.Errorf("cannot read active config: %v", err)
 			}
 
 			names := make([]string, 0, len(configs))

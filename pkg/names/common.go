@@ -38,7 +38,7 @@ var customIdentifier = regexp.MustCompile(`^[a-z0-9-.]+$`)
 
 // validateID returns an error if the provided ID is invalid.
 func validateID(id string) error {
-	if "" == id {
+	if id == "" {
 		return fmt.Errorf("invalid identifier %q: identifier must be nonempty", id)
 	} else if !customIdentifier.MatchString(id) {
 		return fmt.Errorf("invalid identifier %q: must match %q", id, customIdentifier)

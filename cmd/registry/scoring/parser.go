@@ -353,7 +353,7 @@ func GenerateCombinedPattern(targetPattern *scoring.ResourcePattern, inputPatter
 
 		return mergedPatternName.String(), mergedFilter, nil
 	default:
-		return "", "", fmt.Errorf("Unsupported pattern in either targetPattern %q or inputPattern %q", targetPatternName.String(), inputPatternName.String())
+		return "", "", fmt.Errorf("unsupported pattern in either targetPattern %q or inputPattern %q", targetPatternName.String(), inputPatternName.String())
 	}
 }
 
@@ -381,5 +381,5 @@ func findCommonPattern(a, b string) (string, error) {
 	if a != "-" && b == "-" {
 		return a, nil
 	}
-	return "", fmt.Errorf("Cannot find common pattern")
+	return "", fmt.Errorf("cannot find common pattern")
 }
