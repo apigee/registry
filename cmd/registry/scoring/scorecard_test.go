@@ -20,7 +20,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/application/scoring"
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
@@ -492,29 +492,7 @@ func TestCalculateScoreCard(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "score-card-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-card-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-card-test", test.seed)
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{
@@ -1029,29 +1007,7 @@ func TestProcessScorePatterns(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "score-patterns-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-patterns-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-patterns-test", test.seed)
 
 			definition := &scoring.ScoreCardDefinition{
 				Id:          "quality",
@@ -1190,29 +1146,7 @@ func TestProcessScorePatternsError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "score-patterns-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "score-patterns-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "score-patterns-test", test.seed)
 
 			resource := patterns.SpecResource{
 				Spec: &rpc.ApiSpec{

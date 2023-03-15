@@ -19,15 +19,12 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/application/scoring"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -46,22 +43,6 @@ const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.
 func protoMarshal(m proto.Message) []byte {
 	b, _ := proto.Marshal(m)
 	return b
-}
-
-func deleteProject(
-	ctx context.Context,
-	client connection.AdminClient,
-	t *testing.T,
-	projectID string) {
-	t.Helper()
-	req := &rpc.DeleteProjectRequest{
-		Name:  "projects/" + projectID,
-		Force: true,
-	}
-	err := client.DeleteProject(ctx, req)
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Failed DeleteProject(%v): %s", req, err.Error())
-	}
 }
 
 var (
@@ -256,36 +237,14 @@ func TestScoreCard(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "scorecard-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "scorecard-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "scorecard-test", test.seed)
 
 			// setup the score command
 			scoreCardCmd := Command()
 			args := []string{"projects/scorecard-test/locations/global/apis/-/versions/-/specs/-"}
 			scoreCardCmd.SetArgs(args)
 
-			if err = scoreCardCmd.Execute(); err != nil {
+			if err := scoreCardCmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
 

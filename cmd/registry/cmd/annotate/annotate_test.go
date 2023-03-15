@@ -18,13 +18,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -50,37 +47,10 @@ func TestAnnotate(t *testing.T) {
 
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer registryClient.Close()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer adminClient.Close()
-	// Clear the test project.
-	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  projectName,
-		Force: true,
-	})
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Error deleting test project: %+v", err)
-	}
-	// Create the test project.
-	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: projectID,
-		Project: &rpc.Project{
-			DisplayName: "Test",
-			Description: "A test catalog",
-		},
-	})
-	if err != nil {
-		t.Fatalf("Error creating project %s", err)
-	}
+	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, projectName, nil)
+
 	// Create a sample api.
-	_, err = registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
+	_, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 		Parent: projectName + "/locations/global",
 		ApiId:  apiID,
 		Api:    &rpc.Api{},

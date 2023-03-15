@@ -18,11 +18,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestFetch(t *testing.T) {
@@ -34,36 +32,8 @@ func TestFetch(t *testing.T) {
 	artifactContents := "hello"
 
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  project.String(),
-		Force: true,
-	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Setup: failed to delete test project: %s", err)
-	}
-	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: project.ProjectID,
-		Project:   &rpc.Project{},
-	}); err != nil {
-		t.Fatalf("Setup: Failed to create test project: %s", err)
-	}
-	t.Cleanup(func() {
-		if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-			Name:  project.String(),
-			Force: true,
-		}); err != nil && status.Code(err) != codes.NotFound {
-			t.Fatalf("Setup: failed to delete test project: %s", err)
-		}
-		adminClient.Close()
-	})
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, projectID, nil)
+
 	api, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 		ApiId:  "a",
 		Parent: parent,

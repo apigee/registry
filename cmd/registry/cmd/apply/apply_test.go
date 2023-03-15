@@ -22,10 +22,7 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
-	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -42,31 +39,7 @@ func TestApply(t *testing.T) {
 	parent := project.String() + "/locations/global"
 
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-
-	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  project.String(),
-		Force: true,
-	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Errorf("Setup: failed to delete test project: %s", err)
-	}
-
-	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: project.ProjectID,
-		Project:   &rpc.Project{},
-	}); err != nil {
-		t.Fatalf("Setup: Failed to create test project: %s", err)
-	}
-
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
+	grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
 
 	// Test various normal invocations of `registry apply`
 	tests := []struct {
@@ -102,31 +75,7 @@ func TestApplyErrors(t *testing.T) {
 	parent := project.String() + "/locations/global"
 
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-
-	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  project.String(),
-		Force: true,
-	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Errorf("Setup: failed to delete test project: %s", err)
-	}
-
-	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: project.ProjectID,
-		Project:   &rpc.Project{},
-	}); err != nil {
-		t.Fatalf("Setup: Failed to create test project: %s", err)
-	}
-
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
+	grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
 
 	// clear the configured registry.project
 	config, err := connection.ActiveConfig()
@@ -176,31 +125,7 @@ func TestApply_Stdin(t *testing.T) {
 	parent := project.String() + "/locations/global"
 
 	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-
-	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  project.String(),
-		Force: true,
-	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Errorf("Setup: failed to delete test project: %s", err)
-	}
-
-	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: project.ProjectID,
-		Project:   &rpc.Project{},
-	}); err != nil {
-		t.Fatalf("Setup: Failed to create test project: %s", err)
-	}
-
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
+	grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
 
 	tests := []struct {
 		desc string

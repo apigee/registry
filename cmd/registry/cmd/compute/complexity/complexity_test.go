@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
@@ -89,32 +88,12 @@ func TestComplexity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			client, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
 			testProject := "complexity-test"
-			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/" + testProject,
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Setup: Failed to delete test project: %s", err)
+			client, adminClient := grpctest.SetupRegistry(ctx, t, testProject, nil)
+			project := rpc.Project{
+				Name: "projects/" + testProject,
 			}
-			project, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: testProject,
-				Project: &rpc.Project{
-					DisplayName: testProject,
-					Description: "Test project",
-				},
-			})
-			if err != nil {
-				t.Fatalf("Failed to create project %s: %s", testProject, err.Error())
-			}
+
 			api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
 				Parent: project.Name + "/locations/global",
 				ApiId:  test.apiId,

@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
@@ -101,41 +100,14 @@ func TestResolve(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			client, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
-
 			testProject := "controller-demo"
-
-			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/" + testProject,
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Setup: Failed to delete test project: %s", err)
-			}
-
-			project, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: testProject,
-				Project: &rpc.Project{
-					DisplayName: "Demo",
-					Description: "A demo catalog",
-				},
-			})
-			if err != nil {
-				t.Fatalf("Failed to create project %s: %s", testProject, err.Error())
-			}
+			client, adminClient := grpctest.SetupRegistry(ctx, t, testProject, nil)
 
 			// Setup some resources in the project
 
 			// Create API
 			api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
-				Parent: project.Name + "/locations/global",
+				Parent: "projects/" + testProject + "/locations/global",
 				ApiId:  "petstore",
 				Api: &rpc.Api{
 					DisplayName:  "petstore",

@@ -51,27 +51,7 @@ func setup(t *testing.T) (context.Context, connection.RegistryClient) {
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/b/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 	}
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	t.Cleanup(func() {
-		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	})
-	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "my-project", seed)
 	return ctx, registryClient
 }
 
@@ -130,27 +110,7 @@ func setupWithoutArtifacts(t *testing.T) (context.Context, connection.RegistryCl
 		&rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"},
 	}
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { registryClient.Close() })
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create client: %+v", err)
-	}
-	t.Cleanup(func() { adminClient.Close() })
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	t.Cleanup(func() {
-		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	})
-	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "my-project", seed)
 	return ctx, registryClient
 }
 

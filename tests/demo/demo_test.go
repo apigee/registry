@@ -123,45 +123,8 @@ func TestDemo(t *testing.T) {
 
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer registryClient.Close()
-	// Create an admin client.
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer adminClient.Close()
-	// Clear the demo project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name:  "projects/demo",
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		if status.Code(err) != codes.NotFound {
-			check(t, "Failed to delete demo project: %+v", err)
-		}
-	}
-	// Create the demo project.
-	{
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "demo",
-			Project: &rpc.Project{
-				DisplayName: "Demo",
-				Description: "A demo catalog",
-			},
-		}
-		project, err := adminClient.CreateProject(ctx, req)
-		check(t, "error creating project %s", err)
-		if project.GetName() != "projects/demo" {
-			t.Errorf("Invalid project name %s", project.GetName())
-		}
-	}
+	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "demo", nil)
+
 	// List the demo project. This should return exactly one result.
 	{
 		req := &rpc.ListProjectsRequest{
@@ -392,14 +355,5 @@ func TestDemo(t *testing.T) {
 		if len(revisionIDs) != 0 {
 			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
 		}
-	}
-	// Delete the demo project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name:  "projects/demo",
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete demo project: %+v", err)
 	}
 }
