@@ -38,7 +38,7 @@ func TestNoActiveConfig(t *testing.T) {
 
 	checkErr := func(t *testing.T, err error) {
 		t.Helper()
-		want := fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+		want := fmt.Errorf(`no active configuration, use 'registry config configurations' to manage`)
 		if err == nil {
 			t.Errorf("expected error: %s", want)
 		} else if diff := cmp.Diff(want.Error(), err.Error()); diff != "" {

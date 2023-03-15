@@ -159,17 +159,17 @@ properties:
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config1"})
 	cmd.SetIn(strings.NewReader("Y\n"))
-	want = "Cannot delete config \"config1\": Cannot delete active configuration."
+	want = "cannot delete config \"config1\": cannot delete active configuration"
 	if err = cmd.Execute(); err == nil || err.Error() != want {
-		t.Errorf("expected error: %s", want)
+		t.Errorf("unexpected error, want: %s, got: %s", want, err.Error())
 	}
 
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config2"})
 	cmd.SetIn(strings.NewReader("N\n"))
-	want = "Aborted by user."
+	want = "aborted by user"
 	if err = cmd.Execute(); err == nil || err.Error() != want {
-		t.Errorf("expected error: %s", want)
+		t.Errorf("unexpected error, want: %s, got: %s", want, err.Error())
 	}
 
 	cmd = deleteCommand()

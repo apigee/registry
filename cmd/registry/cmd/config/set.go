@@ -40,9 +40,9 @@ func setCommand() *cobra.Command {
 			target, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
-					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+					return fmt.Errorf(`no active configuration, use 'registry config configurations' to manage`)
 				}
-				return fmt.Errorf("Cannot read config: %v", err)
+				return fmt.Errorf("cannot read config: %v", err)
 			}
 
 			name, value := args[0], args[1]
@@ -51,11 +51,11 @@ func setCommand() *cobra.Command {
 			}
 
 			if err = c.Set(name, value); err != nil {
-				return fmt.Errorf("Cannot set value: %v", err)
+				return fmt.Errorf("cannot set value: %v", err)
 			}
 
 			if err = c.Write(target); err != nil {
-				return fmt.Errorf("Cannot write config: %v", err)
+				return fmt.Errorf("cannot write config: %v", err)
 			}
 
 			cmd.Printf("Updated property %q.\n", name)

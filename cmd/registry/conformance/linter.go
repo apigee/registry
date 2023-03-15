@@ -75,7 +75,7 @@ func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*linterMet
 	}
 
 	if len(linterNameToMetadata) == 0 {
-		return nil, fmt.Errorf("Empty linter metadata")
+		return nil, fmt.Errorf("empty linter metadata")
 	}
 	return linterNameToMetadata, nil
 }
