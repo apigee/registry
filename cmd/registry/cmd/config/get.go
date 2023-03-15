@@ -32,9 +32,9 @@ func getCommand() *cobra.Command {
 			_, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
-					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+					return fmt.Errorf(`no active configuration, use 'registry config configurations' to manage`)
 				}
-				return fmt.Errorf("Cannot read config: %v", err)
+				return fmt.Errorf("cannot read config: %v", err)
 			}
 
 			if !contains(c.Properties(), args[0]) {
@@ -43,7 +43,7 @@ func getCommand() *cobra.Command {
 
 			v, err := c.Get(args[0])
 			if err != nil {
-				return fmt.Errorf("Cannot decode config: %v", err)
+				return fmt.Errorf("cannot decode config: %v", err)
 			}
 
 			cmd.Println(v)

@@ -32,7 +32,7 @@ import (
 const ActivePointerFilename = "active_config"
 
 var (
-	ErrNoActiveConfiguration = fmt.Errorf("No active configuration.")
+	ErrNoActiveConfiguration = fmt.Errorf("no active configuration")
 
 	// Flags defines Flags that may be bound to a Configuration. Use like:
 	// `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
@@ -40,7 +40,7 @@ var (
 
 	// Directory is $HOME/config/registry
 	Directory             string
-	ErrCannotDeleteActive = fmt.Errorf("Cannot delete active configuration")
+	ErrCannotDeleteActive = fmt.Errorf("cannot delete active configuration")
 	ErrReservedConfigName = fmt.Errorf("%q is reserved", ActivePointerFilename)
 
 	envBindings    = []string{"registry.address", "registry.insecure", "registry.token"}
@@ -217,7 +217,7 @@ func ReadValid(name string) (c Configuration, err error) {
 func Read(name string) (c Configuration, err error) {
 	dir, file := filepath.Split(name)
 	if file == "" {
-		return c, fmt.Errorf("Configuration name cannot be empty.")
+		return c, fmt.Errorf("configuration name cannot be empty")
 	}
 
 	if dir == "" {

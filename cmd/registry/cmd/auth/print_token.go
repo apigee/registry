@@ -33,7 +33,7 @@ func printTokenCommand() *cobra.Command {
 			_, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
-					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+					return fmt.Errorf(`no active configuration, use 'registry config configurations' to manage`)
 				}
 				return err
 			}
@@ -43,7 +43,7 @@ func printTokenCommand() *cobra.Command {
 			}
 
 			if c.TokenSource == "" {
-				return fmt.Errorf("No token source found. Use `registry config set token-source` to define.")
+				return fmt.Errorf("no token source found, use `registry config set token-source` to define")
 			}
 
 			token, err := genToken(c.TokenSource)

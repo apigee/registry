@@ -36,12 +36,12 @@ func activateCommand() *cobra.Command {
 
 			_, err := config.Read(name)
 			if err != nil {
-				return fmt.Errorf("Cannot read config %q: %v", name, err)
+				return fmt.Errorf("cannot read config %q: %v", name, err)
 			}
 
 			err = config.Activate(name)
 			if err != nil {
-				return fmt.Errorf("Cannot activate config %q: %v", name, err)
+				return fmt.Errorf("cannot activate config %q: %v", name, err)
 			}
 
 			cmd.Printf("Activated %q.\n", name)
