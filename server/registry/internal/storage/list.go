@@ -1130,16 +1130,11 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 // may be joined with dependant tables (eg. artifacts, blobs) to ensure that only the
 // rows in those tables that are associated with the more recent spec revision are matched.
 func (c *Client) latestSpecRevisionsQuery(ctx context.Context) *gorm.DB {
+	inner := c.db.Table("specs").
+		Select("*, row_number() over(partition by project_id,api_id,version_id,spec_id order by revision_create_time desc) as rn")
 	return c.db.WithContext(ctx).
-		Table("specs s").
-		Select("s.*").
-		Joins(`LEFT JOIN specs s2
-		ON s.project_id = s2.project_id
-		AND s.api_id = s2.api_id
-		AND s.version_id = s2.version_id
-		AND s.spec_id = s2.spec_id
-		AND s.revision_create_time < s2.revision_create_time`).
-		Where("s2.key IS NULL")
+		Table("(?) as t", inner).
+		Where("t.rn = 1")
 }
 
 func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
@@ -1284,15 +1279,11 @@ func (c *Client) ListDeploymentRevisionArtifacts(ctx context.Context, parent nam
 // may be joined with dependant tables (eg. artifacts, blobs) to ensure that only the
 // rows in those tables that are associated with the more recent deployment revision are matched.
 func (c *Client) latestDeploymentRevisionsQuery(ctx context.Context) *gorm.DB {
+	inner := c.db.Table("deployments").
+		Select("*, row_number() over(partition by project_id,api_id,deployment_id order by revision_create_time desc) as rn")
 	return c.db.WithContext(ctx).
-		Table("deployments d").
-		Select("d.*").
-		Joins(`LEFT JOIN deployments d2
-		ON d.project_id = d2.project_id
-		AND d.api_id = d2.api_id
-		AND d.deployment_id = d2.deployment_id
-		AND d.revision_create_time < d2.revision_create_time`).
-		Where("d2.key IS NULL")
+		Table("(?) as t", inner).
+		Where("t.rn = 1")
 }
 
 func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
