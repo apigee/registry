@@ -442,7 +442,7 @@ func TestConformance(t *testing.T) {
 			}
 
 			// Apply the styleguide to the registry
-			args := []string{test.conformancePath, "--parent", "projects/" + testProject + "/locations/global"}
+			args := []string{"-f", test.conformancePath, "--parent", "projects/" + testProject + "/locations/global"}
 			applyCmd := apply.Command()
 			applyCmd.SetArgs(args)
 			if err = applyCmd.Execute(); err != nil {

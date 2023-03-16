@@ -48,19 +48,15 @@ func TestApply(t *testing.T) {
 	}{
 		{
 			desc: "apis-registry.yaml",
-			args: []string{sampleDir + "/apis/registry.yaml", "--parent", parent, "--jobs", "1"},
+			args: []string{"-f", sampleDir + "/apis/registry.yaml", "--parent", parent, "--jobs", "1"},
 		},
 		{
 			desc: "artifacts-lifecycle.yaml",
-			args: []string{sampleDir + "/artifacts/lifecycle.yaml", "--parent", parent, "--jobs", "1"},
+			args: []string{"-f", sampleDir + "/artifacts/lifecycle.yaml", "--parent", parent, "--jobs", "1"},
 		},
 		{
 			desc: "sample",
-			args: []string{sampleDir, "-R", "--parent", parent, "--jobs", "1"},
-		},
-		{
-			desc: "sample apis and artifacts",
-			args: []string{sampleDir + "/apis", sampleDir + "/artifacts", "-R", "--parent", parent, "--jobs", "1"},
+			args: []string{"-f", sampleDir, "-R", "--parent", parent, "--jobs", "1"},
 		},
 	}
 	for _, test := range tests {
@@ -96,7 +92,7 @@ func TestApplyErrors(t *testing.T) {
 	}{
 		{
 			desc: "input file not found",
-			args: []string{sampleDir + "/missing.yaml", "--parent", parent},
+			args: []string{"-f", sampleDir + "/missing.yaml", "--parent", parent},
 		},
 		{
 			desc: "no input file specified",
@@ -104,15 +100,11 @@ func TestApplyErrors(t *testing.T) {
 		},
 		{
 			desc: "no parent specified",
-			args: []string{sampleDir + "/apis/registry.yaml"},
+			args: []string{"-f", sampleDir + "/apis/registry.yaml"},
 		},
 		{
 			desc: "invalid parent specified",
-			args: []string{sampleDir + "/apis/registry.yaml", "--parent", "projects/invalid/locations/global"},
-		},
-		{
-			desc: "no stdin with files",
-			args: []string{sampleDir, "-", "--parent", "projects/invalid/locations/global"},
+			args: []string{"-f", sampleDir + "/apis/registry.yaml", "--parent", "projects/invalid/locations/global"},
 		},
 	}
 	for _, test := range tests {
@@ -143,12 +135,12 @@ func TestApply_Stdin(t *testing.T) {
 		{
 			desc: "apis-registry.yaml",
 			file: sampleDir + "/apis/registry.yaml",
-			args: []string{"-", "--parent", parent, "--jobs", "1"},
+			args: []string{"-f", "-", "--parent", parent, "--jobs", "1"},
 		},
 		{
 			desc: "artifacts-lifecycle.yaml",
 			file: sampleDir + "/artifacts/lifecycle.yaml",
-			args: []string{"-", "--parent", parent, "--jobs", "1"},
+			args: []string{"-f", "-", "--parent", parent, "--jobs", "1"},
 		},
 	}
 	for _, test := range tests {
