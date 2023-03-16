@@ -31,9 +31,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, path, project string, recursive bool, jobs int) error {
+func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, project string, recursive bool, jobs int, paths ...string) error {
 	patches := &patchGroup{}
-	if path == "-" {
+	if paths[0] == "-" {
 		bytes, err := io.ReadAll(in)
 		if err != nil {
 			return err
@@ -44,29 +44,31 @@ func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, 
 		return patches.run(ctx, jobs)
 	}
 
-	err := filepath.WalkDir(path,
-		func(fileName string, entry fs.DirEntry, err error) error {
-			if err != nil {
+	for _, p := range paths {
+		err := filepath.WalkDir(p,
+			func(fileName string, entry fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				} else if entry.IsDir() && fileName != p && !recursive {
+					return filepath.SkipDir // Skip the directory and contents.
+				} else if entry.IsDir() {
+					return nil // Do nothing for the directory, but still walk its contents.
+				} else if !strings.HasSuffix(fileName, ".yaml") && !strings.HasSuffix(fileName, ".yml") {
+					return nil // Skip everything that's not a YAML file.
+				}
+				bytes, err := os.ReadFile(fileName)
+				if err != nil {
+					return err
+				}
+				err = patches.parse(client, bytes, fileName, project)
+				if err != nil {
+					err = fmt.Errorf("parsing %s: %w", fileName, err)
+				}
 				return err
-			} else if entry.IsDir() && fileName != path && !recursive {
-				return filepath.SkipDir // Skip the directory and contents.
-			} else if entry.IsDir() {
-				return nil // Do nothing for the directory, but still walk its contents.
-			} else if !strings.HasSuffix(fileName, ".yaml") && !strings.HasSuffix(fileName, ".yml") {
-				return nil // Skip everything that's not a YAML file.
-			}
-			bytes, err := os.ReadFile(fileName)
-			if err != nil {
-				return err
-			}
-			err = patches.parse(client, bytes, fileName, project)
-			if err != nil {
-				err = fmt.Errorf("parsing %s: %w", fileName, err)
-			}
+			})
+		if err != nil {
 			return err
-		})
-	if err != nil {
-		return err
+		}
 	}
 	return patches.run(ctx, jobs)
 }

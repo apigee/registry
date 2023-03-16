@@ -25,16 +25,23 @@ import (
 )
 
 func Command() *cobra.Command {
-	var fileName string
 	var project string
 	var recursive bool
 	var jobs int
 	cmd := &cobra.Command{
-		Use:   "apply (-f FILE | -f -)",
+		Use:   "apply PATH_1 ... PATH_1 | -",
 		Short: "Apply YAML to the API Registry",
-		Long:  "Apply YAML to the API Registry by file name or stdin. Resources will be created if they don't exist yet.\n\nMore info and example usage at https://github.com/apigee/registry/wiki/registry-apply",
-		Args:  cobra.NoArgs,
+		Long:  "Apply YAML to the API Registry by file / folder name or stdin. Resources will be created if they don't exist yet.\n\nMore info and example usage at https://github.com/apigee/registry/wiki/registry-apply",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				for _, a := range args {
+					if a == "-" {
+						return fmt.Errorf("provide either '-' or file list, not both")
+					}
+				}
+			}
+
 			ctx := cmd.Context()
 			if project == "" {
 				c, err := connection.ActiveConfig()
@@ -55,11 +62,9 @@ func Command() *cobra.Command {
 			if err := visitor.VerifyLocation(ctx, client, project); err != nil {
 				return fmt.Errorf("parent project %q does not exist: %s", project, err)
 			}
-			return patch.Apply(ctx, client, cmd.InOrStdin(), fileName, project, recursive, jobs)
+			return patch.Apply(ctx, client, cmd.InOrStdin(), project, recursive, jobs, args...)
 		},
 	}
-	cmd.Flags().StringVarP(&fileName, "file", "f", "", "file or directory containing the patch(es) to apply. Use '-' to read from standard input")
-	_ = cmd.MarkFlagRequired("file")
 	cmd.Flags().StringVar(&project, "parent", "", "GCP project containing the API registry")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false, "process the directory used in -f, --file recursively")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")

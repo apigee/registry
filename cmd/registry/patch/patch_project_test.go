@@ -55,7 +55,7 @@ func TestProjectImports(t *testing.T) {
 			project := names.Project{ProjectID: "patch-project-test"}
 			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
 
-			if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 10); err != nil {
+			if err := Apply(ctx, registryClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
 				t.Fatalf("Apply() returned error: %s", err)
 			}
 

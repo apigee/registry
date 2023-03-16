@@ -230,7 +230,7 @@ func TestResolve(t *testing.T) {
 			addRevisionToWants(s)
 
 			// Apply the manifest to the registry
-			args := []string{"-f", test.manifestPath, "--parent", "projects/" + testProject + "/locations/global"}
+			args := []string{test.manifestPath, "--parent", "projects/" + testProject + "/locations/global"}
 			applyCmd := apply.Command()
 			applyCmd.SetArgs(args)
 			if err = applyCmd.Execute(); err != nil {
