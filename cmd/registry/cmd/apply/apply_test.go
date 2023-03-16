@@ -58,6 +58,10 @@ func TestApply(t *testing.T) {
 			desc: "sample",
 			args: []string{sampleDir, "-R", "--parent", parent, "--jobs", "1"},
 		},
+		{
+			desc: "sample apis and artifacts",
+			args: []string{sampleDir + "/apis", sampleDir + "/artifacts", "-R", "--parent", parent, "--jobs", "1"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
@@ -105,6 +109,10 @@ func TestApplyErrors(t *testing.T) {
 		{
 			desc: "invalid parent specified",
 			args: []string{sampleDir + "/apis/registry.yaml", "--parent", "projects/invalid/locations/global"},
+		},
+		{
+			desc: "no stdin with files",
+			args: []string{sampleDir, "-", "--parent", "projects/invalid/locations/global"},
 		},
 	}
 	for _, test := range tests {
