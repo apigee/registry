@@ -110,8 +110,6 @@ func TestApplyErrors(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			cmd.SetArgs(test.args)
 			if err := cmd.Execute(); err == nil {
 				t.Fatalf("Execute() with args %+v succeeded, expected error", cmd.Args)

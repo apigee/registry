@@ -27,8 +27,6 @@ func activateCommand() *cobra.Command {
 		Short: "Activates an existing named configuration",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			name := args[0]
 			if err := config.ValidateName(name); err != nil {
 				return err
