@@ -34,7 +34,7 @@ func Command() *cobra.Command {
 		Short: "Apply YAML to the API Registry",
 		Long: "Apply YAML to the API Registry by files / folder names or stdin. " +
 			"Resources will be created if they don't exist yet. " +
-			"Multiple files may be specified in -f separated by commas or by repeating the -f flag." +
+			"Multiple files may be specified by repeating the -f flag." +
 			"\n\nMore info and example usage at https://github.com/apigee/registry/wiki/registry-apply",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
