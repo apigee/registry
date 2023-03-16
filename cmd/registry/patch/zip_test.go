@@ -31,7 +31,7 @@ func TestAutomaticallyZippedSpecs(t *testing.T) {
 		},
 	})
 	testpath := "testdata/sample-protos"
-	if err := Apply(ctx, registryClient, nil, testpath, "projects/patch-autozip-test/locations/global", true, 1); err != nil {
+	if err := Apply(ctx, registryClient, nil, "projects/patch-autozip-test/locations/global", true, 1, testpath); err != nil {
 		t.Fatalf("Apply() failed with error %s", err)
 	}
 	// verify the spec

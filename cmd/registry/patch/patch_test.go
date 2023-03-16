@@ -1231,7 +1231,7 @@ func TestEmptyArtifactPatches(t *testing.T) {
 	})
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := Apply(ctx, registryClient, nil, test.path, "projects/patch-empty-test/locations/global", true, 10); err == nil {
+			if err := Apply(ctx, registryClient, nil, "projects/patch-empty-test/locations/global", true, 10, test.path); err == nil {
 				t.Errorf("Apply() succeeded and should have failed")
 			}
 		})
@@ -1268,7 +1268,7 @@ func TestDeploymentImports(t *testing.T) {
 			connection.SetConfig(config)
 
 			// apply the api and deployments
-			if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 10); err != nil {
+			if err := Apply(ctx, registryClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
 				t.Fatalf("Apply() returned error: %s", err)
 			}
 
