@@ -63,7 +63,7 @@ func (c Configuration) Write(name string) error {
 	return enc.Encode(c)
 }
 
-// Validate returns an error if Config is invalid.
+// Validate returns a ValidationError if Config is invalid.
 func (c Configuration) Validate() error {
 	if c.Registry.Address == "" {
 		return ValidationError{
@@ -71,6 +71,20 @@ func (c Configuration) Validate() error {
 		}
 	}
 	return nil
+}
+
+// ValidateProperty returns an UnknownPropertyError if not a valid property.
+func (c Configuration) ValidateProperty(k string) error {
+	kNS := k
+	if !strings.Contains(k, ".") {
+		kNS = default_namespace + "." + kNS
+	}
+	for _, p := range c.Properties() {
+		if p == kNS {
+			return nil
+		}
+	}
+	return UnknownPropertyError{k}
 }
 
 // Properties returns a sorted list of all valid property names.
@@ -91,6 +105,9 @@ func (c Configuration) FlatMap() (map[string]interface{}, error) {
 
 // Set sets a property from a qualified or default namespace name.
 func (c *Configuration) Set(k string, v interface{}) error {
+	if err := c.ValidateProperty(k); err != nil {
+		return err
+	}
 	if !strings.Contains(k, ".") {
 		k = default_namespace + "." + k
 	}
@@ -101,6 +118,9 @@ func (c *Configuration) Set(k string, v interface{}) error {
 
 // Unset removed a property by qualified or default namespace name.
 func (c *Configuration) Unset(k string) error {
+	if err := c.ValidateProperty(k); err != nil {
+		return err
+	}
 	if !strings.Contains(k, ".") {
 		k = default_namespace + "." + k
 	}
@@ -111,15 +131,16 @@ func (c *Configuration) Unset(k string) error {
 
 // Get gets a property from a qualified or default namespace name.
 func (c *Configuration) Get(k string) (interface{}, error) {
+	if err := c.ValidateProperty(k); err != nil {
+		return nil, err
+	}
 	m, err := c.FlatMap()
 	if err != nil {
 		return "", fmt.Errorf("cannot decode config: %v", err)
 	}
-
 	if !strings.Contains(k, ".") {
 		k = default_namespace + "." + k
 	}
-
 	return m[k], nil
 }
 
@@ -209,4 +230,12 @@ func unflattenMap(src map[string]interface{}) (dest map[string]interface{}) {
 		target[splits[len(splits)-1]] = v
 	}
 	return dest
+}
+
+type UnknownPropertyError struct {
+	Property string
+}
+
+func (n UnknownPropertyError) Error() string {
+	return fmt.Sprintf("unknown property: %q.", n.Property)
 }

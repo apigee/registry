@@ -31,8 +31,6 @@ func listCommand() *cobra.Command {
 		Short: "Lists existing named configs",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			configs, err := config.Configurations()
 			if errors.Is(err, fs.ErrNotExist) || len(configs) == 0 {
 				cmd.Println("You don't have any configurations. Run 'registry config configurations create' to create a configuration.")

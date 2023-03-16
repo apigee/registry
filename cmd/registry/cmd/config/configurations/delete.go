@@ -28,8 +28,6 @@ func deleteCommand() *cobra.Command {
 		Short: "Deletes a named configuration",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			for _, name := range args {
 				if err := config.ValidateName(name); err != nil {
 					return err

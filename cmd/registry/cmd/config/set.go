@@ -35,8 +35,6 @@ func setCommand() *cobra.Command {
 			"registry config set token-source 'gcloud auth print-access-token email@example.com'",
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			target, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
@@ -46,12 +44,8 @@ func setCommand() *cobra.Command {
 			}
 
 			name, value := args[0], args[1]
-			if !contains(c.Properties(), name) {
-				return UnknownPropertyError{name}
-			}
-
 			if err = c.Set(name, value); err != nil {
-				return fmt.Errorf("cannot set value: %v", err)
+				return err
 			}
 
 			if err = c.Write(target); err != nil {
@@ -63,13 +57,4 @@ func setCommand() *cobra.Command {
 		},
 	}
 	return cmd
-}
-
-func contains(arr []string, x string) bool {
-	for _, v := range arr {
-		if v == x {
-			return true
-		}
-	}
-	return false
 }
