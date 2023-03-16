@@ -15,8 +15,6 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/apigee/registry/cmd/registry/cmd/config/configurations"
 	"github.com/spf13/cobra"
 )
@@ -37,12 +35,4 @@ func Command() *cobra.Command {
 	cmd.AddCommand(setCommand())
 	cmd.AddCommand(unsetCommand())
 	return cmd
-}
-
-type UnknownPropertyError struct {
-	property string
-}
-
-func (n UnknownPropertyError) Error() string {
-	return fmt.Sprintf("Unknown property: %q.", n.property)
 }

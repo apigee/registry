@@ -27,8 +27,6 @@ func getCommand() *cobra.Command {
 		Short: "Print a property value in the active configuration",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			_, c, err := config.ActiveRaw()
 			if err != nil {
 				if err == config.ErrNoActiveConfiguration {
@@ -37,13 +35,9 @@ func getCommand() *cobra.Command {
 				return fmt.Errorf("cannot read config: %v", err)
 			}
 
-			if !contains(c.Properties(), args[0]) {
-				return UnknownPropertyError{args[0]}
-			}
-
 			v, err := c.Get(args[0])
 			if err != nil {
-				return fmt.Errorf("cannot decode config: %v", err)
+				return err
 			}
 
 			cmd.Println(v)

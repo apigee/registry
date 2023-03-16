@@ -249,8 +249,6 @@ func TestGetInvalidResources(t *testing.T) {
 			// cycle through output types
 			format := []string{"name", "yaml", "contents"}[i%3]
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{r, "-o", format}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
@@ -278,8 +276,6 @@ func TestGetInvalidResources(t *testing.T) {
 			// cycle through output types
 			format := []string{"name", "yaml", "contents"}[i%3]
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			out := bytes.NewBuffer(make([]byte, 0))
 			cmd.SetErr(out)
 			args := []string{r, "-o", format}
@@ -302,8 +298,6 @@ func TestGetInvalidResources(t *testing.T) {
 	for _, r := range resourcesWithoutContents {
 		t.Run(r+"--output-contents", func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{r, "-o", "contents"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
@@ -327,8 +321,6 @@ func TestGetInvalidResources(t *testing.T) {
 	for _, r := range resources {
 		t.Run(r+"--output-invalid", func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{r, "-o", "invalid"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
@@ -341,8 +333,6 @@ func TestGetInvalidResources(t *testing.T) {
 	for _, o := range outputs {
 		t.Run(o+"--nested", func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{resources[0], "-o", o, "--nested"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
@@ -407,8 +397,6 @@ func TestGetValidResourcesWithFilter(t *testing.T) {
 	for _, r := range valid_resources {
 		t.Run(r, func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{r, "--filter", "name.contains('a')"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
@@ -460,8 +448,6 @@ func TestGetMultipleContentRequestsShouldFail(t *testing.T) {
 	for _, r := range multiple_resources {
 		t.Run(r, func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{r, "--output", "contents"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {

@@ -172,8 +172,6 @@ func TestDeleteInvalidResources(t *testing.T) {
 	for _, r := range resources {
 		t.Run(r, func(t *testing.T) {
 			cmd := Command()
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			args := []string{r, "--force"}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
@@ -184,8 +182,6 @@ func TestDeleteInvalidResources(t *testing.T) {
 	// Verify that we get an error if --filter is used with a specific resource.
 	t.Run("filter-with-specific-resource", func(t *testing.T) {
 		cmd := Command()
-		cmd.SilenceUsage = true
-		cmd.SilenceErrors = true
 		args := []string{"projects/my-project/locations/global/apis/a", "--filter", "true"}
 		cmd.SetArgs(args)
 		if err := cmd.Execute(); err == nil {

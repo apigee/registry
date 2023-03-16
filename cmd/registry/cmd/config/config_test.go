@@ -92,7 +92,7 @@ func TestConfig(t *testing.T) {
 
 	cmd := setCommand()
 	cmd.SetArgs([]string{"test", "test"})
-	if err := cmd.Execute(); !errors.Is(err, UnknownPropertyError{"test"}) {
+	if err := cmd.Execute(); !errors.Is(err, config.UnknownPropertyError{Property: "test"}) {
 		t.Errorf("expected UnknownPropertyError")
 	}
 
@@ -122,7 +122,7 @@ func TestConfig(t *testing.T) {
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"test"})
-	if err := cmd.Execute(); !errors.Is(err, UnknownPropertyError{"test"}) {
+	if err := cmd.Execute(); !errors.Is(err, config.UnknownPropertyError{Property: "test"}) {
 		t.Errorf("expected UnknownPropertyError")
 	}
 
