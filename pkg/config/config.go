@@ -60,6 +60,7 @@ func CreateFlagSet() *pflag.FlagSet {
 	flags := pflag.NewFlagSet("registry", pflag.ExitOnError)
 	flags.StringP("config", "c", "", "name of a configuration profile or path to config file")
 	flags.String("registry.address", "", "the server and port of the Registry API (eg. localhost:8080)")
+	flags.String("address", "", "the server and port of the Registry API (eg. localhost:8080)")
 	flags.Bool("registry.insecure", false, "if specified, client connects via http (not https)")
 	flags.String("registry.location", "", "the API Registry location")
 	flags.String("registry.project", "", "the API Registry project")
@@ -215,11 +216,11 @@ func ReadValid(name string) (c Configuration, err error) {
 // file: does not bind to env vars or flags, resolve, or validate.
 // See also: ReadValid()
 func Read(name string) (c Configuration, err error) {
-	dir, file := filepath.Split(name)
-	if file == "" {
-		return c, fmt.Errorf("configuration name cannot be empty")
+	if err = ValidateName(name); err != nil {
+		return
 	}
 
+	dir, file := filepath.Split(name)
 	if dir == "" {
 		name = filepath.Join(Directory, file)
 	}

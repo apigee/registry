@@ -28,8 +28,6 @@ func describeCommand() *cobra.Command {
 		Short: "Describes a named configuration by listing its properties",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
 			name := args[0]
 			s, err := config.Read(name)
 			if err != nil {
