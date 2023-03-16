@@ -91,7 +91,7 @@ func (c Configuration) FlatMap() (map[string]interface{}, error) {
 
 // Set sets a property from a qualified or default namespace name.
 func (c *Configuration) Set(k string, v interface{}) error {
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		k = default_namespace + "." + k
 	}
 	return c.FromMap(map[string]interface{}{
@@ -101,7 +101,7 @@ func (c *Configuration) Set(k string, v interface{}) error {
 
 // Unset removed a property by qualified or default namespace name.
 func (c *Configuration) Unset(k string) error {
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		k = default_namespace + "." + k
 	}
 	return c.FromMap(map[string]interface{}{
@@ -116,7 +116,7 @@ func (c *Configuration) Get(k string) (interface{}, error) {
 		return "", fmt.Errorf("cannot decode config: %v", err)
 	}
 
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		k = default_namespace + "." + k
 	}
 
