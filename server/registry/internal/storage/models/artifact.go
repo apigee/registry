@@ -30,7 +30,7 @@ import (
 type Artifact struct {
 	Key          string    `gorm:"primaryKey"`
 	ProjectID    string    // Project associated with artifact (required).
-	ApiID        string    // Api associated with artifact (if appropriate).
+	ApiID        string    `gorm:"index"` // Api associated with artifact (if appropriate).
 	VersionID    string    // Version associated with artifact (if appropriate).
 	SpecID       string    // Spec associated with artifact (if appropriate).
 	RevisionID   string    // Revision associated with parent (if appropriate).
