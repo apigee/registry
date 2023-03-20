@@ -41,7 +41,7 @@ func NewVocabularyFromZippedProtos(b []byte) (*metrics.Vocabulary, error) {
 	}
 
 	for _, f := range r.File {
-		if strings.HasSuffix(f.Name, ".proto") {
+		if !strings.HasSuffix(f.Name, ".proto") {
 			continue
 		}
 
