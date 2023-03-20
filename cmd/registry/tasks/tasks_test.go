@@ -18,30 +18,40 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestWorkerPool(t *testing.T) {
 	ctx := context.Background()
 	jobs := 100
+	counter := new(atomic.Int32)
 
 	taskQueue, wait := WorkerPool(ctx, jobs)
 	defer wait()
 
 	for i := 0; i < 1000; i++ {
-		taskQueue <- &doNothingTask{i: i}
+		taskQueue <- &incrTask{counter}
+	}
+
+	count := counter.Load()
+	if count != int32(1000) {
+		t.Errorf("expected %d got: %d", 1000, count)
 	}
 }
 
-type doNothingTask struct {
-	i int
+type incrTask struct {
+	counter *atomic.Int32
 }
 
-func (task *doNothingTask) String() string {
-	return fmt.Sprintf("do nothing %d", task.i)
+func (t *incrTask) String() string {
+	return "add 1"
 }
 
-func (task *doNothingTask) Run(ctx context.Context) error {
+func (t *incrTask) Run(ctx context.Context) error {
+	t.counter.Add(1)
+	time.Sleep(time.Millisecond) // make the task last a moment
 	return nil
 }
 
