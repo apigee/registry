@@ -17,27 +17,29 @@ package tasks
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync/atomic"
 	"testing"
-	"time"
 )
 
 func TestWorkerPool(t *testing.T) {
 	ctx := context.Background()
 	jobs := 100
 	counter := new(atomic.Int32)
+	want := 1000
 
-	taskQueue, wait := WorkerPool(ctx, jobs)
-	defer wait()
+	func() {
+		taskQueue, wait := WorkerPool(ctx, jobs)
+		for i := 0; i < want; i++ {
+			taskQueue <- &incrTask{counter}
+		}
+		if err := wait(); err != nil {
+			t.Error(err)
+		}
+	}()
 
-	for i := 0; i < 1000; i++ {
-		taskQueue <- &incrTask{counter}
-	}
-
-	count := counter.Load()
-	if count != int32(1000) {
-		t.Errorf("expected %d got: %d", 1000, count)
+	got := counter.Load()
+	if got != int32(want) {
+		t.Errorf("want %d got: %d", want, got)
 	}
 }
 
@@ -51,7 +53,6 @@ func (t *incrTask) String() string {
 
 func (t *incrTask) Run(ctx context.Context) error {
 	t.counter.Add(1)
-	time.Sleep(time.Millisecond) // make the task last a moment
 	return nil
 }
 
@@ -60,19 +61,19 @@ func TestWorkerPoolWithWarnings(t *testing.T) {
 	jobs := 1
 
 	taskQueue, wait := WorkerPool(ctx, jobs)
-	defer wait()
-
-	for i := 0; i < 10; i++ {
-		taskQueue <- &failTask{i: i}
+	for i := 0; i < 2; i++ {
+		taskQueue <- &failTask{}
+	}
+	if err := wait(); err == nil {
+		t.Error("want error, got nil")
 	}
 }
 
 type failTask struct {
-	i int
 }
 
 func (task *failTask) String() string {
-	return fmt.Sprintf("do nothing %d", task.i)
+	return "fail task"
 }
 
 func (task *failTask) Run(ctx context.Context) error {

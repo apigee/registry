@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/apigee/registry/pkg/log"
+	"golang.org/x/sync/errgroup"
 )
 
 // Task is a generic interface for a runnable operation
@@ -33,33 +34,42 @@ type Task interface {
 // The clients should add new tasks to this taskQueue
 // and call the call the wait func when done.
 // Do not separately close the taskQueue, make use of the wait func.
-func WorkerPool(ctx context.Context, n int) (chan<- Task, func()) {
-	var wg sync.WaitGroup
+func WorkerPool(ctx context.Context, n int) (chan<- Task, func() error) {
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.SetLimit(n) // pool size
 	taskQueue := make(chan Task, 1024)
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go worker(ctx, &wg, taskQueue, false)
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-	wait := func() {
+	go func() {
+		for task := range taskQueue {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				t := task
+				f := func() error {
+					err := t.Run(ctx)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Warnf("Task failed: %s", task)
+					}
+					return err
+				}
+				eg.Go(f) // blocks at n runners
+			}
+		}
+		wg.Done()
+	}()
+
+	wait := func() error {
 		close(taskQueue)
-		wg.Wait()
+		wg.Wait()        // wait for all work to be added
+		err := eg.Wait() // wait for all work to be completed
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Errorf("WorkerPool closed on err: %v", err)
+		}
+		return err
 	}
 
 	return taskQueue, wait
-}
-
-// A worker which pulls tasks from the taskQueue, executes them and logs errors if any.
-func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task, warnOnError bool) {
-	defer wg.Done()
-	for task := range taskQueue {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			if err := task.Run(ctx); err != nil {
-				log.FromContext(ctx).WithError(err).Warnf("Task failed: %s", task)
-			}
-		}
-	}
 }
