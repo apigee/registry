@@ -318,6 +318,25 @@ func TestManipulations(t *testing.T) {
 	if diff := cmp.Diff(want, m); diff != "" {
 		t.Fatalf("unexpected diff: (-want +got):\n%s", diff)
 	}
+
+	if err = c.Set("token-source", "source"); err != nil {
+		t.Fatal(err)
+	}
+	if m, err = c.FlatMap(); err != nil {
+		t.Fatal(err)
+	}
+	want["token-source"] = "source"
+	if diff := cmp.Diff(want, m); diff != "" {
+		t.Fatalf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	ts, err := c.Get("token-source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts != "source" {
+		t.Errorf("want: %s, got: %s", "source", l)
+	}
 }
 
 func TestAllConfigs(t *testing.T) {

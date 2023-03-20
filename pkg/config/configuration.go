@@ -76,7 +76,7 @@ func (c Configuration) Validate() error {
 // ValidateProperty returns an UnknownPropertyError if not a valid property.
 func (c Configuration) ValidateProperty(k string) error {
 	kNS := k
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		kNS = default_namespace + "." + kNS
 	}
 	for _, p := range c.Properties() {
@@ -108,7 +108,7 @@ func (c *Configuration) Set(k string, v interface{}) error {
 	if err := c.ValidateProperty(k); err != nil {
 		return err
 	}
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		k = default_namespace + "." + k
 	}
 	return c.FromMap(map[string]interface{}{
@@ -121,7 +121,7 @@ func (c *Configuration) Unset(k string) error {
 	if err := c.ValidateProperty(k); err != nil {
 		return err
 	}
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		k = default_namespace + "." + k
 	}
 	return c.FromMap(map[string]interface{}{
@@ -138,7 +138,7 @@ func (c *Configuration) Get(k string) (interface{}, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot decode config: %v", err)
 	}
-	if !strings.Contains(k, ".") {
+	if !strings.Contains(k, ".") && k != "token-source" {
 		k = default_namespace + "." + k
 	}
 	return m[k], nil

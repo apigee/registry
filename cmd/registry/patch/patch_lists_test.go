@@ -49,7 +49,7 @@ func TestArtifactLists(t *testing.T) {
 			config.Project = project.ProjectID
 			connection.SetConfig(config)
 
-			if err := Apply(ctx, registryClient, nil, test.root, project.String()+"/locations/global", true, 10); err != nil {
+			if err := Apply(ctx, registryClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
 				t.Fatalf("Apply() returned error: %s", err)
 			}
 
