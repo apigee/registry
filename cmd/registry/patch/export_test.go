@@ -58,7 +58,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-project", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportProject(ctx, registryClient, project, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export project: %s", err)
@@ -69,7 +69,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-api", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPI(ctx, registryClient, project.Api("registry"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export api: %s", err)
@@ -80,7 +80,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-api-recursive", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPI(ctx, registryClient, project.Api("registry"), true, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export api: %s", err)
@@ -91,7 +91,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-version", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export version: %s", err)
@@ -102,7 +102,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-version-recursive", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), true, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export version: %s", err)
@@ -113,7 +113,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-spec", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export spec: %s", err)
@@ -125,7 +125,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-spec-recursive", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), true, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export spec: %s", err)
@@ -136,7 +136,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-deployment", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export deployment: %s", err)
@@ -147,7 +147,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-deployment-recursive", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), true, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export deployment: %s", err)
@@ -158,7 +158,7 @@ func TestExport(t *testing.T) {
 
 		t.Run(test.desc+"-artifact", func(t *testing.T) {
 			tempDir := t.TempDir()
-			taskQueue, wait := tasks.WorkerPool(ctx, 1)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
 			err = ExportArtifact(ctx, registryClient, project.Api("registry").Artifact("api-references"), tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export artifact: %s", err)

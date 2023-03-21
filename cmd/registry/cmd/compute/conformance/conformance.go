@@ -119,7 +119,7 @@ func processStyleGuide(ctx context.Context, client connection.RegistryClient, st
 		return
 	}
 
-	taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+	taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 	defer wait()
 
 	for _, spec := range specs {

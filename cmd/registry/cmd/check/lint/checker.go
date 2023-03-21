@@ -73,7 +73,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 
 	// enable rules to access client
 	ctx = context.WithValue(ctx, ContextKeyRegistryClient, client)
-	taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+	taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 	defer func() {
 		wait()
 		if response.Error != "" { // from a panic

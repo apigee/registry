@@ -68,7 +68,7 @@ func csvCommand() *cobra.Command {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 
-			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
 			file, err := os.Open(args[0])

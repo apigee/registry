@@ -114,7 +114,7 @@ func (task *seedArtifactsTask) Run(ctx context.Context) error {
 func BenchmarkListArtifacts(b *testing.B) {
 	ctx, client := setup(b)
 	// Try to speed up creation with a worker pool (this might not help much but seemed worth a try).
-	taskQueue, wait := tasks.WorkerPool(ctx, 5)
+	taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 5)
 	projectName := names.Project{ProjectID: projectID}
 	total := 1000
 	step := 5

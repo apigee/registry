@@ -17,54 +17,97 @@ package tasks
 import (
 	"context"
 	"errors"
-	"fmt"
+	"sync"
 	"testing"
 )
 
 func TestWorkerPool(t *testing.T) {
 	ctx := context.Background()
 	jobs := 100
+	counter := new(atomicInt32)
+	want := 1000
 
-	taskQueue, wait := WorkerPool(ctx, jobs)
-	defer wait()
+	func() {
+		taskQueue, wait := WorkerPool(ctx, jobs)
+		for i := 0; i < want; i++ {
+			taskQueue <- &incrTask{counter}
+		}
+		if err := wait(); err != nil {
+			t.Error(err)
+		}
+	}()
 
-	for i := 0; i < 1000; i++ {
-		taskQueue <- &doNothingTask{i: i}
+	got := counter.Load()
+	if got != int32(want) {
+		t.Errorf("want %d got: %d", want, got)
 	}
 }
 
-type doNothingTask struct {
-	i int
+type incrTask struct {
+	counter *atomicInt32
 }
 
-func (task *doNothingTask) String() string {
-	return fmt.Sprintf("do nothing %d", task.i)
+func (t *incrTask) String() string {
+	return "add 1"
 }
 
-func (task *doNothingTask) Run(ctx context.Context) error {
+func (t *incrTask) Run(ctx context.Context) error {
+	t.counter.Add(1)
 	return nil
 }
 
-func TestWorkerPoolWithWarnings(t *testing.T) {
+func TestWorkerPoolWithError(t *testing.T) {
 	ctx := context.Background()
 	jobs := 1
 
 	taskQueue, wait := WorkerPool(ctx, jobs)
-	defer wait()
+	for i := 0; i < 2; i++ {
+		taskQueue <- &failTask{}
+	}
+	if err := wait(); err == nil {
+		t.Error("want error, got nil")
+	}
+}
 
-	for i := 0; i < 10; i++ {
-		taskQueue <- &failTask{i: i}
+func TestWorkerPoolIgnoreError(t *testing.T) {
+	ctx := context.Background()
+	jobs := 1
+
+	taskQueue, wait := WorkerPoolIgnoreError(ctx, jobs)
+	defer wait()
+	for i := 0; i < 2; i++ {
+		taskQueue <- &failTask{}
 	}
 }
 
 type failTask struct {
-	i int
 }
 
 func (task *failTask) String() string {
-	return fmt.Sprintf("do nothing %d", task.i)
+	return "fail task"
 }
 
 func (task *failTask) Run(ctx context.Context) error {
 	return errors.New("fail")
+}
+
+// can be replaced by atomic.Int32 when we move to go 1.19+
+type atomicInt32 struct {
+	sync.RWMutex
+	v int32
+}
+
+// Load atomically loads and returns the value stored in x.
+func (a *atomicInt32) Load() int32 {
+	a.RLock()
+	defer a.RUnlock()
+	return a.v
+}
+
+// Add atomically adds delta to x and returns the new value.
+func (a *atomicInt32) Add(delta int32) int32 {
+	a.Lock()
+	defer a.Unlock()
+	a.v = a.v + delta
+	return a.v
 }

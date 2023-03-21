@@ -71,7 +71,7 @@ func discoveryCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
 			discoveryResponse, err := fetchDiscoveryList(service)

@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/apigee/registry/pkg/log"
+	"golang.org/x/sync/errgroup"
 )
 
 // Task is a generic interface for a runnable operation
@@ -27,39 +28,64 @@ type Task interface {
 	String() string
 }
 
-// This function creates a waitgroup and a taskQueue for the workerPool.
+// WorkerPool creates a waitgroup and a taskQueue for a worker pool.
 // It will create "n" workers which will listen for Tasks on the taskQueue.
-// It returns the taskQueue and a wait func.
-// The clients should add new tasks to this taskQueue
-// and call the call the wait func when done.
-// Do not separately close the taskQueue, make use of the wait func.
-func WorkerPool(ctx context.Context, n int) (chan<- Task, func()) {
-	var wg sync.WaitGroup
+// The return value is the taskQueue and a wait function.
+// Do not directly close the taskQueue, use the wait function.
+// Clients should add new tasks to this taskQueue and call the wait function
+// when done. If a worker fails with an error, the task context will be
+// canceled, instructing the queue and workers to terminate. Tasks should
+// check ctx as appropriate. The first error encountered will be returned
+// from the wait function and all errors will be logged at Warn level.
+func WorkerPool(ctx context.Context, n int) (chan<- Task, func() error) {
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.SetLimit(n) // pool size
 	taskQueue := make(chan Task, 1024)
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go worker(ctx, &wg, taskQueue, false)
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-	wait := func() {
+	go func() {
+		for task := range taskQueue {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				t := task
+				f := func() error {
+					err := t.Run(ctx)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Warnf("task failed: %s", task)
+					}
+					return err
+				}
+				eg.Go(f) // blocks at n runners
+			}
+		}
+		wg.Done()
+	}()
+
+	wait := func() error {
 		close(taskQueue)
-		wg.Wait()
+		wg.Wait()        // wait for all work to be added
+		err := eg.Wait() // wait for all work to be completed
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Warnf("WorkerPool terminated")
+		}
+		return err
 	}
 
 	return taskQueue, wait
 }
 
-// A worker which pulls tasks from the taskQueue, executes them and logs errors if any.
-func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task, warnOnError bool) {
-	defer wg.Done()
-	for task := range taskQueue {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			if err := task.Run(ctx); err != nil {
-				log.FromContext(ctx).WithError(err).Warnf("Task failed: %s", task)
-			}
+// WorkerPoolIgnoreError does the same as WorkerPool, but returns a wait
+// function that captures and logs the error at Error level. This is convenient
+// for defer.
+func WorkerPoolIgnoreError(ctx context.Context, n int) (chan<- Task, func()) {
+	wp, w := WorkerPool(ctx, n)
+	wait := func() {
+		if err := w(); err != nil {
+			log.FromContext(ctx).WithError(err).Errorf("unhandled WorkerPool error")
 		}
 	}
+	return wp, wait
 }
