@@ -33,18 +33,24 @@ type Task interface {
 // The return value is the taskQueue and a wait function.
 // Do not directly close the taskQueue, use the wait function.
 // Clients should add new tasks to this taskQueue and call the wait function
-// when done. If a worker fails with an error, the task context will be
-// canceled, instructing the queue and workers to terminate. Tasks should
-// check ctx as appropriate. The first error encountered will be returned
-// from the wait function and all errors will be logged at Warn level.
-func WorkerPool(ctx context.Context, n int) (chan<- Task, func() error) {
-	eg, ctx := errgroup.WithContext(ctx)
+// when done. If a worker fails with an error and continueOnError is false,
+// the task context will be canceled, instructing the queue and workers to
+// terminate. Tasks should check ctx as appropriate. The first error encountered
+// will be returned from the wait function and all errors are logged at Warn level.
+func WorkerPool(ctx context.Context, n int, continueOnError bool) (chan<- Task, func() error) {
+	var eg *errgroup.Group
+	if continueOnError {
+		eg = &errgroup.Group{}
+	} else {
+		eg, ctx = errgroup.WithContext(ctx)
+	}
 	eg.SetLimit(n) // pool size
 	taskQueue := make(chan Task, 1024)
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	go func() {
+		defer wg.Done()
 		for task := range taskQueue {
 			select {
 			case <-ctx.Done():
@@ -61,7 +67,6 @@ func WorkerPool(ctx context.Context, n int) (chan<- Task, func() error) {
 				eg.Go(f) // blocks at n runners
 			}
 		}
-		wg.Done()
 	}()
 
 	wait := func() error {
@@ -77,11 +82,11 @@ func WorkerPool(ctx context.Context, n int) (chan<- Task, func() error) {
 	return taskQueue, wait
 }
 
-// WorkerPoolIgnoreError does the same as WorkerPool, but returns a wait
-// function that captures and logs the error at Error level. This is convenient
-// for defer.
+// WorkerPoolIgnoreError instantiates a WorkerPool with continueOnError=true and
+// returns a wait function that captures and logs the error at Error level. This
+// is convenient for defer.
 func WorkerPoolIgnoreError(ctx context.Context, n int) (chan<- Task, func()) {
-	wp, w := WorkerPool(ctx, n)
+	wp, w := WorkerPool(ctx, n, false)
 	wait := func() {
 		if err := w(); err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("unhandled WorkerPool error")
