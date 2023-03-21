@@ -15,10 +15,18 @@
 package vocabulary
 
 import (
+	"context"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
+	"github.com/apigee/registry/pkg/names"
+	"github.com/apigee/registry/pkg/visitor"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	metrics "github.com/google/gnostic/metrics"
+	"google.golang.org/protobuf/proto"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -32,5 +40,47 @@ func TestVocabulary(t *testing.T) {
 	command := Command()
 	if err := command.Execute(); err == nil {
 		t.Fatalf("Execute() with no args succeeded and should have failed")
+	}
+}
+
+func TestProtoVocabulary(t *testing.T) {
+	project := names.Project{ProjectID: "vocabulary-test"}
+	ctx := context.Background()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
+
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+	}
+	config.Project = project.ProjectID
+	connection.SetConfig(config)
+
+	applyCmd := apply.Command()
+	applyCmd.SetArgs([]string{"-f", "testdata/apigeeregistry", "-R"})
+	if err := applyCmd.Execute(); err != nil {
+		t.Fatalf("Failed to apply test API")
+	}
+
+	vocabularyCmd := Command()
+	vocabularyCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("protos").String()})
+	if err := vocabularyCmd.Execute(); err != nil {
+		t.Fatalf("Compute vocabulary failed: %s", err)
+	}
+
+	artifactName := project.Api("apigeeregistry").Version("v1").Spec("protos").Artifact("vocabulary")
+	err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+		vocabulary := &metrics.Vocabulary{}
+		err = proto.Unmarshal(message.Contents, vocabulary)
+		if err != nil {
+			return err
+		}
+		if len(vocabulary.Operations) == 0 ||
+			len(vocabulary.Schemas) == 0 {
+			t.Errorf("Failed to compute %s", artifactName.String())
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Error getting artifact: %s", err)
 	}
 }
