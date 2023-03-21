@@ -1,0 +1,7 @@
+apiVersion: apigeeregistry/v1
+kind: Version
+metadata:
+  name: v1
+  parent: apis/apigeeregistry
+data:
+  displayName: v1

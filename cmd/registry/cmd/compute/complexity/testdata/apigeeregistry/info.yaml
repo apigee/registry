@@ -1,0 +1,8 @@
+apiVersion: apigeeregistry/v1
+kind: API
+metadata:
+  name: apigeeregistry
+  labels:
+    provider: google-com
+data:
+  displayName: Google Apigee Registry API
