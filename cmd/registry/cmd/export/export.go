@@ -52,7 +52,7 @@ func Command() *cobra.Command {
 				return err
 			}
 			// Initialize task queue.
-			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 			// Create the visitor that will perform exports.
 			v := &exportVisitor{

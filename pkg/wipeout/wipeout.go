@@ -30,13 +30,13 @@ func Wipeout(ctx context.Context, client connection.RegistryClient, projectID st
 	project := "projects/" + projectID + "/locations/global"
 	{
 		log.Debugf(ctx, "Deleting apis")
-		taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+		taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 		wipeoutApis(ctx, client, taskQueue, project)
 		wait()
 	}
 	{
 		log.Debugf(ctx, "Deleting artifacts")
-		taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+		taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 		wipeoutArtifacts(ctx, client, taskQueue, project)
 		wait()
 	}

@@ -108,7 +108,7 @@ func Command() *cobra.Command {
 			}
 
 			log.Debug(ctx, "Starting execution...")
-			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 			// Submit tasks to taskQueue
 			for i := 0; i < len(actions) && i < maxActions; i++ {

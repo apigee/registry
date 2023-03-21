@@ -155,7 +155,7 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 		p.deploymentTasks,
 		p.artifactTasks,
 	} {
-		taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+		taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 		for _, task := range taskLists {
 			taskQueue <- task
 		}

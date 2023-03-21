@@ -55,7 +55,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
 			valuesToClear := make([]string, 0)

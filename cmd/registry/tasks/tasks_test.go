@@ -56,7 +56,7 @@ func (t *incrTask) Run(ctx context.Context) error {
 	return nil
 }
 
-func TestWorkerPoolWithWarnings(t *testing.T) {
+func TestWorkerPoolWithError(t *testing.T) {
 	ctx := context.Background()
 	jobs := 1
 
@@ -66,6 +66,17 @@ func TestWorkerPoolWithWarnings(t *testing.T) {
 	}
 	if err := wait(); err == nil {
 		t.Error("want error, got nil")
+	}
+}
+
+func TestWorkerPoolIgnoreError(t *testing.T) {
+	ctx := context.Background()
+	jobs := 1
+
+	taskQueue, wait := WorkerPoolIgnoreError(ctx, jobs)
+	defer wait()
+	for i := 0; i < 2; i++ {
+		taskQueue <- &failTask{}
 	}
 }
 

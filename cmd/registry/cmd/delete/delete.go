@@ -69,7 +69,7 @@ func Command() *cobra.Command {
 				return errors.New("no resources found")
 			}
 			// Initialize task queue.
-			taskQueue, wait := tasks.WorkerPool(ctx, jobs)
+			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 			// Delete all of the resources that were found.
 			for _, task := range v.tasks {
