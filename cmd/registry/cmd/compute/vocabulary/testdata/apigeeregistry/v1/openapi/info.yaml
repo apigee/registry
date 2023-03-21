@@ -1,0 +1,8 @@
+apiVersion: apigeeregistry/v1
+kind: Spec
+metadata:
+  name: openapi
+  parent: apis/apigeeregistry/versions/v1
+data:
+  filename: openapi.yaml
+  mimeType: application/x.openapi+gzip;version=3.0.3

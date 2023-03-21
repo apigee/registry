@@ -1,0 +1,8 @@
+apiVersion: apigeeregistry/v1
+kind: Spec
+metadata:
+  name: discovery
+  parent: apis/apigeeregistry/versions/v1
+data:
+  filename: discovery.json
+  mimeType: application/x.discovery+gzip
