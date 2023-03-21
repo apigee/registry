@@ -36,14 +36,16 @@ func TestMain(m *testing.M) {
 	grpctest.TestMain(m, registry.Config{})
 }
 
-func TestVocabulary(t *testing.T) {
+func TestComputeVocabularyWithNoArgs(t *testing.T) {
 	command := Command()
+	command.SilenceErrors = true
+	command.SilenceUsage = true
 	if err := command.Execute(); err == nil {
 		t.Fatalf("Execute() with no args succeeded and should have failed")
 	}
 }
 
-func TestProtoVocabulary(t *testing.T) {
+func TestComputeVocabulary(t *testing.T) {
 	project := names.Project{ProjectID: "vocabulary-test"}
 	ctx := context.Background()
 	registryClient, _ := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
@@ -61,26 +63,78 @@ func TestProtoVocabulary(t *testing.T) {
 		t.Fatalf("Failed to apply test API")
 	}
 
-	vocabularyCmd := Command()
-	vocabularyCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("protos").String()})
-	if err := vocabularyCmd.Execute(); err != nil {
-		t.Fatalf("Compute vocabulary failed: %s", err)
-	}
+	t.Run("protos", func(t *testing.T) {
+		vocabularyCmd := Command()
+		vocabularyCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("protos").String()})
+		if err := vocabularyCmd.Execute(); err != nil {
+			t.Fatalf("Compute vocabulary failed: %s", err)
+		}
 
-	artifactName := project.Api("apigeeregistry").Version("v1").Spec("protos").Artifact("vocabulary")
-	err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
-		vocabulary := &metrics.Vocabulary{}
-		err = proto.Unmarshal(message.Contents, vocabulary)
+		artifactName := project.Api("apigeeregistry").Version("v1").Spec("protos").Artifact("vocabulary")
+		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+			vocabulary := &metrics.Vocabulary{}
+			err = proto.Unmarshal(message.Contents, vocabulary)
+			if err != nil {
+				return err
+			}
+			if len(vocabulary.Operations) == 0 ||
+				len(vocabulary.Schemas) == 0 {
+				t.Errorf("Failed to compute %s", artifactName.String())
+			}
+			return nil
+		})
 		if err != nil {
-			return err
+			t.Fatalf("Error getting artifact: %s", err)
 		}
-		if len(vocabulary.Operations) == 0 ||
-			len(vocabulary.Schemas) == 0 {
-			t.Errorf("Failed to compute %s", artifactName.String())
-		}
-		return nil
 	})
-	if err != nil {
-		t.Fatalf("Error getting artifact: %s", err)
-	}
+
+	t.Run("openapi", func(t *testing.T) {
+		vocabularyCmd := Command()
+		vocabularyCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("openapi").String()})
+		if err := vocabularyCmd.Execute(); err != nil {
+			t.Fatalf("Compute vocabulary failed: %s", err)
+		}
+
+		artifactName := project.Api("apigeeregistry").Version("v1").Spec("openapi").Artifact("vocabulary")
+		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+			vocabulary := &metrics.Vocabulary{}
+			err = proto.Unmarshal(message.Contents, vocabulary)
+			if err != nil {
+				return err
+			}
+			if len(vocabulary.Operations) == 0 ||
+				len(vocabulary.Schemas) == 0 {
+				t.Errorf("Failed to compute %s", artifactName.String())
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error getting artifact: %s", err)
+		}
+	})
+
+	t.Run("discovery", func(t *testing.T) {
+		vocabularyCmd := Command()
+		vocabularyCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("discovery").String()})
+		if err := vocabularyCmd.Execute(); err != nil {
+			t.Fatalf("Compute vocabulary failed: %s", err)
+		}
+
+		artifactName := project.Api("apigeeregistry").Version("v1").Spec("discovery").Artifact("vocabulary")
+		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+			vocabulary := &metrics.Vocabulary{}
+			err = proto.Unmarshal(message.Contents, vocabulary)
+			if err != nil {
+				return err
+			}
+			if len(vocabulary.Operations) == 0 ||
+				len(vocabulary.Schemas) == 0 {
+				t.Errorf("Failed to compute %s", artifactName.String())
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error getting artifact: %s", err)
+		}
+	})
 }
