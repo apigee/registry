@@ -37,7 +37,7 @@ import (
 )
 
 func Command() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "vocabulary SPEC_REVISION",
 		Short: "Compute vocabularies of API specs",
 		Args:  cobra.MinimumNArgs(1),
@@ -100,6 +100,10 @@ func Command() *cobra.Command {
 			}
 		},
 	}
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
+	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
+	return cmd
 }
 
 type computeVocabularyTask struct {
