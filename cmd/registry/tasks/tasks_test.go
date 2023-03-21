@@ -17,14 +17,14 @@ package tasks
 import (
 	"context"
 	"errors"
-	"sync/atomic"
+	"sync"
 	"testing"
 )
 
 func TestWorkerPool(t *testing.T) {
 	ctx := context.Background()
 	jobs := 100
-	counter := new(atomic.Int32)
+	counter := new(atomicInt32)
 	want := 1000
 
 	func() {
@@ -44,7 +44,7 @@ func TestWorkerPool(t *testing.T) {
 }
 
 type incrTask struct {
-	counter *atomic.Int32
+	counter *atomicInt32
 }
 
 func (t *incrTask) String() string {
@@ -78,4 +78,25 @@ func (task *failTask) String() string {
 
 func (task *failTask) Run(ctx context.Context) error {
 	return errors.New("fail")
+}
+
+// can be replaced by atomic.Int32 when we move to go 1.19+
+type atomicInt32 struct {
+	sync.RWMutex
+	v int32
+}
+
+// Load atomically loads and returns the value stored in x.
+func (a *atomicInt32) Load() int32 {
+	a.RLock()
+	defer a.RUnlock()
+	return a.v
+}
+
+// Add atomically adds delta to x and returns the new value.
+func (a *atomicInt32) Add(delta int32) int32 {
+	a.Lock()
+	defer a.Unlock()
+	a.v = a.v + delta
+	return a.v
 }
