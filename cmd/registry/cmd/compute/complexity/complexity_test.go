@@ -22,8 +22,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
+	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	metrics "github.com/google/gnostic/metrics"
@@ -41,6 +44,109 @@ func TestMain(m *testing.M) {
 	grpctest.TestMain(m, registry.Config{})
 }
 
+func TestComputeComplexityWithNoArgs(t *testing.T) {
+	command := Command()
+	command.SilenceErrors = true
+	command.SilenceUsage = true
+	if err := command.Execute(); err == nil {
+		t.Fatalf("Execute() with no args succeeded and should have failed")
+	}
+}
+
+func TestComputeComplexity(t *testing.T) {
+	project := names.Project{ProjectID: "complexity-test"}
+	ctx := context.Background()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
+
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+	}
+	config.Project = project.ProjectID
+	connection.SetConfig(config)
+
+	applyCmd := apply.Command()
+	applyCmd.SetArgs([]string{"-f", "testdata/apigeeregistry", "-R"})
+	if err := applyCmd.Execute(); err != nil {
+		t.Fatalf("Failed to apply test API")
+	}
+
+	t.Run("protos", func(t *testing.T) {
+		complexityCmd := Command()
+		complexityCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("protos").String()})
+		if err := complexityCmd.Execute(); err != nil {
+			t.Fatalf("Compute complexity failed: %s", err)
+		}
+
+		artifactName := project.Api("apigeeregistry").Version("v1").Spec("protos").Artifact("complexity")
+		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+			complexity := &metrics.Complexity{}
+			err = proto.Unmarshal(message.Contents, complexity)
+			if err != nil {
+				return err
+			}
+			if complexity.PathCount == 0 ||
+				complexity.SchemaCount == 0 {
+				t.Errorf("Failed to compute %s", artifactName.String())
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error getting artifact: %s", err)
+		}
+	})
+
+	t.Run("openapi", func(t *testing.T) {
+		complexityCmd := Command()
+		complexityCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("openapi").String()})
+		if err := complexityCmd.Execute(); err != nil {
+			t.Fatalf("Compute complexity failed: %s", err)
+		}
+
+		artifactName := project.Api("apigeeregistry").Version("v1").Spec("openapi").Artifact("complexity")
+		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+			complexity := &metrics.Complexity{}
+			err = proto.Unmarshal(message.Contents, complexity)
+			if err != nil {
+				return err
+			}
+			if complexity.PathCount == 0 ||
+				complexity.SchemaCount == 0 {
+				t.Errorf("Failed to compute %s", artifactName.String())
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error getting artifact: %s", err)
+		}
+	})
+
+	t.Run("discovery", func(t *testing.T) {
+		complexityCmd := Command()
+		complexityCmd.SetArgs([]string{project.Api("apigeeregistry").Version("v1").Spec("discovery").String()})
+		if err := complexityCmd.Execute(); err != nil {
+			t.Fatalf("Compute complexity failed: %s", err)
+		}
+
+		artifactName := project.Api("apigeeregistry").Version("v1").Spec("discovery").Artifact("complexity")
+		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
+			complexity := &metrics.Complexity{}
+			err = proto.Unmarshal(message.Contents, complexity)
+			if err != nil {
+				return err
+			}
+			if complexity.PathCount == 0 ||
+				complexity.SchemaCount == 0 {
+				t.Errorf("Failed to compute %s", artifactName.String())
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error getting artifact: %s", err)
+		}
+	})
+}
+
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()
 	fileBytes, _ := os.ReadFile(filename)
@@ -55,7 +161,7 @@ func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	}
 	return &buf, nil
 }
-func TestComplexity(t *testing.T) {
+func TestComputeComplexityValues(t *testing.T) {
 	tests := []struct {
 		desc       string
 		apiId      string
