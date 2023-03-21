@@ -21,15 +21,15 @@ import (
 	"testing"
 )
 
-func TestWorkerPool(t *testing.T) {
+func TestWorkerPoolContinueOnError(t *testing.T) {
 	ctx := context.Background()
 	jobs := 100
 	counter := new(atomicInt32)
-	want := 1000
+	total := 1000
 
 	func() {
-		taskQueue, wait := WorkerPool(ctx, jobs)
-		for i := 0; i < want; i++ {
+		taskQueue, wait := WorkerPool(ctx, jobs, true)
+		for i := 0; i < total; i++ {
 			taskQueue <- &incrTask{counter}
 		}
 		if err := wait(); err != nil {
@@ -38,8 +38,34 @@ func TestWorkerPool(t *testing.T) {
 	}()
 
 	got := counter.Load()
-	if got != int32(want) {
-		t.Errorf("want %d got: %d", want, got)
+	if got != int32(total) {
+		t.Errorf("want %d got: %d", total, got)
+	}
+}
+
+func TestWorkerPoolStopOnError(t *testing.T) {
+	ctx := context.Background()
+	jobs := 100
+	counter := new(atomicInt32)
+	total := 1000
+	errorAt := 500
+
+	func() {
+		taskQueue, wait := WorkerPool(ctx, jobs, false)
+		for i := 0; i < total; i++ {
+			if i == errorAt {
+				taskQueue <- &failTask{}
+			}
+			taskQueue <- &incrTask{counter}
+		}
+		if err := wait(); err == nil {
+			t.Log("expected error")
+		}
+	}()
+
+	got := counter.Load()
+	if got < int32(errorAt) || got >= int32(total) {
+		t.Errorf("want between %d and %d, got: %d", errorAt, total, got)
 	}
 }
 
@@ -54,19 +80,6 @@ func (t *incrTask) String() string {
 func (t *incrTask) Run(ctx context.Context) error {
 	t.counter.Add(1)
 	return nil
-}
-
-func TestWorkerPoolWithError(t *testing.T) {
-	ctx := context.Background()
-	jobs := 1
-
-	taskQueue, wait := WorkerPool(ctx, jobs)
-	for i := 0; i < 2; i++ {
-		taskQueue <- &failTask{}
-	}
-	if err := wait(); err == nil {
-		t.Error("want error, got nil")
-	}
 }
 
 func TestWorkerPoolIgnoreError(t *testing.T) {
