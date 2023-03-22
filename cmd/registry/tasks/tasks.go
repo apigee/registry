@@ -60,7 +60,7 @@ func WorkerPool(ctx context.Context, n int, continueOnError bool) (chan<- Task, 
 				f := func() error {
 					err := t.Run(ctx)
 					if err != nil {
-						log.FromContext(ctx).WithError(err).Warnf("task failed: %s", task)
+						log.FromContext(ctx).WithError(err).Warnf("task failed: %s", t)
 					}
 					return err
 				}
