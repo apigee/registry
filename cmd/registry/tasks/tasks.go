@@ -86,7 +86,7 @@ func WorkerPool(ctx context.Context, n int, continueOnError bool) (chan<- Task, 
 // returns a wait function that captures and logs the error at Error level. This
 // is convenient for defer.
 func WorkerPoolIgnoreError(ctx context.Context, n int) (chan<- Task, func()) {
-	wp, w := WorkerPool(ctx, n, false)
+	wp, w := WorkerPool(ctx, n, true)
 	wait := func() {
 		if err := w(); err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("unhandled WorkerPool error")
