@@ -18,11 +18,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -186,13 +189,21 @@ func ListSpecs(ctx context.Context,
 		}
 
 		if getContents {
+			ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
 			resp, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 				Name: r.GetName(),
 			})
 			if err != nil {
 				return err
 			}
-			r.Contents = resp.GetData()
+			if mime.IsGZipCompressed(resp.ContentType) {
+				r.Contents, err = compress.GUnzippedBytes(resp.Data)
+				if err != nil {
+					return err
+				}
+			} else {
+				r.Contents = resp.GetData()
+			}
 		}
 
 		if err := handler(ctx, r); err != nil {
@@ -217,13 +228,21 @@ func ListSpecRevisions(ctx context.Context,
 		}
 
 		if getContents {
+			ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
 			resp, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 				Name: r.GetName(),
 			})
 			if err != nil {
 				return err
 			}
-			r.Contents = resp.GetData()
+			if mime.IsGZipCompressed(resp.ContentType) {
+				r.Contents, err = compress.GUnzippedBytes(resp.Data)
+				if err != nil {
+					return err
+				}
+			} else {
+				r.Contents = resp.GetData()
+			}
 		}
 
 		if err := handler(ctx, r); err != nil {
