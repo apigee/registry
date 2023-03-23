@@ -41,8 +41,7 @@ func SetArtifact(ctx context.Context,
 	if code == codes.AlreadyExists {
 		request := &rpc.ReplaceArtifactRequest{}
 		request.Artifact = artifact
-		_, err := client.ReplaceArtifact(ctx, request)
-		return err
+		_, err = client.ReplaceArtifact(ctx, request)
 	}
 	return err
 }
