@@ -15,9 +15,11 @@
 package visitor
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
@@ -29,6 +31,10 @@ func TestFetch(t *testing.T) {
 	parent := project.String() + "/locations/global"
 
 	specContents := "hello"
+	gzippedSpecContents, err := compress.GZippedBytes([]byte(specContents))
+	if err != nil {
+		t.Fatalf("Setup: Failed to compress test data: %s", err)
+	}
 	artifactContents := "hello"
 
 	ctx := context.Background()
@@ -62,8 +68,8 @@ func TestFetch(t *testing.T) {
 		ApiSpecId: "s",
 		Parent:    versionName.String(),
 		ApiSpec: &rpc.ApiSpec{
-			Contents: []byte(specContents),
-			MimeType: "text/plain",
+			Contents: gzippedSpecContents,
+			MimeType: "text/plain+gzip",
 		},
 	})
 	if err != nil {
@@ -91,7 +97,7 @@ func TestFetch(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to fetch spec contents: %s", err)
 		}
-		if string(spec.Contents) != specContents {
+		if !bytes.Equal(spec.Contents, gzippedSpecContents) {
 			t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 		}
 	})
@@ -111,7 +117,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse spec name: %s", err)
 		}
 		err = GetSpec(ctx, registryClient, specName, true, func(ctx context.Context, spec *rpc.ApiSpec) error {
-			if string(spec.Contents) != specContents {
+			if !bytes.Equal(spec.Contents, gzippedSpecContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 			}
 			return nil
@@ -146,7 +152,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse spec revision name: %s", err)
 		}
 		err = GetSpecRevision(ctx, registryClient, specRevisionName, true, func(ctx context.Context, spec *rpc.ApiSpec) error {
-			if string(spec.Contents) != specContents {
+			if !bytes.Equal(spec.Contents, gzippedSpecContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 			}
 			return nil
