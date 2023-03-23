@@ -72,6 +72,12 @@ func TestOpenAPIMimeTypes(t *testing.T) {
 			if IsZipArchive(value) {
 				t.Errorf("%s is incorrectly recognized as a zip archive", value)
 			}
+			if IsGZipCompressed(value) {
+				unzipped := GUnzippedType(value)
+				if IsGZipCompressed(unzipped) {
+					t.Errorf("failed to remove compression from type %q", value)
+				}
+			}
 		})
 	}
 }

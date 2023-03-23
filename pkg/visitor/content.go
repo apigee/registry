@@ -18,13 +18,9 @@ import (
 	"context"
 	"path"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -45,21 +41,7 @@ func SetArtifact(ctx context.Context,
 	if code == codes.AlreadyExists {
 		request := &rpc.ReplaceArtifactRequest{}
 		request.Artifact = artifact
-		_, err := client.ReplaceArtifact(ctx, request)
-		return err
+		_, err = client.ReplaceArtifact(ctx, request)
 	}
 	return err
-}
-
-func GetBytesForSpec(ctx context.Context, client connection.RegistryClient, spec *rpc.ApiSpec) ([]byte, error) {
-	request := &rpc.GetApiSpecContentsRequest{Name: spec.GetName()}
-	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
-	contents, err := client.GetApiSpecContents(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	if mime.IsGZipCompressed(contents.ContentType) {
-		return compress.GUnzippedBytes(contents.Data)
-	}
-	return contents.Data, nil
 }

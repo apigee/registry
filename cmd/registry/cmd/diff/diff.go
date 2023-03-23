@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
-	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -196,22 +195,7 @@ func printDiff(spec1, spec2 *rpc.ApiSpec) error {
 			}
 		}
 	} else {
-		var err error
-		contents1 := spec1.Contents
-		if mime.IsGZipCompressed(spec1.MimeType) {
-			contents1, err = compress.GUnzippedBytes(contents1)
-			if err != nil {
-				return err
-			}
-		}
-		contents2 := spec2.Contents
-		if mime.IsGZipCompressed(spec2.MimeType) {
-			contents2, err = compress.GUnzippedBytes(contents2)
-			if err != nil {
-				return err
-			}
-		}
-		diff := computeDiff(contents1, contents2, spec1.Name, spec2.Name)
+		diff := computeDiff(spec1.Contents, spec2.Contents, spec1.Name, spec2.Name)
 		if len(diff) > 0 {
 			fmt.Println(diff)
 		}
