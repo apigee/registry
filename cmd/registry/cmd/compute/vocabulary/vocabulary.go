@@ -164,7 +164,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 			return nil
 		}
 	} else {
-		return fmt.Errorf("we don't know how to summarize %s", task.specName)
+		return fmt.Errorf("we don't know how to compute the vocabulary of %s", task.specName)
 	}
 
 	if task.dryRun {
