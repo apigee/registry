@@ -41,9 +41,8 @@ func FetchSpecContents(ctx context.Context, client *gapic.RegistryClient, spec *
 	if mime.IsGZipCompressed(spec.MimeType) {
 		spec.MimeType = mime.GUnzippedType(spec.MimeType)
 		spec.Contents, err = compress.GUnzippedBytes(spec.Contents)
-		return err
 	}
-	return nil
+	return err
 }
 
 func FetchArtifactContents(ctx context.Context, client *gapic.RegistryClient, artifact *rpc.Artifact) error {
