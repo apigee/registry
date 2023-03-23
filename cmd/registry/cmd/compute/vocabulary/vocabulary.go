@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
@@ -27,6 +28,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -117,11 +119,18 @@ func (task *computeVocabularyTask) String() string {
 }
 
 func (task *computeVocabularyTask) Run(ctx context.Context) error {
+	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
 	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 		Name: task.specName,
 	})
 	if err != nil {
 		return err
+	}
+	if mime.IsGZipCompressed(contents.ContentType) {
+		contents.Data, err = compress.GUnzippedBytes(contents.Data)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.specName)
@@ -155,7 +164,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 			return nil
 		}
 	} else {
-		return fmt.Errorf("we don't know how to summarize %s", task.specName)
+		return fmt.Errorf("we don't know how to compute the vocabulary of %s", task.specName)
 	}
 
 	if task.dryRun {
