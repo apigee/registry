@@ -19,7 +19,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
 
@@ -32,25 +31,13 @@ func TestContentHelpers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse spec name %s", specName)
 	}
-	compressedSpecName, err := names.ParseSpec("projects/content-test/locations/global/apis/a/versions/v/specs/s-gzip")
-	if err != nil {
-		t.Fatalf("failed to parse spec name %s", compressedSpecName)
-	}
 	specContents := "hello"
-	compressedSpecContents, err := compress.GZippedBytes([]byte(specContents))
-	if err != nil {
-		t.Fatalf("failed to compress contents for %s", compressedSpecName)
-	}
 	ctx := context.Background()
 	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "content-test", []seeder.RegistryResource{
 		&rpc.ApiSpec{
 			Name:     specName.String(),
 			MimeType: "text/plain",
 			Contents: []byte(specContents)},
-		&rpc.ApiSpec{
-			Name:     compressedSpecName.String(),
-			MimeType: "text/plain+gzip",
-			Contents: compressedSpecContents},
 	})
 	t.Cleanup(func() {
 		if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
@@ -58,30 +45,6 @@ func TestContentHelpers(t *testing.T) {
 			Force: true,
 		}); err != nil {
 			t.Fatalf("failed to delete test project: %s", err)
-		}
-	})
-	t.Run("fetch-spec-contents", func(t *testing.T) {
-		bytes, err := GetBytesForSpec(ctx, registryClient, &rpc.ApiSpec{Name: specName.String()})
-		if err != nil {
-			t.Fatalf("GetBytesForSpec failed to read spec contents")
-		}
-		if string(bytes) != specContents {
-			t.Fatalf("GetBytesForSpec returned incorrect spec contents (%q expected %q)", string(bytes), specContents)
-		}
-	})
-	t.Run("fetch-compressed-spec-contents", func(t *testing.T) {
-		bytes, err := GetBytesForSpec(ctx, registryClient, &rpc.ApiSpec{Name: compressedSpecName.String()})
-		if err != nil {
-			t.Fatalf("GetBytesForSpec failed to read spec contents")
-		}
-		if string(bytes) != specContents {
-			t.Fatalf("GetBytesForSpec returned incorrect spec contents (%q expected %q)", string(bytes), specContents)
-		}
-	})
-	t.Run("fetch-spec-contents-invalid", func(t *testing.T) {
-		_, err := GetBytesForSpec(ctx, registryClient, &rpc.ApiSpec{Name: specName.String() + "-invalid"})
-		if err == nil {
-			t.Fatalf("GetBytesForSpec of invalid spec succeeded and should have failed")
 		}
 	})
 	t.Run("set-artifact", func(t *testing.T) {

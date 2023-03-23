@@ -30,8 +30,8 @@ func TestFetch(t *testing.T) {
 	project := names.Project{ProjectID: projectID}
 	parent := project.String() + "/locations/global"
 
-	specContents := "hello"
-	gzippedSpecContents, err := compress.GZippedBytes([]byte(specContents))
+	specContents := []byte("hello")
+	gzippedSpecContents, err := compress.GZippedBytes(specContents)
 	if err != nil {
 		t.Fatalf("Setup: Failed to compress test data: %s", err)
 	}
@@ -97,7 +97,7 @@ func TestFetch(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to fetch spec contents: %s", err)
 		}
-		if !bytes.Equal(spec.Contents, gzippedSpecContents) {
+		if !bytes.Equal(spec.Contents, specContents) {
 			t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 		}
 	})
@@ -117,7 +117,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse spec name: %s", err)
 		}
 		err = GetSpec(ctx, registryClient, specName, true, func(ctx context.Context, spec *rpc.ApiSpec) error {
-			if !bytes.Equal(spec.Contents, gzippedSpecContents) {
+			if !bytes.Equal(spec.Contents, specContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 			}
 			return nil
@@ -134,7 +134,7 @@ func TestFetch(t *testing.T) {
 		count := 0
 		err = ListSpecs(ctx, registryClient, specName, "", true, func(ctx context.Context, spec *rpc.ApiSpec) error {
 			count++
-			if string(spec.Contents) != specContents {
+			if !bytes.Equal(spec.Contents, specContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 			}
 			return nil
@@ -152,7 +152,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse spec revision name: %s", err)
 		}
 		err = GetSpecRevision(ctx, registryClient, specRevisionName, true, func(ctx context.Context, spec *rpc.ApiSpec) error {
-			if !bytes.Equal(spec.Contents, gzippedSpecContents) {
+			if !bytes.Equal(spec.Contents, specContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 			}
 			return nil
@@ -169,7 +169,7 @@ func TestFetch(t *testing.T) {
 		count := 0
 		err = ListSpecRevisions(ctx, registryClient, specRevisionName, "", true, func(ctx context.Context, spec *rpc.ApiSpec) error {
 			count++
-			if string(spec.Contents) != specContents {
+			if !bytes.Equal(spec.Contents, specContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
 			}
 			return nil

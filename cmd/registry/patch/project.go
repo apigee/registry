@@ -20,9 +20,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
@@ -31,7 +29,6 @@ import (
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/grpc/metadata"
 	"gopkg.in/yaml.v3"
 )
 
@@ -489,18 +486,11 @@ func (task *exportSpecTask) Run(ctx context.Context) error {
 	if task.message.Filename == "" {
 		return nil
 	}
-	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
-	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
-		Name: task.message.GetName(),
-	})
+	err = visitor.FetchSpecContents(ctx, task.client, task.message)
 	if err != nil {
 		return err
 	}
-	data := contents.GetData()
-	if strings.Contains(contents.GetContentType(), "+gzip") {
-		data, _ = compress.GUnzippedBytes(data)
-	}
-	return os.WriteFile(filepath.Join(parentDir, task.message.Filename), data, 0644)
+	return os.WriteFile(filepath.Join(parentDir, task.message.Filename), task.message.GetContents(), 0644)
 }
 
 type exportDeploymentTask struct {

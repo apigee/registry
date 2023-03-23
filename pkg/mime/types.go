@@ -69,6 +69,11 @@ func IsGZipCompressed(mimeType string) bool {
 	return strings.Contains(mimeType, "+gzip")
 }
 
+// GUnzippedType returns an equivalent uncompressed MIME type for a compressed type.
+func GUnzippedType(mimeType string) string {
+	return strings.Replace(mimeType, "+gzip", "", 1)
+}
+
 // IsZipArchive returns true if a MIME type represents a type stored as a multifile Zip archive.
 func IsZipArchive(mimeType string) bool {
 	return strings.Contains(mimeType, "+zip")

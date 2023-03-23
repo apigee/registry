@@ -198,6 +198,7 @@ func ListSpecs(ctx context.Context,
 			}
 			r.Contents = resp.GetData()
 			if mime.IsGZipCompressed(resp.ContentType) {
+				r.MimeType = mime.GUnzippedType(r.MimeType)
 				r.Contents, err = compress.GUnzippedBytes(r.Contents)
 				if err != nil {
 					return err
@@ -236,6 +237,7 @@ func ListSpecRevisions(ctx context.Context,
 			}
 			r.Contents = resp.GetData()
 			if mime.IsGZipCompressed(resp.ContentType) {
+				r.MimeType = mime.GUnzippedType(r.MimeType)
 				r.Contents, err = compress.GUnzippedBytes(r.Contents)
 				if err != nil {
 					return err

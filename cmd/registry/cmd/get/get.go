@@ -19,9 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/encoding"
@@ -221,11 +219,7 @@ func (v *getVisitor) SpecHandler() visitor.SpecHandler {
 			if err := visitor.FetchSpecContents(ctx, v.registryClient, message); err != nil {
 				return err
 			}
-			contents := message.GetContents()
-			if strings.Contains(message.GetMimeType(), "+gzip") {
-				contents, _ = compress.GUnzippedBytes(contents)
-			}
-			v.results = append(v.results, contents)
+			v.results = append(v.results, message.GetContents())
 			return nil
 		case "yaml":
 			spec, err := patch.NewApiSpec(ctx, v.registryClient, message, v.nested)

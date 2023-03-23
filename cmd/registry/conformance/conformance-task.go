@@ -94,7 +94,7 @@ func (task *ComputeConformanceTask) String() string {
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing conformance report %s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId))
 
-	data, err := visitor.GetBytesForSpec(ctx, task.Client, task.Spec)
+	err := visitor.FetchSpecContents(ctx, task.Client, task.Spec)
 	if err != nil {
 		return err
 	}
@@ -111,10 +111,10 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	defer os.RemoveAll(root)
 
 	if mime.IsZipArchive(task.Spec.GetMimeType()) {
-		_, err = compress.UnzipArchiveToPath(data, root)
+		_, err = compress.UnzipArchiveToPath(task.Spec.GetContents(), root)
 	} else {
 		// Write the file to the temporary directory.
-		err = os.WriteFile(filepath.Join(root, name), data, 0644)
+		err = os.WriteFile(filepath.Join(root, name), task.Spec.GetContents(), 0644)
 	}
 	if err != nil {
 		return err

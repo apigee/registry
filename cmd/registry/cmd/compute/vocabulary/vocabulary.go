@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
@@ -28,7 +27,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -81,18 +79,18 @@ func Command() *cobra.Command {
 			if parsed.RevisionID == "" {
 				err = visitor.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
-						client:   client,
-						specName: spec.GetName(),
-						dryRun:   dryRun,
+						client: client,
+						spec:   spec,
+						dryRun: dryRun,
 					}
 					return nil
 				})
 			} else {
 				err = visitor.ListSpecRevisions(ctx, client, parsed, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
-						client:   client,
-						specName: spec.GetName(),
-						dryRun:   dryRun,
+						client: client,
+						spec:   spec,
+						dryRun: dryRun,
 					}
 					return nil
 				})
@@ -109,62 +107,53 @@ func Command() *cobra.Command {
 }
 
 type computeVocabularyTask struct {
-	client   connection.RegistryClient
-	specName string
-	dryRun   bool
+	client connection.RegistryClient
+	spec   *rpc.ApiSpec
+	dryRun bool
 }
 
 func (task *computeVocabularyTask) String() string {
-	return "compute vocabulary " + task.specName
+	return "compute vocabulary " + task.spec.Name
 }
 
 func (task *computeVocabularyTask) Run(ctx context.Context) error {
-	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
-	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
-		Name: task.specName,
-	})
-	if err != nil {
+	if err := visitor.FetchSpecContents(ctx, task.client, task.spec); err != nil {
 		return err
 	}
-	if mime.IsGZipCompressed(contents.ContentType) {
-		contents.Data, err = compress.GUnzippedBytes(contents.Data)
-		if err != nil {
-			return err
-		}
-	}
 
-	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.specName)
+	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.spec.Name)
 	var vocab *metrics.Vocabulary
 
-	if mime.IsOpenAPIv2(contents.GetContentType()) {
-		document, err := oas2.ParseDocument(contents.GetData())
+	if mime.IsOpenAPIv2(task.spec.GetMimeType()) {
+		document, err := oas2.ParseDocument(task.spec.GetContents())
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.spec.Name)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
-	} else if mime.IsOpenAPIv3(contents.GetContentType()) {
-		document, err := oas3.ParseDocument(contents.GetData())
+	} else if mime.IsOpenAPIv3(task.spec.GetMimeType()) {
+		document, err := oas3.ParseDocument(task.spec.GetContents())
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.spec.Name)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
-	} else if mime.IsDiscovery(contents.GetContentType()) {
-		document, err := discovery.ParseDocument(contents.GetData())
+	} else if mime.IsDiscovery(task.spec.GetMimeType()) {
+		document, err := discovery.ParseDocument(task.spec.GetContents())
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.spec.Name)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
-	} else if mime.IsProto(contents.GetContentType()) && mime.IsZipArchive(contents.GetContentType()) {
-		vocab, err = NewVocabularyFromZippedProtos(contents.GetData())
+	} else if mime.IsProto(task.spec.GetMimeType()) && mime.IsZipArchive(task.spec.GetMimeType()) {
+		var err error
+		vocab, err = NewVocabularyFromZippedProtos(task.spec.GetContents())
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
+			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.spec.Name)
 			return nil
 		}
 	} else {
-		return fmt.Errorf("we don't know how to compute the vocabulary of %s", task.specName)
+		return fmt.Errorf("we don't know how to compute the vocabulary of %s", task.spec.Name)
 	}
 
 	if task.dryRun {
@@ -177,7 +166,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		return err
 	}
 	return visitor.SetArtifact(ctx, task.client, &rpc.Artifact{
-		Name:     task.specName + "/artifacts/vocabulary",
+		Name:     task.spec.Name + "/artifacts/vocabulary",
 		MimeType: mime.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	})

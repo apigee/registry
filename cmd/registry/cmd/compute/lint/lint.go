@@ -74,10 +74,10 @@ func Command() *cobra.Command {
 			// Iterate through a collection of specs and evaluate each.
 			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 				taskQueue <- &computeLintTask{
-					client:   client,
-					specName: spec.Name,
-					linter:   linter,
-					dryRun:   dryRun,
+					client: client,
+					spec:   spec,
+					linter: linter,
+					dryRun: dryRun,
 				}
 				return nil
 			})
@@ -92,14 +92,14 @@ func Command() *cobra.Command {
 }
 
 type computeLintTask struct {
-	client   connection.RegistryClient
-	specName string
-	linter   string
-	dryRun   bool
+	client connection.RegistryClient
+	spec   *rpc.ApiSpec
+	linter string
+	dryRun bool
 }
 
 func (task *computeLintTask) String() string {
-	return fmt.Sprintf("compute %s/lint-%s", task.specName, task.linter)
+	return fmt.Sprintf("compute %s/lint-%s", task.spec.Name, task.linter)
 }
 
 func lintRelation(linter string) string {
@@ -107,14 +107,8 @@ func lintRelation(linter string) string {
 }
 
 func (task *computeLintTask) Run(ctx context.Context) error {
-	request := &rpc.GetApiSpecRequest{
-		Name: task.specName,
-	}
-	spec, err := task.client.GetApiSpec(ctx, request)
-	if err != nil {
-		return err
-	}
-	data, err := visitor.GetBytesForSpec(ctx, task.client, spec)
+	spec := task.spec
+	err := visitor.FetchSpecContents(ctx, task.client, spec)
 	if err != nil {
 		return err
 	}
@@ -127,7 +121,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		}
 		relation = lintRelation(task.linter)
 		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = NewLintFromOpenAPI(spec.Name, data, task.linter)
+		lint, err = NewLintFromOpenAPI(spec.Name, spec.Contents, task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
@@ -140,7 +134,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		}
 		relation = lintRelation(task.linter)
 		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = NewLintFromZippedProtos(spec.Name, data)
+		lint, err = NewLintFromZippedProtos(spec.Name, spec.Contents)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
 		}

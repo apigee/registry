@@ -17,7 +17,9 @@ package visitor
 import (
 	"context"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -34,8 +36,13 @@ func FetchSpecContents(ctx context.Context, client *gapic.RegistryClient, spec *
 	if err != nil {
 		return err
 	}
-	spec.Contents = contents.GetData()
 	spec.MimeType = contents.GetContentType()
+	spec.Contents = contents.GetData()
+	if mime.IsGZipCompressed(spec.MimeType) {
+		spec.MimeType = mime.GUnzippedType(spec.MimeType)
+		spec.Contents, err = compress.GUnzippedBytes(spec.Contents)
+		return err
+	}
 	return nil
 }
 

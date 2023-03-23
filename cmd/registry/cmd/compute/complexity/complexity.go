@@ -17,9 +17,7 @@ package complexity
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
@@ -133,11 +131,6 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	relation := "complexity"
 	log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
 	contents := spec.GetContents()
-	if strings.Contains(spec.GetMimeType(), "+gzip") {
-		if contents, err = compress.GUnzippedBytes(contents); err != nil {
-			return err
-		}
-	}
 	var complexity *metrics.Complexity
 	if mime.IsOpenAPIv2(spec.GetMimeType()) {
 		document, err := oas2.ParseDocument(contents)
