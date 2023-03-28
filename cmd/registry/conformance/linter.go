@@ -48,6 +48,10 @@ func getLinterBinaryName(linterName string) string {
 	return "registry-lint-" + linterName
 }
 
+func SimpleLinterMetadata(linter string) *LinterMetadata {
+	return &LinterMetadata{name: linter}
+}
+
 func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*LinterMetadata, error) {
 	linterNameToMetadata := make(map[string]*LinterMetadata)
 

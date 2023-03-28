@@ -17,9 +17,10 @@ package lint
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/tasks"
-	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/mime"
@@ -107,50 +108,27 @@ func lintRelation(linter string) string {
 }
 
 func (task *computeLintTask) Run(ctx context.Context) error {
-	spec := task.spec
-	err := visitor.FetchSpecContents(ctx, task.client, spec)
+	root, err := conformance.WriteSpecForLinting(ctx, task.client, task.spec)
+	if root != "" {
+		defer os.RemoveAll(root)
+	}
 	if err != nil {
 		return err
 	}
-	var relation string
-	var lint *style.Lint
-	if mime.IsOpenAPIv2(spec.GetMimeType()) || mime.IsOpenAPIv3(spec.GetMimeType()) {
-		// the default openapi linter is gnostic
-		if task.linter == "" {
-			task.linter = "gnostic"
-		}
-		relation = lintRelation(task.linter)
-		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = NewLintFromOpenAPI(spec.Name, spec.Contents, task.linter)
-		if err != nil {
-			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
-		}
-	} else if mime.IsDiscovery(spec.GetMimeType()) {
-		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)
-	} else if mime.IsProto(spec.GetMimeType()) && mime.IsZipArchive(spec.GetMimeType()) {
-		// the default proto linter is the aip linter
-		if task.linter == "" {
-			task.linter = "aip"
-		}
-		relation = lintRelation(task.linter)
-		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = NewLintFromZippedProtos(spec.Name, spec.Contents)
-		if err != nil {
-			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
-		}
-	} else {
-		return fmt.Errorf("we don't know how to lint %s", spec.Name)
+	linterMetadata := conformance.SimpleLinterMetadata(task.linter)
+	response, err := conformance.RunLinter(ctx, root, linterMetadata)
+	if err != nil {
+		return err
 	}
-
+	lint := response.Lint
 	if task.dryRun {
 		fmt.Println(protojson.Format((lint)))
 		return nil
 	}
-
-	subject := spec.GetName()
+	subject := task.spec.GetName()
 	messageData, _ := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
+		Name:     subject + "/artifacts/" + lintRelation(task.linter),
 		MimeType: mime.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.Lint"),
 		Contents: messageData,
 	}

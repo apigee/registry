@@ -111,6 +111,11 @@ func (linter *apiLinterRunner) filterProblems(
 	problems []*style.LintProblem,
 	rules []string,
 ) []*style.LintProblem {
+	// If no rules were specified, return the list without filtering.
+	if len(rules) == 0 {
+		return problems
+	}
+
 	// Construct a set of all the problems enabled for this mimetype
 	// so we have efficient lookup.
 	enabledProblems := make(map[string]bool)
