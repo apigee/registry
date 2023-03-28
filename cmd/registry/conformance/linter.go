@@ -15,28 +15,41 @@
 package conformance
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
 
+	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/application/style"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
+	"github.com/apigee/registry/pkg/mime"
+	"github.com/apigee/registry/pkg/visitor"
+	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/proto"
 )
 
-type ruleMetadata struct {
+type RuleMetadata struct {
 	guidelineRule *style.Rule      // Rule object associated with the linter-rule.
 	guideline     *style.Guideline // Guideline object associated with the linter-rule.
 }
 
-type linterMetadata struct {
+type LinterMetadata struct {
 	name          string
 	rules         []string
-	rulesMetadata map[string]*ruleMetadata
+	rulesMetadata map[string]*RuleMetadata
 }
 
 func getLinterBinaryName(linterName string) string {
 	return "registry-lint-" + linterName
 }
 
-func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*linterMetadata, error) {
-	linterNameToMetadata := make(map[string]*linterMetadata)
+func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*LinterMetadata, error) {
+	linterNameToMetadata := make(map[string]*LinterMetadata)
 
 	// Iterate through all the guidelines of the style guide.
 	for _, guideline := range styleguide.GetGuidelines() {
@@ -50,10 +63,10 @@ func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*linterMet
 
 			metadata, ok := linterNameToMetadata[linterName]
 			if !ok {
-				metadata = &linterMetadata{
+				metadata = &LinterMetadata{
 					name:          linterName,
 					rules:         make([]string, 0),
-					rulesMetadata: make(map[string]*ruleMetadata),
+					rulesMetadata: make(map[string]*RuleMetadata),
 				}
 				linterNameToMetadata[linterName] = metadata
 			}
@@ -67,7 +80,7 @@ func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*linterMet
 			metadata.rules = append(metadata.rules, linterRuleName)
 
 			if _, ok := metadata.rulesMetadata[linterRuleName]; !ok {
-				metadata.rulesMetadata[linterRuleName] = &ruleMetadata{}
+				metadata.rulesMetadata[linterRuleName] = &RuleMetadata{}
 			}
 			metadata.rulesMetadata[linterRuleName].guideline = guideline
 			metadata.rulesMetadata[linterRuleName].guidelineRule = rule
@@ -78,4 +91,74 @@ func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*linterMet
 		return nil, fmt.Errorf("empty linter metadata")
 	}
 	return linterNameToMetadata, nil
+}
+
+func WriteSpecForLinting(ctx context.Context, client connection.RegistryClient, spec *rpc.ApiSpec) (string, error) {
+	err := visitor.FetchSpecContents(ctx, client, spec)
+	if err != nil {
+		return "", err
+	}
+	// Put the spec in a temporary directory.
+	root, err := os.MkdirTemp("", "registry-spec-")
+	if err != nil {
+		return "", err
+	}
+	filename := spec.GetFilename()
+	if filename == "" {
+		return root, fmt.Errorf("%s does not specify a filename", spec.GetName())
+	}
+	name := filepath.Base(filename)
+
+	if mime.IsZipArchive(spec.GetMimeType()) {
+		_, err = compress.UnzipArchiveToPath(spec.GetContents(), root)
+	} else {
+		// Write the file to the temporary directory.
+		err = os.WriteFile(filepath.Join(root, name), spec.GetContents(), 0644)
+	}
+	if err != nil {
+		return root, err
+	}
+	return root, nil
+}
+
+func RunLinter(ctx context.Context,
+	specDirectory string,
+	metadata *LinterMetadata) (*style.LinterResponse, error) {
+	// Formulate the request.
+	requestBytes, err := proto.Marshal(&style.LinterRequest{
+		SpecDirectory: specDirectory,
+		RuleIds:       metadata.rules,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed marshaling linterRequest, Error: %s ", err)
+	}
+
+	executableName := getLinterBinaryName(metadata.name)
+	cmd := exec.Command(executableName)
+	cmd.Stdin = bytes.NewReader(requestBytes)
+	cmd.Stderr = os.Stderr
+
+	pluginStartTime := time.Now()
+	// Run the linter.
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("running the plugin %s return error: %s", executableName, err)
+	}
+
+	pluginElapsedTime := time.Since(pluginStartTime)
+	log.Debugf(ctx, "Plugin %s ran in time %s", executableName, pluginElapsedTime)
+
+	// Unmarshal the output bytes into a response object. If there's a failure, log and continue.
+	linterResponse := &style.LinterResponse{}
+	err = proto.Unmarshal(output, linterResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed unmarshalling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
+	}
+
+	// Check if there were any errors in the plugin.
+	if len(linterResponse.GetErrors()) > 0 {
+		return nil, fmt.Errorf("plugin %s encountered errors: %v", executableName, linterResponse.GetErrors())
+	}
+
+	return linterResponse, nil
 }

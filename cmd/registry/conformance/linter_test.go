@@ -48,7 +48,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 	tests := []struct {
 		desc       string
 		styleguide *style.StyleGuide
-		want       map[string]*linterMetadata
+		want       map[string]*LinterMetadata
 		wantErr    bool
 	}{
 		{
@@ -64,11 +64,11 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]*linterMetadata{
+			want: map[string]*LinterMetadata{
 				"sample": {
 					name:  "sample",
 					rules: []string{noRefSiblingsRule.GetLinterRulename()},
-					rulesMetadata: map[string]*ruleMetadata{
+					rulesMetadata: map[string]*RuleMetadata{
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
 							guideline: &style.Guideline{
@@ -94,11 +94,11 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]*linterMetadata{
+			want: map[string]*LinterMetadata{
 				"sample": {
 					name:  "sample",
 					rules: []string{noRefSiblingsRule.GetLinterRulename()},
-					rulesMetadata: map[string]*ruleMetadata{
+					rulesMetadata: map[string]*RuleMetadata{
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
 							guideline: &style.Guideline{
@@ -112,7 +112,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				"spectral": {
 					name:  "spectral",
 					rules: []string{noRefCyclesRule.GetLinterRulename()},
-					rulesMetadata: map[string]*ruleMetadata{
+					rulesMetadata: map[string]*RuleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
 							guideline: &style.Guideline{
@@ -143,11 +143,11 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]*linterMetadata{
+			want: map[string]*LinterMetadata{
 				"sample": {
 					name:  "sample",
 					rules: []string{noRefSiblingsRule.GetLinterRulename()},
-					rulesMetadata: map[string]*ruleMetadata{
+					rulesMetadata: map[string]*RuleMetadata{
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
 							guideline: &style.Guideline{
@@ -161,7 +161,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				"spectral": {
 					name:  "spectral",
 					rules: []string{noRefCyclesRule.GetLinterRulename(), operationDescriptionRule.GetLinterRulename()},
-					rulesMetadata: map[string]*ruleMetadata{
+					rulesMetadata: map[string]*RuleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
 							guideline: &style.Guideline{
@@ -240,11 +240,11 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			want: map[string]*linterMetadata{
+			want: map[string]*LinterMetadata{
 				"spectral": {
 					name:  "spectral",
 					rules: []string{noRefCyclesRule.GetLinterRulename()},
-					rulesMetadata: map[string]*ruleMetadata{
+					rulesMetadata: map[string]*RuleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
 							guideline: &style.Guideline{
@@ -279,8 +279,8 @@ func TestGenerateLinterMetadata(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),
-				cmp.AllowUnexported(linterMetadata{}),
-				cmp.AllowUnexported(ruleMetadata{}),
+				cmp.AllowUnexported(LinterMetadata{}),
+				cmp.AllowUnexported(RuleMetadata{}),
 				cmpopts.SortMaps(func(a, b string) bool { return a < b }),
 			}
 			if !cmp.Equal(test.want, got, opts) {

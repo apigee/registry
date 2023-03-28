@@ -15,15 +15,11 @@
 package conformance
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"time"
 
-	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/log"
@@ -82,7 +78,7 @@ func initializeGuidelineReport(guidelineID string) *style.GuidelineReport {
 type ComputeConformanceTask struct {
 	Client          connection.RegistryClient
 	Spec            *rpc.ApiSpec
-	LintersMetadata map[string]*linterMetadata
+	LintersMetadata map[string]*LinterMetadata
 	StyleguideId    string
 	DryRun          bool
 }
@@ -94,33 +90,15 @@ func (task *ComputeConformanceTask) String() string {
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing conformance report %s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId))
 
-	err := visitor.FetchSpecContents(ctx, task.Client, task.Spec)
-	if err != nil {
-		return err
-	}
-	// Put the spec in a temporary directory.
-	root, err := os.MkdirTemp("", "registry-spec-")
-	if err != nil {
-		return err
-	}
-	filename := task.Spec.GetFilename()
-	if filename == "" {
-		return fmt.Errorf("%s does not specify a filename", task.Spec.GetName())
-	}
-	name := filepath.Base(filename)
-	defer os.RemoveAll(root)
-
-	if mime.IsZipArchive(task.Spec.GetMimeType()) {
-		_, err = compress.UnzipArchiveToPath(task.Spec.GetContents(), root)
-	} else {
-		// Write the file to the temporary directory.
-		err = os.WriteFile(filepath.Join(root, name), task.Spec.GetContents(), 0644)
+	root, err := WriteSpecForLinting(ctx, task.Client, task.Spec)
+	if root != "" {
+		defer os.RemoveAll(root)
 	}
 	if err != nil {
 		return err
 	}
 
-	// Get project
+	// Get project ID from spec name
 	spec, err := names.ParseSpecRevision(task.Spec.GetName())
 	if err != nil {
 		return err
@@ -130,7 +108,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	conformanceReport := initializeConformanceReport(task.Spec.GetName(), task.StyleguideId, spec.ProjectID)
 	guidelineReportsMap := make(map[string]int)
 	for _, metadata := range task.LintersMetadata {
-		linterResponse, err := task.invokeLinter(ctx, root, metadata)
+		linterResponse, err := RunLinter(ctx, root, metadata)
 		// If a linter returned an error, we shouldn't stop linting completely across all linters and
 		// discard the conformance report for this spec. We should log but still continue, because there
 		// may still be useful information from other linters that we may be discarding.
@@ -149,55 +127,12 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	return task.storeConformanceReport(ctx, conformanceReport)
 }
 
-func (task *ComputeConformanceTask) invokeLinter(
-	ctx context.Context,
-	specDirectory string,
-	metadata *linterMetadata) (*style.LinterResponse, error) {
-	// Formulate the request.
-	requestBytes, err := proto.Marshal(&style.LinterRequest{
-		SpecDirectory: specDirectory,
-		RuleIds:       metadata.rules,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed marshaling linterRequest, Error: %s ", err)
-	}
-
-	executableName := getLinterBinaryName(metadata.name)
-	cmd := exec.Command(executableName)
-	cmd.Stdin = bytes.NewReader(requestBytes)
-	cmd.Stderr = os.Stderr
-
-	pluginStartTime := time.Now()
-	// Run the linter.
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("running the plugin %s return error: %s", executableName, err)
-	}
-
-	pluginElapsedTime := time.Since(pluginStartTime)
-	log.Debugf(ctx, "Plugin %s ran in time %s", executableName, pluginElapsedTime)
-
-	// Unmarshal the output bytes into a response object. If there's a failure, log and continue.
-	linterResponse := &style.LinterResponse{}
-	err = proto.Unmarshal(output, linterResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed unmarshalling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
-	}
-
-	// Check if there were any errors in the plugin.
-	if len(linterResponse.GetErrors()) > 0 {
-		return nil, fmt.Errorf("plugin %s encountered errors: %v", executableName, linterResponse.GetErrors())
-	}
-
-	return linterResponse, nil
-}
-
 func (task *ComputeConformanceTask) computeConformanceReport(
 	ctx context.Context,
 	conformanceReport *style.ConformanceReport,
 	guidelineReportsMap map[string]int,
 	linterResponse *style.LinterResponse,
-	linterMetadata *linterMetadata,
+	linterMetadata *LinterMetadata,
 ) {
 	// Process linterResponse to generate conformance report
 	lintFiles := linterResponse.Lint.GetFiles()

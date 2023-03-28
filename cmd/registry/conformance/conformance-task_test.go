@@ -113,7 +113,7 @@ func TestComputeConformanceReport(t *testing.T) {
 	tests := []struct {
 		desc           string
 		linterResponse *style.LinterResponse
-		linterMetadata *linterMetadata
+		linterMetadata *LinterMetadata
 		wantReport     *style.ConformanceReport
 	}{
 		// Test basic flow.
@@ -140,10 +140,10 @@ func TestComputeConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			linterMetadata: &linterMetadata{
+			linterMetadata: &LinterMetadata{
 				name:  "sample-linter",
 				rules: []string{"no-$ref-siblings"},
-				rulesMetadata: map[string]*ruleMetadata{
+				rulesMetadata: map[string]*RuleMetadata{
 					"no-$ref-siblings": {
 						guidelineRule: &style.Rule{
 							Id:       "norefsiblings",
@@ -222,10 +222,10 @@ func TestComputeConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			linterMetadata: &linterMetadata{
+			linterMetadata: &LinterMetadata{
 				name:  "sample-linter",
 				rules: []string{"operation-description"},
-				rulesMetadata: map[string]*ruleMetadata{
+				rulesMetadata: map[string]*RuleMetadata{
 					"operation-description": {
 						guidelineRule: &style.Rule{
 							Id:       "operationdescription",
@@ -315,10 +315,10 @@ func TestComputeConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			linterMetadata: &linterMetadata{
+			linterMetadata: &LinterMetadata{
 				name:  "sample-linter",
 				rules: []string{"operation-description", "tag-description", "info-description", "no-$ref-siblings"},
-				rulesMetadata: map[string]*ruleMetadata{
+				rulesMetadata: map[string]*RuleMetadata{
 					"operation-description": {
 						guidelineRule: &style.Rule{
 							Id:       "operationdescription",
@@ -488,10 +488,10 @@ func TestPreExistingConformanceReport(t *testing.T) {
 		},
 	}
 
-	linterMetadata := &linterMetadata{
+	linterMetadata := &LinterMetadata{
 		name:  "sample-linter",
 		rules: []string{"operation-description"},
-		rulesMetadata: map[string]*ruleMetadata{
+		rulesMetadata: map[string]*RuleMetadata{
 			"operation-description": {
 				guidelineRule: &style.Rule{
 					Id:       "operationdescription",
