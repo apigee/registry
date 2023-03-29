@@ -89,6 +89,9 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&linter, "linter", "", "the linter to use (aip|spectral|gnostic)")
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
+	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
 
