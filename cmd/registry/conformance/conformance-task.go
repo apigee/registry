@@ -78,7 +78,7 @@ func initializeGuidelineReport(guidelineID string) *style.GuidelineReport {
 type ComputeConformanceTask struct {
 	Client          connection.RegistryClient
 	Spec            *rpc.ApiSpec
-	LintersMetadata map[string]*LinterMetadata
+	LintersMetadata map[string]*linterMetadata
 	StyleguideId    string
 	DryRun          bool
 }
@@ -132,7 +132,7 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 	conformanceReport *style.ConformanceReport,
 	guidelineReportsMap map[string]int,
 	linterResponse *style.LinterResponse,
-	linterMetadata *LinterMetadata,
+	linterMetadata *linterMetadata,
 ) {
 	// Process linterResponse to generate conformance report
 	lintFiles := linterResponse.Lint.GetFiles()

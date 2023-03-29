@@ -33,27 +33,27 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type RuleMetadata struct {
+type ruleMetadata struct {
 	guidelineRule *style.Rule      // Rule object associated with the linter-rule.
 	guideline     *style.Guideline // Guideline object associated with the linter-rule.
 }
 
-type LinterMetadata struct {
+type linterMetadata struct {
 	name          string
 	rules         []string
-	rulesMetadata map[string]*RuleMetadata
+	rulesMetadata map[string]*ruleMetadata
 }
 
 func getLinterBinaryName(linterName string) string {
 	return "registry-lint-" + linterName
 }
 
-func SimpleLinterMetadata(linter string) *LinterMetadata {
-	return &LinterMetadata{name: linter}
+func SimpleLinterMetadata(linter string) *linterMetadata {
+	return &linterMetadata{name: linter}
 }
 
-func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*LinterMetadata, error) {
-	linterNameToMetadata := make(map[string]*LinterMetadata)
+func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*linterMetadata, error) {
+	linterNameToMetadata := make(map[string]*linterMetadata)
 
 	// Iterate through all the guidelines of the style guide.
 	for _, guideline := range styleguide.GetGuidelines() {
@@ -67,10 +67,10 @@ func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*LinterMet
 
 			metadata, ok := linterNameToMetadata[linterName]
 			if !ok {
-				metadata = &LinterMetadata{
+				metadata = &linterMetadata{
 					name:          linterName,
 					rules:         make([]string, 0),
-					rulesMetadata: make(map[string]*RuleMetadata),
+					rulesMetadata: make(map[string]*ruleMetadata),
 				}
 				linterNameToMetadata[linterName] = metadata
 			}
@@ -84,7 +84,7 @@ func GenerateLinterMetadata(styleguide *style.StyleGuide) (map[string]*LinterMet
 			metadata.rules = append(metadata.rules, linterRuleName)
 
 			if _, ok := metadata.rulesMetadata[linterRuleName]; !ok {
-				metadata.rulesMetadata[linterRuleName] = &RuleMetadata{}
+				metadata.rulesMetadata[linterRuleName] = &ruleMetadata{}
 			}
 			metadata.rulesMetadata[linterRuleName].guideline = guideline
 			metadata.rulesMetadata[linterRuleName].guidelineRule = rule
@@ -127,7 +127,7 @@ func WriteSpecForLinting(ctx context.Context, client connection.RegistryClient, 
 
 func RunLinter(ctx context.Context,
 	specDirectory string,
-	metadata *LinterMetadata) (*style.LinterResponse, error) {
+	metadata *linterMetadata) (*style.LinterResponse, error) {
 	// Formulate the request.
 	requestBytes, err := proto.Marshal(&style.LinterRequest{
 		SpecDirectory: specDirectory,
