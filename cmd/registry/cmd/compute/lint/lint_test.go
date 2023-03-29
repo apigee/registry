@@ -45,6 +45,33 @@ func TestLint(t *testing.T) {
 	}
 }
 
+func TestInvalidComputeLint(t *testing.T) {
+	tests := []struct {
+		desc string
+		args []string
+	}{
+		{
+			desc: "no-linter-specified",
+			args: []string{"spec"},
+		},
+		{
+			desc: "missing-linter-specified",
+			args: []string{"spec", "--linter", "nonexistent"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			command := Command()
+			command.SilenceErrors = true
+			command.SilenceUsage = true
+			command.SetArgs(test.args)
+			if err := command.Execute(); err == nil {
+				t.Fatalf("Execute() with no args succeeded and should have failed")
+			}
+		})
+	}
+}
+
 func TestComputeLint(t *testing.T) {
 	project := names.Project{ProjectID: "lint-test"}
 	ctx := context.Background()

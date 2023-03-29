@@ -16,13 +16,14 @@ package lint
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -33,47 +34,57 @@ import (
 )
 
 func Command() *cobra.Command {
-	var linter string
 	cmd := &cobra.Command{
 		Use:   "lint SPEC",
 		Short: "Compute lint results for API specs",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			args[0] = c.FQName(args[0])
 
+			linter, err := cmd.Flags().GetString("linter")
+			if err != nil {
+				return fmt.Errorf("failed to get linter from flags: %s", err)
+			}
+			if linter == "" {
+				return errors.New("--linter argument is required")
+			}
+			if _, err = exec.LookPath(fmt.Sprintf("registry-lint-%s", linter)); err != nil {
+				return err
+			}
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
+				fmt.Errorf("failed to get filter from flags: %s", err)
 			}
 			dryRun, err := cmd.Flags().GetBool("dry-run")
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get fry-run from flags")
+				fmt.Errorf("failed to get dry-run from flags: %s", err)
 			}
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 			// Initialize task queue.
 			jobs, err := cmd.Flags().GetInt("jobs")
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+				return fmt.Errorf("failed to get jobs from flags: %s", err)
 			}
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
 			spec, err := names.ParseSpec(args[0])
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
+				return fmt.Errorf("invalid spec pattern %s", args[0])
 			}
 
 			// Iterate through a collection of specs and evaluate each.
-			err = visitor.ListSpecs(ctx, client, spec, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
+			return visitor.ListSpecs(ctx, client, spec, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 				taskQueue <- &computeLintTask{
 					client: client,
 					spec:   spec,
@@ -82,16 +93,13 @@ func Command() *cobra.Command {
 				}
 				return nil
 			})
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
-			}
 		},
 	}
 
-	cmd.Flags().StringVar(&linter, "linter", "", "the linter to use (aip|spectral|gnostic)")
-	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
-	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
-	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().String("linter", "", "the linter to use")
+	cmd.Flags().String("filter", "", "Filter selected resources")
+	cmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.Flags().Int("jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
 
