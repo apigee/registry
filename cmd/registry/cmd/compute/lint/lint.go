@@ -59,11 +59,11 @@ func Command() *cobra.Command {
 
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				fmt.Errorf("failed to get filter from flags: %s", err)
+				return fmt.Errorf("failed to get filter from flags: %s", err)
 			}
 			dryRun, err := cmd.Flags().GetBool("dry-run")
 			if err != nil {
-				fmt.Errorf("failed to get dry-run from flags: %s", err)
+				return fmt.Errorf("failed to get dry-run from flags: %s", err)
 			}
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
