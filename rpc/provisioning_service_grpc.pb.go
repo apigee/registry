@@ -22,7 +22,8 @@ package rpc
 
 import (
 	context "context"
-	longrunning "google.golang.org/genproto/googleapis/longrunning"
+
+	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
