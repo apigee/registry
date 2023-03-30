@@ -58,6 +58,10 @@ func TestInvalidComputeLint(t *testing.T) {
 			desc: "missing-linter-specified",
 			args: []string{"spec", "--linter", "nonexistent"},
 		},
+		{
+			desc: "empty-linter-specified",
+			args: []string{"spec", "--linter", ""},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {

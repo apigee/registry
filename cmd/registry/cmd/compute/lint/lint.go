@@ -51,7 +51,7 @@ func Command() *cobra.Command {
 				return fmt.Errorf("failed to get linter from flags: %s", err)
 			}
 			if linter == "" {
-				return errors.New("--linter argument is required")
+				return errors.New("--linter argument cannot be empty")
 			}
 			if _, err = exec.LookPath(fmt.Sprintf("registry-lint-%s", linter)); err != nil {
 				return err
@@ -97,6 +97,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().String("linter", "", "the linter to use")
+	_ = cmd.MarkFlagRequired("linter")
 	cmd.Flags().String("filter", "", "Filter selected resources")
 	cmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
 	cmd.Flags().Int("jobs", 10, "Number of actions to perform concurrently")
