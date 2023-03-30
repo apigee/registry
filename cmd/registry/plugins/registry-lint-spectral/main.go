@@ -16,6 +16,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -125,24 +126,26 @@ func (linter *spectralLinterRunner) createConfigurationFile(root string, ruleIds
 	// Create the spectral configuration.
 	configuration := spectralConfiguration{}
 	configuration.Rules = make(map[string]bool)
-	configuration.Extends = [][]string{{"spectral:oas", "off"}, {"spectral:asyncapi", "off"}}
+	if len(ruleIds) == 0 {
+		// if no rules were specified, use the default rules.
+		configuration.Extends = [][]string{{"spectral:oas", "all"}, {"spectral:asyncapi", "all"}}
+	} else {
+		configuration.Extends = [][]string{{"spectral:oas", "off"}, {"spectral:asyncapi", "off"}}
+	}
 	for _, ruleName := range ruleIds {
 		configuration.Rules[ruleName] = true
 	}
-
 	// Marshal the configuration into a file.
 	file, err := json.MarshalIndent(configuration, "", " ")
 	if err != nil {
 		return "", err
 	}
-
 	// Write the configuration to the temporary directory.
 	configPath := filepath.Join(root, "spectral.json")
 	err = os.WriteFile(configPath, file, 0644)
 	if err != nil {
 		return "", err
 	}
-
 	return configPath, nil
 }
 
@@ -189,9 +192,22 @@ func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, erro
 		"--output", outputPath,
 	)
 
-	// Ignore errors from Spectral because Spectral returns an
-	// error result when APIs have errors.
-	_ = cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		switch v := err.(type) {
+		case *exec.ExitError:
+			code := v.ExitCode()
+			if code == 1 {
+				// This just means there were linter errors
+			} else {
+				log.Printf("linter error %T (%s)", err, specPath)
+				log.Printf("%s", string(output))
+			}
+		default:
+			log.Printf("linter error %T (%s)", err, specPath)
+			log.Printf("%s", string(output))
+		}
+	}
 
 	// Read and parse the spectral output.
 	b, err := os.ReadFile(outputPath)
