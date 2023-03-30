@@ -20,11 +20,11 @@ import (
 	"os"
 	"testing"
 
+	pubsub "cloud.google.com/go/pubsub/apiv1/pubsubpb"
 	"cloud.google.com/go/pubsub/pstest"
 	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
 func TestNotifications(t *testing.T) {
