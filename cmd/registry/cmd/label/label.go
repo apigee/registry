@@ -41,17 +41,17 @@ func Command() *cobra.Command {
 		Use:   "label RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
 		Short: "Label resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			args[0] = c.FQName(args[0])
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
@@ -75,10 +75,7 @@ func Command() *cobra.Command {
 			}
 			labeling := &Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
 
-			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to handle command")
-			}
+			return matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
 		},
 	}
 
