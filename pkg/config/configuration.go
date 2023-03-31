@@ -167,9 +167,9 @@ func (c *Configuration) Resolve() error {
 	if c.Registry.Token == "" && c.TokenSource != "" {
 		shellArgs := strings.Split(c.TokenSource, " ")
 		execCmd := exec.Command(shellArgs[0], shellArgs[1:]...)
-		out, err := execCmd.Output()
+		out, err := execCmd.CombinedOutput()
 		if err != nil {
-			return err
+			return fmt.Errorf("error running token source: %s", string(out))
 		}
 		c.Registry.Token = strings.TrimSpace(string(out))
 	}
