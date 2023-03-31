@@ -44,6 +44,8 @@ func lintStatsRelation(linter string) string {
 
 func Command() *cobra.Command {
 	var linter string
+	var filter string
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "lintstats RESOURCE",
 		Short: "Compute summaries of linter runs",
@@ -55,15 +57,6 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
 			args[0] = c.FQName(args[0])
-
-			filter, err := cmd.Flags().GetString("filter")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
-			}
-			dryRun, err := cmd.Flags().GetBool("dry-run")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
-			}
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
@@ -82,8 +75,10 @@ func Command() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
 	cmd.Flags().StringVar(&linter, "linter", "", "the name of the linter whose results will be used to compute stats (aip|spectral|gnostic)")
 	_ = cmd.MarkFlagRequired("linter")
+	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
 	return cmd
 }
 

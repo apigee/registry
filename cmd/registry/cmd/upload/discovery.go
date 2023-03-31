@@ -49,6 +49,7 @@ func fetchDiscoveryList(service string) (*discovery.List, error) {
 
 func discoveryCommand() *cobra.Command {
 	var service string
+	var jobs int
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Args:  cobra.NoArgs,
@@ -67,10 +68,6 @@ func discoveryCommand() *cobra.Command {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
-			jobs, err := cmd.Flags().GetInt("jobs")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
-			}
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
@@ -93,8 +90,11 @@ func discoveryCommand() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringVar(&projectID, "project-id", "", "project ID to use for each upload (deprecated)")
+	cmd.Flags().StringVar(&parent, "parent", "", "parent for the upload (projects/PROJECT/locations/LOCATION)")
 	cmd.Flags().StringVar(&service, "service", "",
 		fmt.Sprintf("the API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }
 

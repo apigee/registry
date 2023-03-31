@@ -54,7 +54,7 @@ func TestParentFromFlags(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			cmd := Command()
+			cmd := protosCommand()
 			cmd.SetContext(context.Background())
 			if err := cmd.ParseFlags(test.args); err != nil {
 				t.Fatalf("Failed to parse flags")

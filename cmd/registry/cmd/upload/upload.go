@@ -33,25 +33,16 @@ func Command() *cobra.Command {
 	cmd.AddCommand(discoveryCommand())
 	cmd.AddCommand(openAPICommand())
 	cmd.AddCommand(protosCommand())
-
-	cmd.PersistentFlags().String("project-id", "", "project ID to use for each upload (deprecated)")
-	cmd.PersistentFlags().String("parent", "", "parent for the upload (projects/PROJECT/locations/LOCATION)")
-	cmd.PersistentFlags().IntP("jobs", "j", 10, "number of actions to perform concurrently")
-
 	return cmd
 }
+
+// shared among all subcommands
+var parent string
+var projectID string
 
 func getParent(cmd *cobra.Command) (string, error) {
 	ctx := cmd.Context()
 
-	parent, err := cmd.Flags().GetString("parent")
-	if err != nil {
-		return "", fmt.Errorf("failed to get parent from flags (%s)", err)
-	}
-	projectID, err := cmd.Flags().GetString("project-id")
-	if err != nil {
-		return "", fmt.Errorf("failed to get project-id from flags (%s)", err)
-	}
 	if projectID != "" && parent != "" {
 		return "", errors.New("--project-id cannot be used with --parent")
 	}
