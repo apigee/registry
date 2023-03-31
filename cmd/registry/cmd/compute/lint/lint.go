@@ -34,6 +34,10 @@ import (
 )
 
 func Command() *cobra.Command {
+	var filter string
+	var linter string
+	var jobs int
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "lint SPEC",
 		Short: "Compute lint results for API specs",
@@ -46,10 +50,6 @@ func Command() *cobra.Command {
 			}
 			args[0] = c.FQName(args[0])
 
-			linter, err := cmd.Flags().GetString("linter")
-			if err != nil {
-				return fmt.Errorf("failed to get linter from flags: %s", err)
-			}
 			if linter == "" {
 				return errors.New("--linter argument cannot be empty")
 			}
@@ -57,24 +57,11 @@ func Command() *cobra.Command {
 				return err
 			}
 
-			filter, err := cmd.Flags().GetString("filter")
-			if err != nil {
-				return fmt.Errorf("failed to get filter from flags: %s", err)
-			}
-			dryRun, err := cmd.Flags().GetBool("dry-run")
-			if err != nil {
-				return fmt.Errorf("failed to get dry-run from flags: %s", err)
-			}
-
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				return err
 			}
 			// Initialize task queue.
-			jobs, err := cmd.Flags().GetInt("jobs")
-			if err != nil {
-				return fmt.Errorf("failed to get jobs from flags: %s", err)
-			}
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
@@ -96,11 +83,11 @@ func Command() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("linter", "", "the linter to use")
+	cmd.Flags().StringVar(&linter, "linter", "", "the linter to use")
 	_ = cmd.MarkFlagRequired("linter")
-	cmd.Flags().String("filter", "", "Filter selected resources")
-	cmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
-	cmd.Flags().Int("jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }
 

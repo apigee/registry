@@ -37,6 +37,9 @@ import (
 )
 
 func Command() *cobra.Command {
+	var filter string
+	var jobs int
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "vocabulary SPEC_REVISION",
 		Short: "Compute vocabularies of API specs",
@@ -49,24 +52,11 @@ func Command() *cobra.Command {
 			}
 			path := c.FQName(args[0])
 
-			filter, err := cmd.Flags().GetString("filter")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
-			}
-			dryRun, err := cmd.Flags().GetBool("dry-run")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
-			}
-
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
-			jobs, err := cmd.Flags().GetInt("jobs")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
-			}
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
 			defer wait()
 
@@ -100,9 +90,9 @@ func Command() *cobra.Command {
 			}
 		},
 	}
-	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
-	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
-	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }
 
