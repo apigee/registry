@@ -66,10 +66,10 @@ func Command() *cobra.Command {
 				} else {
 					pair := strings.Split(operation, "=")
 					if len(pair) != 2 {
-						log.Fatalf(ctx, "%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
+						return fmt.Errorf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
 					}
 					if pair[0] == "" {
-						log.Fatalf(ctx, "%q is invalid because it specifies an empty key", operation)
+						return fmt.Errorf("%q is invalid because it specifies an empty key", operation)
 					}
 					valuesToSet[pair[0]] = pair[1]
 				}
