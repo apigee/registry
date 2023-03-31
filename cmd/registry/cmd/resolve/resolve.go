@@ -61,27 +61,27 @@ func Command() *cobra.Command {
 		Use:   "resolve MANIFEST_ARTIFACT",
 		Short: "Resolve dependencies by performing actions in a specified manifest",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			args[0] = c.FQName(args[0])
 
 			name, err := names.ParseArtifact(args[0])
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Invalid manifest resource name")
+				return err
 			}
 
 			registryClient, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 
 			manifest, err := fetchManifest(ctx, registryClient, name.String())
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch manifest")
+				return err
 			}
 
 			client := &controller.RegistryLister{RegistryClient: registryClient}
@@ -94,7 +94,7 @@ func Command() *cobra.Command {
 			// Location: registry/deployments/controller/dashboard/*
 			if len(actions) == 0 {
 				log.Debug(ctx, "Generated 0 actions. The registry is already in a resolved state.")
-				return
+				return nil
 			}
 
 			log.Debugf(ctx, "Generated %d actions.", len(actions))
@@ -104,7 +104,7 @@ func Command() *cobra.Command {
 				for _, a := range actions {
 					log.Debugf(ctx, "Action: %q", a.Command)
 				}
-				return
+				return nil
 			}
 
 			log.Debug(ctx, "Starting execution...")
@@ -117,6 +117,7 @@ func Command() *cobra.Command {
 					TaskID: fmt.Sprintf("%.8s", uuid.New()),
 				}
 			}
+			return nil
 		},
 	}
 
