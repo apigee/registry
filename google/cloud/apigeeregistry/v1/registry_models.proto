@@ -54,13 +54,13 @@ message Api {
   string availability = 6;
 
   // The recommended version of the API.
-  // Format: apis/{api}/versions/{version}
+  // Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}
   string recommended_version = 7 [(google.api.resource_reference) = {
                                     type: "apigeeregistry.googleapis.com/ApiVersion"
                                   }];
 
   // The recommended deployment of the API.
-  // Format: apis/{api}/deployments/{deployment}
+  // Format: projects/{project}/locations/{location}/apis/{api}/deployments/{deployment}
   string recommended_deployment = 8 [(google.api.resource_reference) = {
                                        type: "apigeeregistry.googleapis.com/ApiDeployment"
                                      }];

@@ -18,9 +18,9 @@ import (
 	"context"
 	"testing"
 
+	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"

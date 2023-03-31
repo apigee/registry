@@ -20,12 +20,12 @@ import (
 	"log"
 	"strings"
 
+	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/wipeout"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
 	"google.golang.org/genproto/googleapis/api/httpbody"
-	"google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
