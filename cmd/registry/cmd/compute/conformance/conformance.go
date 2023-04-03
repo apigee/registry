@@ -41,22 +41,22 @@ func Command() *cobra.Command {
 		Use:   "conformance SPEC_REVISION",
 		Short: "Compute lint results for API specs",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			args[0] = c.FQName(args[0])
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 
 			name, err := names.ParseSpecRevision(args[0])
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Invalid Argument: must specify one or more API specs")
+				return err
 			}
 
 			specs := make([]*rpc.ApiSpec, 0)
@@ -72,7 +72,7 @@ func Command() *cobra.Command {
 				})
 			}
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
+				return err
 			}
 
 			guides := make([]*style.StyleGuide, 0)
@@ -85,13 +85,14 @@ func Command() *cobra.Command {
 				guides = append(guides, guide)
 				return nil
 			}); err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list styleguide artifacts")
+				return err
 			}
 
 			for _, guide := range guides {
 				log.Debugf(ctx, "Processing styleguide: %s", guide.GetId())
 				processStyleGuide(ctx, client, guide, specs, dryRun, jobs)
 			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")

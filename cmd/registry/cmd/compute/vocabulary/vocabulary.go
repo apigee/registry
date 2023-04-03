@@ -44,17 +44,17 @@ func Command() *cobra.Command {
 		Use:   "vocabulary SPEC_REVISION",
 		Short: "Compute vocabularies of API specs",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			path := c.FQName(args[0])
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 			// Initialize task queue.
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, jobs)
@@ -62,7 +62,7 @@ func Command() *cobra.Command {
 
 			parsed, err := names.ParseSpecRevision(path)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
+				return err
 			}
 
 			// Iterate through a collection of specs and summarize each.
@@ -85,9 +85,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 			}
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
-			}
+			return err
 		},
 	}
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")

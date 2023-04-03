@@ -50,17 +50,17 @@ func Command() *cobra.Command {
 		Use:   "lintstats RESOURCE",
 		Short: "Compute summaries of linter runs",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			args[0] = c.FQName(args[0])
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 
 			adminClient, err := connection.NewAdminClientWithSettings(ctx, c)
@@ -68,10 +68,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, args[0], filter, linter, dryRun)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
-			}
+			return matchAndHandleLintStatsCmd(ctx, client, adminClient, args[0], filter, linter, dryRun)
 		},
 	}
 

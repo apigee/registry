@@ -22,7 +22,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
@@ -38,11 +37,11 @@ func Command() *cobra.Command {
 		Use:   "diff RESOURCE_1 RESOURCE_2",
 		Short: "Compare resources in the API Registry",
 		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			for i := range args {
 				args[i] = c.FQName(args[i])
@@ -50,7 +49,7 @@ func Command() *cobra.Command {
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 
 			var spec1, spec2 *rpc.ApiSpec
@@ -61,7 +60,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+					return err
 				}
 				path1 = name1
 			} else if name1, err := names.ParseSpecRevision(args[0]); err == nil {
@@ -70,7 +69,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+					return err
 				}
 				path1 = name1.Spec()
 			}
@@ -81,7 +80,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+					return err
 				}
 			} else if name2, err := names.ParseSpecRevision(args[1]); err == nil {
 				err = visitor.GetSpecRevision(ctx, client, name2, true, func(ctx context.Context, s *rpc.ApiSpec) error {
@@ -89,7 +88,7 @@ func Command() *cobra.Command {
 					return nil
 				})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+					return err
 				}
 			} else if name2, err := resolveSpecRevision(ctx, client, path1.String(), args[1]); err == nil {
 				err = visitor.GetSpecRevision(ctx, client, name2, true, func(ctx context.Context, s *rpc.ApiSpec) error {
@@ -97,17 +96,15 @@ func Command() *cobra.Command {
 					return nil
 				})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+					return err
 				}
 			} else {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
+				return err
 			}
 			if spec1 != nil && spec2 != nil {
 				err = printDiff(spec1, spec2)
 			}
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
-			}
+			return err
 		},
 	}
 	return cmd
