@@ -32,20 +32,20 @@ goto :eof
 setlocal
 
 :: set the service address.
-set APG_REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
-set APG_REGISTRY_INSECURE=false
+set REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
+set REGISTRY_INSECURE=false
 
-FOR /F %%g IN ('gcloud config get project') DO set APG_REGISTRY_PROJECT=%%g
-set APG_REGISTRY_LOCATION=global
+FOR /F %%g IN ('gcloud config get project') DO set REGISTRY_PROJECT=%%g
+set REGISTRY_LOCATION=global
 FOR /F %%g IN ('gcloud config get account') DO set CLIENT_EMAIL=%%g
-set APG_REGISTRY_TOKEN_SOURCE=gcloud auth print-access-token %CLIENT_EMAIL%
+set REGISTRY_TOKEN_SOURCE=gcloud auth print-access-token %CLIENT_EMAIL%
 
 registry config configurations create hosted ^
-  --registry.insecure=%APG_REGISTRY_INSECURE% ^
-  --registry.address=%APG_REGISTRY_ADDRESS% ^
-  --registry.project=%APG_REGISTRY_PROJECT% ^
-  --registry.location=%APG_REGISTRY_LOCATION%
+  --registry.insecure=%REGISTRY_INSECURE% ^
+  --registry.address=%REGISTRY_ADDRESS% ^
+  --registry.project=%REGISTRY_PROJECT% ^
+  --registry.location=%REGISTRY_LOCATION%
 
-registry config set token-source "%APG_REGISTRY_TOKEN_SOURCE%"
+registry config set token-source "%REGISTRY_TOKEN_SOURCE%"
 
 endlocal

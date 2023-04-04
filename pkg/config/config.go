@@ -44,7 +44,6 @@ var (
 	ErrReservedConfigName = fmt.Errorf("%q is reserved", ActivePointerFilename)
 
 	envBindings    = []string{"registry.address", "registry.insecure", "registry.token"}
-	envPrefix      = "APG"
 	envKeyReplacer = strings.NewReplacer(".", "_")
 )
 
@@ -197,16 +196,6 @@ func ReadValid(name string) (c Configuration, err error) {
 		return
 	}
 
-	for _, env := range envBindings {
-		if v.IsSet(env) {
-			evar := strings.ToUpper(envKeyReplacer.Replace(envPrefix + "." + env))
-			eval, _ := os.LookupEnv(evar)
-			if eval == v.GetString(env) {
-				fmt.Printf("WARN: deprecated env: %s=%q\n", evar, eval)
-			}
-		}
-	}
-
 	return
 }
 
@@ -277,7 +266,6 @@ func ActiveName() (string, error) {
 func bindEnvs(v *viper.Viper) error {
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(envKeyReplacer)
-	v.SetEnvPrefix(envPrefix)
 	for _, env := range envBindings {
 		if err := v.BindEnv(env); err != nil {
 			return err
