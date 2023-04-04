@@ -33,5 +33,5 @@ The following environment variables are also used for overrides for testing and
 internal purposes, but should be avoided for production as they are not
 guaranteed:
 
-- APG_REGISTRY_ADDRESS
-- APG_REGISTRY_INSECURE
+- REGISTRY_ADDRESS
+- REGISTRY_INSECURE

@@ -62,8 +62,8 @@ func TestNoConfigurations(t *testing.T) {
 
 func TestConfigurations(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
-	t.Setenv("APG_REGISTRY_ADDRESS", "")
-	t.Setenv("APG_REGISTRY_INSECURE", "")
+	t.Setenv("REGISTRY_ADDRESS", "")
+	t.Setenv("REGISTRY_INSECURE", "")
 
 	cmd := createCommand()
 	cmd.SetArgs([]string{"config1"})

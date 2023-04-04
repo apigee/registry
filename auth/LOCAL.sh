@@ -20,14 +20,14 @@
 #
 
 # Be sure that the port setting below is correct. 8080 is the default.
-APG_REGISTRY_ADDRESS="localhost:8080"
+REGISTRY_ADDRESS="localhost:8080"
 
 # Local calls don't use TLS.
-APG_REGISTRY_INSECURE="true"
+REGISTRY_INSECURE="true"
 
-APG_REGISTRY_LOCATION="global"
+REGISTRY_LOCATION="global"
 
 registry config configurations create local \
-  --registry.insecure="${APG_REGISTRY_INSECURE}" \
-  --registry.address="${APG_REGISTRY_ADDRESS}" \
-  --registry.location="${APG_REGISTRY_LOCATION}"
+  --registry.insecure="${REGISTRY_INSECURE}" \
+  --registry.address="${REGISTRY_ADDRESS}" \
+  --registry.location="${REGISTRY_LOCATION}"

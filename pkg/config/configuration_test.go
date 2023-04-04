@@ -39,7 +39,7 @@ func TestMissingDirectory(t *testing.T) {
 
 func TestActiveSettings(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
-	t.Setenv("APG_REGISTRY_ADDRESS", "")
+	t.Setenv("REGISTRY_ADDRESS", "")
 
 	// missing active file
 	_, err := config.Active()
@@ -95,7 +95,7 @@ func TestActiveSettings(t *testing.T) {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
-	t.Setenv("APG_REGISTRY_ADDRESS", "ignore")
+	t.Setenv("REGISTRY_ADDRESS", "ignore")
 	name, raw, err := config.ActiveRaw()
 	if err != nil {
 		t.Fatal(err)
@@ -118,9 +118,9 @@ func TestSettingsEnvVars(t *testing.T) {
 			Token:    "token",
 		},
 	}
-	t.Setenv("APG_REGISTRY_ADDRESS", want.Registry.Address)
-	t.Setenv("APG_REGISTRY_INSECURE", strconv.FormatBool(want.Registry.Insecure))
-	t.Setenv("APG_REGISTRY_TOKEN", want.Registry.Token)
+	t.Setenv("REGISTRY_ADDRESS", want.Registry.Address)
+	t.Setenv("REGISTRY_INSECURE", strconv.FormatBool(want.Registry.Insecure))
+	t.Setenv("REGISTRY_TOKEN", want.Registry.Token)
 
 	got, err := config.Active()
 	if err != nil {
@@ -341,8 +341,8 @@ func TestManipulations(t *testing.T) {
 
 func TestAllConfigs(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
-	t.Setenv("APG_REGISTRY_ADDRESS", "")
-	t.Setenv("APG_REGISTRY_INSECURE", "")
+	t.Setenv("REGISTRY_ADDRESS", "")
+	t.Setenv("REGISTRY_INSECURE", "")
 
 	config1 := config.Configuration{
 		Registry: config.Registry{

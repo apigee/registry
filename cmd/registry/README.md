@@ -6,8 +6,8 @@ subcommands that call methods of the Registry API.
 
 ## Usage
 
-Run `registry help` for general information and `registry help [subcommand]`
-for details on any subcommand.
+Run `registry help` for general information and `registry help [subcommand]` for
+details on any subcommand.
 
 ## Configuration
 
@@ -52,8 +52,7 @@ gcloud config set project $PROJECT_ID
 ```
 
 4. Run the following script to get an authorization token and set it in your
-   environment as `$APG_REGISTRY_TOKEN` (on Windows, please use
-   `auth/HOSTED.bat`):
+   environment as `$REGISTRY_TOKEN` (on Windows, please use `auth/HOSTED.bat`):
 
 ```
 . auth/HOSTED.sh
@@ -90,8 +89,8 @@ that is likely to become a recommended way to populate an API registry.
   registry upload openapi APIs --project-id $PROJECT_ID
   ```
 
-  Here `APIs` is a directory in the repo and `$PROJECT_ID` should be set to
-  your registry project id.
+  Here `APIs` is a directory in the repo and `$PROJECT_ID` should be set to your
+  registry project id.
 
 - `registry upload protos` reads Protocol Buffer API descriptions from a
   directory that follows the style of the

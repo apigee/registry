@@ -35,8 +35,8 @@ import (
 )
 
 // NewIfNoAddress will create a RegistryServer served by a
-// basic grpc.Server if env var APG_REGISTRY_ADDRESS is
-// not set, see NewServer() for details. If APG_REGISTRY_ADDRESS
+// basic grpc.Server if env var REGISTRY_ADDRESS is
+// not set, see NewServer() for details. If REGISTRY_ADDRESS
 // is set, returns nil as client will connect to that remote address.
 // Example:
 //

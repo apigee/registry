@@ -31,18 +31,18 @@ if ! [ -x "$(command -v gcloud)" ]; then
 fi
 
 # Set the service address.
-APG_REGISTRY_ADDRESS="apigeeregistry.googleapis.com:443"
-APG_REGISTRY_INSECURE="false"
+REGISTRY_ADDRESS="apigeeregistry.googleapis.com:443"
+REGISTRY_INSECURE="false"
 
-APG_REGISTRY_PROJECT="$(gcloud config get project)"
-APG_REGISTRY_LOCATION="global"
-APG_REGISTRY_CLIENT_EMAIL="$(gcloud auth list --filter=status:ACTIVE --format="value(account)")"
-APG_REGISTRY_TOKEN_SOURCE="gcloud auth print-access-token ${APG_REGISTRY_CLIENT_EMAIL}"
+REGISTRY_PROJECT="$(gcloud config get project)"
+REGISTRY_LOCATION="global"
+REGISTRY_CLIENT_EMAIL="$(gcloud auth list --filter=status:ACTIVE --format="value(account)")"
+REGISTRY_TOKEN_SOURCE="gcloud auth print-access-token ${REGISTRY_CLIENT_EMAIL}"
 
 registry config configurations create hosted \
-  --registry.insecure="${APG_REGISTRY_INSECURE}" \
-  --registry.address="${APG_REGISTRY_ADDRESS}" \
-  --registry.project="${APG_REGISTRY_PROJECT}" \
-  --registry.location="${APG_REGISTRY_LOCATION}" 
+  --registry.insecure="${REGISTRY_INSECURE}" \
+  --registry.address="${REGISTRY_ADDRESS}" \
+  --registry.project="${REGISTRY_PROJECT}" \
+  --registry.location="${REGISTRY_LOCATION}" 
   
-registry config set token-source "${APG_REGISTRY_TOKEN_SOURCE}"
+registry config set token-source "${REGISTRY_TOKEN_SOURCE}"
