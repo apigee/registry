@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/encoding"
-	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -46,7 +45,7 @@ func Command() *cobra.Command {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			pattern := c.FQName(args[0])
 			registryClient, err := connection.NewRegistryClientWithSettings(ctx, c)

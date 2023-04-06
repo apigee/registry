@@ -62,7 +62,7 @@ func discoveryCommand() *cobra.Command {
 			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 			if err := visitor.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
@@ -73,7 +73,7 @@ func discoveryCommand() *cobra.Command {
 
 			discoveryResponse, err := fetchDiscoveryList(service)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch discovery list")
+				return fmt.Errorf("failed to fetch discovery list: %s", err)
 			}
 
 			// Create an upload job for each API.
