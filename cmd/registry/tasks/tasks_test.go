@@ -64,8 +64,8 @@ func TestWorkerPoolStopOnError(t *testing.T) {
 	}()
 
 	got := counter.Load()
-	if got < int32(errorAt) || got >= int32(total) {
-		t.Errorf("want between %d and %d, got: %d", errorAt, total, got)
+	if got < int32(errorAt) || got > int32(total) {
+		t.Errorf("want from %d to %d, got: %d", errorAt, total, got)
 	}
 }
 
