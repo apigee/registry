@@ -65,7 +65,7 @@ func Command() *cobra.Command {
 
 			adminClient, err := connection.NewAdminClientWithSettings(ctx, c)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 
 			return matchAndHandleLintStatsCmd(ctx, client, adminClient, args[0], filter, linter, dryRun)
