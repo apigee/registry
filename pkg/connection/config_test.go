@@ -44,6 +44,30 @@ func TestFQNamePartialConfig(t *testing.T) {
 	}
 }
 
+func TestFQNameUnspecifiedLocation(t *testing.T) {
+	data := []struct {
+		input string
+		want  string
+	}{
+		{"locations/foo", "projects/project1/locations/foo"},
+		{"/locations/foo", "projects/project1/locations/foo"},
+		{"apis/foo", "projects/project1/locations/global/apis/foo"},
+		{"/apis/foo", "projects/project1/locations/global/apis/foo"},
+	}
+
+	c := Config{
+		Project: "project1",
+	}
+	for _, d := range data {
+		t.Run(d.input, func(t *testing.T) {
+			got := c.FQName(d.input)
+			if d.want != got {
+				t.Errorf("want: %q, got: %q", d.want, got)
+			}
+		})
+	}
+}
+
 func TestFQNameFullConfig(t *testing.T) {
 	data := []struct {
 		input string
