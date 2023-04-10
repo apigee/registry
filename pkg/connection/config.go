@@ -84,6 +84,9 @@ func (c Config) FQName(name string) string {
 			name = path.Join("projects", c.Project, name)
 		} else if c.Location != "" {
 			name = path.Join("projects", c.Project, "locations", c.Location, name)
+		} else {
+			// Use "global" as the default location.
+			name = path.Join("projects", c.Project, "locations", "global", name)
 		}
 	}
 	return name
