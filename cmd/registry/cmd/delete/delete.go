@@ -39,7 +39,7 @@ func Command() *cobra.Command {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			pattern := c.FQName(args[0])
 			registryClient, err := connection.NewRegistryClientWithSettings(ctx, c)

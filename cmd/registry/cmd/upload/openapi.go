@@ -53,7 +53,7 @@ func openAPICommand() *cobra.Command {
 			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
 			}
 			if err := visitor.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
@@ -65,7 +65,7 @@ func openAPICommand() *cobra.Command {
 			for _, arg := range args {
 				path, err := filepath.Abs(arg)
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
+					return fmt.Errorf("invalid path: %s", err)
 				}
 				scanDirectoryForOpenAPI(ctx, client, parent, baseURI, path, taskQueue)
 			}
