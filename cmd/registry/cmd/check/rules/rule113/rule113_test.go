@@ -137,10 +137,10 @@ func TestCheckAnnotation(t *testing.T) {
 				Severity:   check.Problem_ERROR,
 			},
 		}},
-		{"long", strings.Repeat("y", 64), strings.Repeat("y", 64), nil},
-		{"too long", strings.Repeat("n", 65), strings.Repeat("n", 65), []*check.Problem{
+		{"long", strings.Repeat("y", 63), strings.Repeat("y", 63), nil},
+		{"too long", strings.Repeat("n", 64), strings.Repeat("n", 64), []*check.Problem{
 			{
-				Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, strings.Repeat("n", 65)),
+				Message:    fmt.Sprintf(`Key %q exceeds max length of 63 characters.`, strings.Repeat("n", 64)),
 				Suggestion: "Fix key.",
 				Severity:   check.Problem_ERROR,
 			},

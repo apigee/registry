@@ -16,9 +16,9 @@ package rule105
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/util"
 	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/rpc"
 )
@@ -41,14 +41,6 @@ var sourceUriFormat = &lint.ApiSpecRule{
 		return a.SourceUri != ""
 	},
 	ApplyToApiSpec: func(ctx context.Context, a *rpc.ApiSpec) []*check.Problem {
-		u, err := url.ParseRequestURI(a.SourceUri)
-		if err != nil || u.Host == "" {
-			return []*check.Problem{{
-				Severity:   check.Problem_ERROR,
-				Message:    `source_uri must be an absolute URI.`,
-				Suggestion: `Ensure source_uri includes a host.`,
-			}}
-		}
-		return nil
+		return util.CheckURI("source_uri", a.SourceUri)
 	},
 }

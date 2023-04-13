@@ -88,10 +88,10 @@ func checkLabel(k string, v string) []*check.Problem {
 			Suggestion: `Fix key.`,
 		})
 	}
-	if count := utf8.RuneCountInString(k); count > 64 {
+	if count := utf8.RuneCountInString(k); count > 63 {
 		probs = append(probs, &check.Problem{
 			Severity:   check.Problem_ERROR,
-			Message:    fmt.Sprintf(`Key %q exceeds max length of 64 characters.`, k),
+			Message:    fmt.Sprintf(`Key %q exceeds max length of 63 characters.`, k),
 			Suggestion: `Fix key.`,
 		})
 	}
@@ -102,10 +102,10 @@ func checkLabel(k string, v string) []*check.Problem {
 			Suggestion: `Fix value.`,
 		})
 	}
-	if count := utf8.RuneCountInString(v); count > 64 {
+	if count := utf8.RuneCountInString(v); count > 63 {
 		probs = append(probs, &check.Problem{
 			Severity:   check.Problem_ERROR,
-			Message:    fmt.Sprintf(`Value for key %q exceeds max length of 64 characters.`, k),
+			Message:    fmt.Sprintf(`Value for key %q exceeds max length of 63 characters.`, k),
 			Suggestion: `Fix value.`,
 		})
 	}

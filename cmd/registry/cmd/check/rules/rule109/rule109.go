@@ -42,6 +42,6 @@ var displayName = &lint.FieldRule{
 		return field == fieldName
 	},
 	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []*check.Problem {
-		return util.CheckUTF(fieldName, value, 65)
+		return util.CheckUTF(fieldName, value, 64)
 	},
 }
