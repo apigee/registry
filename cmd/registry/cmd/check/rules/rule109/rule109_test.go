@@ -41,7 +41,7 @@ func TestDisplayName(t *testing.T) {
 
 	tooLong := []*check.Problem{{
 		Severity:   check.Problem_ERROR,
-		Message:    fmt.Sprintf("%s exceeds limit of 65 characters.", fieldName),
+		Message:    fmt.Sprintf("%s exceeds limit of 64 characters.", fieldName),
 		Suggestion: fmt.Sprintf("Fix %s.", fieldName)}}
 
 	tests := []struct {
@@ -51,8 +51,8 @@ func TestDisplayName(t *testing.T) {
 	}{
 		{"empty", "", nil},
 		{"invalid", string([]byte{0xff}), bad},
-		{"long", strings.Repeat("x", 65), nil},
-		{"too long", strings.Repeat("y", 66), tooLong},
+		{"long", strings.Repeat("x", 64), nil},
+		{"too long", strings.Repeat("y", 65), tooLong},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
