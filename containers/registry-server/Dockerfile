@@ -35,16 +35,16 @@ COPY . ./
 RUN ./tools/FETCH-PROTOC.sh && make protos
 
 # Build registry-server.
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
+RUN CGO_ENABLED=1 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
 # Prepare bash dependencies for the final image.
 RUN apt-get -y install wget bash-static \
     && wget -q http://landley.net/toybox/bin/toybox-x86_64 \
-               -O /usr/local/bin/toybox \
-           && chmod 755 /usr/local/bin/toybox \
-           && cd /usr/local/bin; for i in $(./toybox); do ln -s toybox $i; done
+    -O /usr/local/bin/toybox \
+    && chmod 755 /usr/local/bin/toybox \
+    && cd /usr/local/bin; for i in $(./toybox); do ln -s toybox $i; done
 
-FROM gcr.io/distroless/static:latest
+FROM gcr.io/distroless/base:latest
 # Copy bash dependencies.
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /bin/bash-static /bin/bash
