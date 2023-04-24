@@ -1,0 +1,41 @@
+name: Check Registry
+description: Runs registry check command on registry. Exits with non-zero if any problems detected.
+author: Apigee Registry Authors
+branding:
+  color: red
+  icon: cloud-lightning
+inputs:
+  pattern:
+    description: a shell command to use to generate an authorization token for the Registry
+    required: false
+  enable:
+    description: rules to enable
+    required: false
+  disable:
+    description: rules to disable
+    required: false
+  filter:
+    description: filter selected resources
+    required: false
+  jobs:
+    description: number of actions to perform concurrently (default 10)
+    required: false
+  error-level:
+    description: level at which to error
+    required: false
+outputs:
+  report:
+    description: Check Report
+    value: ${{ steps.check.outputs.REPORT }}
+runs:
+  using: composite
+  steps:
+    - name: Run Registry Check
+      id: check      
+      shell: bash
+      run: |
+        REPORT=$(registry check ${{ inputs.pattern }} --enable "${{ inputs.enable }}" --disable "${{ inputs.enable }}" --filter "${{ inputs.filter }}" --error-level "${{ inputs.error-level }}")
+        echo "REPORT<<EOF"$'\n'"${REPORT}"$'\n'EOF >> $GITHUB_OUTPUT
+        echo "Check Report:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo ""$'\n'"${REPORT}"$'\n' >> $GITHUB_STEP_SUMMARY

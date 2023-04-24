@@ -22,6 +22,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules"
+	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/spf13/cobra"
@@ -51,6 +52,7 @@ var (
 	disable    []string
 	configFile string
 	listRules  bool
+	errorlevel string
 )
 
 func Command() *cobra.Command {
@@ -59,6 +61,20 @@ func Command() *cobra.Command {
 		Short: "Check entities in the API Registry",
 		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var exitOnErrorLevel check.Problem_Severity
+			if errorlevel != "" {
+				switch errorlevel {
+				case "ERROR":
+					exitOnErrorLevel = check.Problem_ERROR
+				case "WARNING":
+					exitOnErrorLevel = check.Problem_WARNING
+				case "INFO":
+					exitOnErrorLevel = check.Problem_INFO
+				default:
+					return fmt.Errorf("invalid level: %q, must be INFO, WARNING, or ERROR", errorlevel)
+				}
+			}
+
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
@@ -124,7 +140,19 @@ func Command() *cobra.Command {
 			}
 
 			_, err = cmd.OutOrStdout().Write(serialized)
-			return err
+			if err != nil {
+				return err
+			}
+
+			if exitOnErrorLevel != 0 {
+				for _, p := range response.Problems {
+					if p.Severity <= exitOnErrorLevel {
+						cmd.SilenceUsage = true
+						return fmt.Errorf("exceeded designated error-level %q", errorlevel)
+					}
+				}
+			}
+			return nil
 		},
 	}
 
@@ -134,6 +162,7 @@ func Command() *cobra.Command {
 	cmd.Flags().StringArrayVar(&enable, "enable", nil, "enable rules")
 	cmd.Flags().StringArrayVar(&disable, "disable", nil, "disable rules")
 	cmd.Flags().BoolVar(&listRules, "list-rules", false, "print enabled rules and exit")
+	cmd.Flags().StringVar(&errorlevel, "error-level", "", "exit code 1 if problems at specified level or above [INFO|WARNING|ERROR]")
 
 	return cmd
 }
