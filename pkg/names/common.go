@@ -26,7 +26,7 @@ const (
 	// The format of a resource identifier.
 	// This may be extended to include all characters that do not require escaping.
 	// See https://aip.dev/122#resource-id-segments.
-	identifier = `([A-Za-z0-9-.]+)`
+	identifier = `([a-z0-9-.]+)`
 
 	// The format of a custom revision tag.
 	revisionTag = `([a-z0-9-]+)`

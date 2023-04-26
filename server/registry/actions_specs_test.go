@@ -396,14 +396,6 @@ func TestGetApiSpecResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
-		{
-			desc: "case insensitive name",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
-			req: &rpc.GetApiSpecRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/My-Spec",
-			},
-			want: codes.OK,
-		},
 	}
 
 	for _, test := range tests {
@@ -435,14 +427,6 @@ func TestGetApiSpecContents(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist",
 			},
 			want: codes.NotFound,
-		},
-		{
-			desc: "case insensitive identifiers",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
-			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/locations/global/apis/My-api/versions/V1/specs/My-Spec",
-			},
-			want: codes.OK,
 		},
 		{
 			desc: "inappropriate contents suffix in resource name",

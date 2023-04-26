@@ -59,7 +59,7 @@ func Test_primarySpecRef(t *testing.T) {
 		{"unable to parse", "bad", []*check.Problem{{
 			Severity:   check.Problem_ERROR,
 			Message:    `primary_spec "bad" is not a valid ApiSpec name.`,
-			Suggestion: `Parse error: invalid spec name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/versions/([A-Za-z0-9-.]+)/specs/([A-Za-z0-9-.]+)$"`,
+			Suggestion: `Parse error: invalid spec name "bad": must match "^projects/([a-z0-9-.]+)/locations/global/apis/([a-z0-9-.]+)/versions/([a-z0-9-.]+)/specs/([a-z0-9-.]+)$"`,
 		}}},
 		{"not a sibling", "projects/check-test/locations/global/apis/bad/versions/myversion/specs/bad", []*check.Problem{{
 			Severity:   check.Problem_ERROR,

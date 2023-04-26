@@ -354,14 +354,6 @@ func TestGetApiResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
-		{
-			desc: "case insensitive name",
-			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
-			req: &rpc.GetApiRequest{
-				Name: "projects/my-project/locations/global/apis/My-Api",
-			},
-			want: codes.OK,
-		},
 	}
 
 	for _, test := range tests {
