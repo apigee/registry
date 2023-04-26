@@ -289,14 +289,6 @@ func TestGetProjectResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
-		{
-			desc: "case insensitive name",
-			seed: &rpc.Project{Name: "projects/my-project"},
-			req: &rpc.GetProjectRequest{
-				Name: "projects/My-Project",
-			},
-			want: codes.OK,
-		},
 	}
 
 	for _, test := range tests {

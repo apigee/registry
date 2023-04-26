@@ -343,14 +343,6 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
-		{
-			desc: "case insensitive name",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
-			req: &rpc.GetApiVersionRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/versions/V1",
-			},
-			want: codes.OK,
-		},
 	}
 
 	for _, test := range tests {

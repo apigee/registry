@@ -66,7 +66,7 @@ func Test_apiSpecRevisionRef(t *testing.T) {
 		{"unable to parse", "bad", []*check.Problem{{
 			Severity:   check.Problem_ERROR,
 			Message:    `api_spec_revision "bad" is not a valid ApiSpecRevision name.`,
-			Suggestion: `Parse error: invalid spec revision name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/versions/([A-Za-z0-9-.]+)/specs/([A-Za-z0-9-.]+)(?:@([a-z0-9-]+))?$"`,
+			Suggestion: `Parse error: invalid spec revision name "bad": must match "^projects/([a-z0-9-.]+)/locations/global/apis/([a-z0-9-.]+)/versions/([a-z0-9-.]+)/specs/([a-z0-9-.]+)(?:@([a-z0-9-]+))?$"`,
 		}}},
 		{"not a revision", name, []*check.Problem{{
 			Severity:   check.Problem_ERROR,

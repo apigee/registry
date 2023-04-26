@@ -59,7 +59,7 @@ func Test_recommendedDeploymentRef(t *testing.T) {
 		{"unable to parse", "bad", []*check.Problem{{
 			Severity:   check.Problem_ERROR,
 			Message:    `recommended_deployment "bad" is not a valid ApiDeployment name.`,
-			Suggestion: `Parse error: invalid deployment name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/deployments/([A-Za-z0-9-.]+)$"`,
+			Suggestion: `Parse error: invalid deployment name "bad": must match "^projects/([a-z0-9-.]+)/locations/global/apis/([a-z0-9-.]+)/deployments/([a-z0-9-.]+)$"`,
 		}}},
 		{"not a child", "projects/check-test/locations/global/apis/bad/deployments/bad", []*check.Problem{{
 			Severity:   check.Problem_ERROR,

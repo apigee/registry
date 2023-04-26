@@ -352,14 +352,6 @@ func TestGetApiDeploymentResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
-		{
-			desc: "case insensitive name",
-			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"},
-			req: &rpc.GetApiDeploymentRequest{
-				Name: "projects/my-project/locations/global/apis/a/deployments/D",
-			},
-			want: codes.OK,
-		},
 	}
 
 	for _, test := range tests {

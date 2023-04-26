@@ -447,14 +447,6 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
-		{
-			desc: "case insensitive name",
-			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
-			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/locations/global/artifacts/My-Artifact",
-			},
-			want: codes.OK,
-		},
 	}
 
 	for _, test := range tests {
@@ -487,14 +479,6 @@ func TestGetArtifactContents(t *testing.T) {
 				Name: "projects/my-project/locations/global/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
-		},
-		{
-			desc: "case insensitive identifiers",
-			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
-			req: &rpc.GetArtifactContentsRequest{
-				Name: "projects/my-project/locations/global/artifacts/My-Artifact",
-			},
-			want: codes.OK,
 		},
 		{
 			desc: "inappropriate contents suffix in resource name",
