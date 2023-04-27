@@ -63,7 +63,10 @@ func Command() *cobra.Command {
 				taskQueue:      taskQueue,
 			}
 			// Visit the selected resources.
-			patternName, _ := names.Parse(pattern)
+			patternName, err := names.Parse(pattern)
+			if err != nil {
+				return err
+			}
 			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
 				RegistryClient:  registryClient,
 				AdminClient:     adminClient,
