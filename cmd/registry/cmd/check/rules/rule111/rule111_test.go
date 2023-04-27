@@ -36,7 +36,6 @@ func TestAddRules(t *testing.T) {
 }
 
 func TestMimeTypeContents(t *testing.T) {
-
 	var zbuf bytes.Buffer
 	{
 		zw, _ := gzip.NewWriterLevel(&zbuf, gzip.BestCompression)
