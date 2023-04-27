@@ -1224,14 +1224,14 @@ func TestEmptyArtifactPatches(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
+	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
 		&rpc.Project{
 			Name: "projects/patch-empty-test",
 		},
 	})
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := Apply(ctx, registryClient, nil, "projects/patch-empty-test/locations/global", true, 10, test.path); err == nil {
+			if err := Apply(ctx, registryClient, adminClient, nil, "projects/patch-empty-test/locations/global", true, 10, test.path); err == nil {
 				t.Errorf("Apply() succeeded and should have failed")
 			}
 		})
@@ -1253,7 +1253,7 @@ func TestDeploymentImports(t *testing.T) {
 			ctx := context.Background()
 			project := names.Project{ProjectID: "patch-deployments-test"}
 
-			registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "patch-empty-test", []seeder.RegistryResource{
 				&rpc.Project{
 					Name: project.String(),
 				},
@@ -1268,7 +1268,7 @@ func TestDeploymentImports(t *testing.T) {
 			connection.SetConfig(config)
 
 			// apply the api and deployments
-			if err := Apply(ctx, registryClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
+			if err := Apply(ctx, registryClient, adminClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
 				t.Fatalf("Apply() returned error: %s", err)
 			}
 

@@ -25,13 +25,13 @@ import (
 
 func TestAutomaticallyZippedSpecs(t *testing.T) {
 	ctx := context.Background()
-	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-autozip-test", []seeder.RegistryResource{
+	registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "patch-autozip-test", []seeder.RegistryResource{
 		&rpc.Project{
 			Name: "projects/patch-autozip-test",
 		},
 	})
 	testpath := "testdata/sample-protos"
-	if err := Apply(ctx, registryClient, nil, "projects/patch-autozip-test/locations/global", true, 1, testpath); err != nil {
+	if err := Apply(ctx, registryClient, adminClient, nil, "projects/patch-autozip-test/locations/global", true, 1, testpath); err != nil {
 		t.Fatalf("Apply() failed with error %s", err)
 	}
 	// verify the spec

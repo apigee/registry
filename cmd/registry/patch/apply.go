@@ -31,14 +31,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, project string, recursive bool, jobs int, paths ...string) error {
+func Apply(ctx context.Context, client connection.RegistryClient, adminClient connection.AdminClient, in io.Reader, project string, recursive bool, jobs int, paths ...string) error {
 	patches := &patchGroup{}
 	if paths[0] == "-" {
 		bytes, err := io.ReadAll(in)
 		if err != nil {
 			return err
 		}
-		if err := patches.parse(client, bytes, "", project); err != nil {
+		if err := patches.parse(client, adminClient, bytes, "", project); err != nil {
 			return err
 		}
 		return patches.run(ctx, jobs)
@@ -60,7 +60,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, in io.Reader, 
 				if err != nil {
 					return err
 				}
-				err = patches.parse(client, bytes, fileName, project)
+				err = patches.parse(client, adminClient, bytes, fileName, project)
 				if err != nil {
 					err = fmt.Errorf("parsing %s: %w", fileName, err)
 				}
@@ -98,7 +98,7 @@ func (p *patchGroup) add(task *applyBytesTask) {
 	}
 }
 
-func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileName, project string) error {
+func (p *patchGroup) parse(client connection.RegistryClient, adminClient connection.AdminClient, bytes []byte, fileName, project string) error {
 	p.filesRead++
 	header, items, err := readHeaderWithItems(bytes)
 	if err != nil {
@@ -109,13 +109,14 @@ func (p *patchGroup) parse(client connection.RegistryClient, bytes []byte, fileN
 	p.filesApplied++
 	if items.Kind != yaml.SequenceNode {
 		p.add(&applyBytesTask{
-			client:  client,
-			path:    fileName,
-			project: project,
-			parent:  header.Metadata.Parent,
-			name:    header.Metadata.Name,
-			kind:    header.Kind,
-			bytes:   bytes,
+			client:      client,
+			adminClient: adminClient,
+			path:        fileName,
+			project:     project,
+			parent:      header.Metadata.Parent,
+			name:        header.Metadata.Name,
+			kind:        header.Kind,
+			bytes:       bytes,
 		})
 		return nil
 	}
@@ -172,13 +173,14 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 }
 
 type applyBytesTask struct {
-	client  connection.RegistryClient
-	path    string
-	project string
-	parent  string
-	name    string
-	kind    string
-	bytes   []byte
+	client      connection.RegistryClient
+	adminClient connection.AdminClient
+	path        string
+	project     string
+	parent      string
+	name        string
+	kind        string
+	bytes       []byte
 }
 
 func (task *applyBytesTask) String() string {
@@ -223,6 +225,8 @@ func (task *applyBytesTask) Run(ctx context.Context) error {
 
 	log.FromContext(ctx).Infof("Applying %s", task.resource())
 	switch header.Kind {
+	case "Project":
+		return applyProjectPatchBytes(ctx, task.adminClient, task.bytes)
 	case "API":
 		return applyApiPatchBytes(ctx, task.client, task.bytes, task.project, task.path)
 	case "Version":
