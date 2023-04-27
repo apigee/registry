@@ -29,6 +29,8 @@ import (
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 )
 
@@ -72,8 +74,31 @@ func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, 
 }
 
 // ExportProject writes a project into a directory of YAML files.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- tasks.Task) error {
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, projectName names.Project, root string, taskQueue chan<- tasks.Task) error {
 	root = filepath.Join(root, projectName.ProjectID)
+
+	if err := visitor.GetProject(ctx, adminClient, projectName, nil, func(ctx context.Context, p *rpc.Project) error {
+		filename := fmt.Sprintf("%s/info.yaml", root)
+		parentDir := filepath.Dir(filename)
+		if err := os.MkdirAll(parentDir, 0777); err != nil {
+			return err
+		}
+		project, err := NewProject(ctx, client, p)
+		if err != nil {
+			return err
+		}
+		bytes, err := encoding.EncodeYAML(project)
+		if err != nil {
+			return err
+		}
+		log.FromContext(ctx).Infof("Exported %s", projectName)
+		return os.WriteFile(filename, bytes, 0644)
+	}); err != nil {
+		if status.Code(err) != codes.Unimplemented { // Unimplemented is expected from hosted, ignore
+			return err
+		}
+	}
+
 	if err := visitor.ListAPIs(ctx, client, projectName.Api(""), "", func(ctx context.Context, message *rpc.Api) error {
 		taskQueue <- &exportAPITask{
 			client:  client,
