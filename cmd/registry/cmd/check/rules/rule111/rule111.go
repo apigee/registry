@@ -15,6 +15,8 @@
 package rule111
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"mime"
@@ -66,7 +68,7 @@ var mimeTypeContents = &lint.FieldRule{
 		}
 		for _, p := range allowPrefixes {
 			if strings.HasPrefix(declared, p) {
-				return nil
+				return checkGzip(declared, contents)
 			}
 		}
 
@@ -96,6 +98,21 @@ var mimeTypeContents = &lint.FieldRule{
 				Suggestion: fmt.Sprintf("Detected mime_type: %q.", detected),
 			}}
 		}
-		return nil
+
+		return checkGzip(declared, contents)
 	},
+}
+
+func checkGzip(declared string, contents []byte) []*check.Problem {
+	if strings.Contains(declared, "+gzip") {
+		buf := bytes.NewBuffer(contents)
+		_, err := gzip.NewReader(buf)
+		if err != nil {
+			return []*check.Problem{{
+				Severity: check.Problem_ERROR,
+				Message:  fmt.Sprintf("Mime %q indicates gzip, but contents does not have a valid gzip header", declared),
+			}}
+		}
+	}
+	return nil
 }
