@@ -15,6 +15,8 @@
 package rule111
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"testing"
 
@@ -34,6 +36,18 @@ func TestAddRules(t *testing.T) {
 }
 
 func TestMimeTypeContents(t *testing.T) {
+	var zbuf bytes.Buffer
+	{
+		zw, _ := gzip.NewWriterLevel(&zbuf, gzip.BestCompression)
+		_, err := zw.Write([]byte("string"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := zw.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	tests := []struct {
 		name     string
 		mimeType string
@@ -92,6 +106,30 @@ func TestMimeTypeContents(t *testing.T) {
 			"application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score",
 			createScore(),
 			nil,
+		},
+		{
+			"bad gzip in allowed prefix",
+			"application/octet-stream+gzip;type=google.cloud.apigeeregistry.v1.scoring.Score",
+			createScore(),
+			[]*check.Problem{{
+				Message:  `Mime "application/octet-stream+gzip;type=google.cloud.apigeeregistry.v1.scoring.Score" indicates gzip, but contents does not have a valid gzip header`,
+				Severity: check.Problem_ERROR,
+			}},
+		},
+		{
+			"good gzip",
+			"application/octet-stream+gzip",
+			zbuf.Bytes(),
+			nil,
+		},
+		{
+			"bad gzip",
+			"application/octet-stream+gzip",
+			createScore(),
+			[]*check.Problem{{
+				Message:  `Mime "application/octet-stream+gzip" indicates gzip, but contents does not have a valid gzip header`,
+				Severity: check.Problem_ERROR,
+			}},
 		},
 	}
 	for _, test := range tests {
