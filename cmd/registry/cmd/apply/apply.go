@@ -47,11 +47,11 @@ func Command() *cobra.Command {
 			}
 
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				return err
+			}
 			if project == "" {
-				c, err := connection.ActiveConfig()
-				if err != nil {
-					return err
-				}
 				project, err = c.ProjectWithLocation()
 				if err != nil {
 					return fmt.Errorf("%s: please use --parent or set registry.project in configuration", err)
@@ -59,14 +59,19 @@ func Command() *cobra.Command {
 			} else if !strings.Contains(project, "/locations/") {
 				project += "/locations/global"
 			}
-			client, err := connection.NewRegistryClient(ctx)
+
+			client, err := connection.NewRegistryClientWithSettings(ctx, c)
+			if err != nil {
+				return err
+			}
+			adminClient, err := connection.NewAdminClientWithSettings(ctx, c)
 			if err != nil {
 				return err
 			}
 			if err := visitor.VerifyLocation(ctx, client, project); err != nil {
 				return fmt.Errorf("parent project %q does not exist: %s", project, err)
 			}
-			return patch.Apply(ctx, client, cmd.InOrStdin(), project, recursive, jobs, files...)
+			return patch.Apply(ctx, client, adminClient, cmd.InOrStdin(), project, recursive, jobs, files...)
 		},
 	}
 	cmd.Flags().StringSliceVarP(&files, "file", "f", nil, "file or directory containing the patch(es) to apply. Use '-' to read from standard input")

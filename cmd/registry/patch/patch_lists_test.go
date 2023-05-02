@@ -39,7 +39,7 @@ func TestArtifactLists(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			project := names.Project{ProjectID: "patch-lists-test"}
-			registryClient, _ := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, project.ProjectID, nil)
 
 			// set the configured registry.project to the test project
 			config, err := connection.ActiveConfig()
@@ -49,7 +49,7 @@ func TestArtifactLists(t *testing.T) {
 			config.Project = project.ProjectID
 			connection.SetConfig(config)
 
-			if err := Apply(ctx, registryClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
+			if err := Apply(ctx, registryClient, adminClient, nil, project.String()+"/locations/global", true, 10, test.root); err != nil {
 				t.Fatalf("Apply() returned error: %s", err)
 			}
 
