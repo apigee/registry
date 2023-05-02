@@ -59,7 +59,7 @@ func TestExport(t *testing.T) {
 		t.Run(test.desc+"-project", func(t *testing.T) {
 			tempDir := t.TempDir()
 			taskQueue, wait := tasks.WorkerPoolIgnoreError(ctx, 1)
-			err = ExportProject(ctx, registryClient, project, tempDir, taskQueue)
+			err = ExportProject(ctx, registryClient, adminClient, project, tempDir, taskQueue)
 			if err != nil {
 				t.Errorf("Failed to export project: %s", err)
 			}

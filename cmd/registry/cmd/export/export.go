@@ -63,12 +63,16 @@ func Command() *cobra.Command {
 				taskQueue:      taskQueue,
 			}
 			// Visit the selected resources.
+			patternName, err := names.Parse(pattern)
+			if err != nil {
+				return err
+			}
 			if err = visitor.Visit(ctx, v, visitor.VisitorOptions{
 				RegistryClient:  registryClient,
 				AdminClient:     adminClient,
 				Pattern:         pattern,
 				Filter:          filter,
-				ImplicitProject: &rpc.Project{Name: "Implicit"},
+				ImplicitProject: &rpc.Project{Name: patternName.Project().String()},
 			}); err != nil {
 				return err
 			}
@@ -101,7 +105,7 @@ func (h *exportVisitor) ProjectHandler() visitor.ProjectHandler {
 		if err != nil {
 			return err
 		}
-		return patch.ExportProject(ctx, h.registryClient, name, h.root, h.taskQueue)
+		return patch.ExportProject(ctx, h.registryClient, h.adminClient, name, h.root, h.taskQueue)
 	}
 }
 
