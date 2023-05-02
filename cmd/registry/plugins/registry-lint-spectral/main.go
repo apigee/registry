@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
 	"github.com/apigee/registry/pkg/application/style"
@@ -198,11 +199,17 @@ func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, erro
 		case *exec.ExitError:
 			code := v.ExitCode()
 			if code == 1 {
-				// This just means there were linter errors
+				// This just means the linter found errors
 			} else {
 				log.Printf("linter error %T (%s)", err, specPath)
 				log.Printf("%s", string(output))
 			}
+		case *exec.Error:
+			if strings.Contains(v.Err.Error(), "executable file not found") {
+				return nil, v.Err
+			}
+			log.Printf("linter error %T (%s)", err, specPath)
+			log.Printf("%s", string(output))
 		default:
 			log.Printf("linter error %T (%s)", err, specPath)
 			log.Printf("%s", string(output))
