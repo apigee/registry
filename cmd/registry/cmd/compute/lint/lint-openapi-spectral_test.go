@@ -16,11 +16,17 @@ package lint
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
 func TestSpectralFilenameWithGlobs(t *testing.T) {
+	path, err := exec.LookPath("spectral")
+	if path == "" || err != nil {
+		t.Skip("spectral not present, skipping check")
+	}
+
 	tests := []struct {
 		testName string
 		fileName string
@@ -41,10 +47,7 @@ func TestSpectralFilenameWithGlobs(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer func() {
-				os.RemoveAll(root)
-			}()
-
+			defer os.RemoveAll(root)
 			if err := os.WriteFile(filepath.Join(root, ".spectral.yaml"), []byte(`extends: ["spectral:oas", "spectral:asyncapi"]`), 0644); err != nil {
 				t.Fatal(err)
 			}
