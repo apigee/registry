@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 
 	"github.com/apigee/registry/pkg/application/style"
 )
@@ -42,7 +43,17 @@ type SpectralLintLocation struct {
 	Character int32 `json:"character"`
 }
 
+var regexpSpecialCharacters = regexp.MustCompile(`[\!\.\+\*\?\^\$\(\)\[\]\{\}\|\\]`)
+
 func lintFileForOpenAPIWithSpectral(path string, root string) (*style.LintFile, error) {
+	cleanpath := regexpSpecialCharacters.ReplaceAllString(path, "_")
+	if cleanpath != path {
+		err := os.Rename(filepath.Join(root, path), filepath.Join(root, cleanpath))
+		if err != nil {
+			return nil, err
+		}
+		path = cleanpath
+	}
 	cmd := exec.Command("spectral", "lint", path, "--f", "json", "--output", "spectral-lint.json")
 	cmd.Dir = root
 	// ignore errors from Spectral because Spectral returns an error result when APIs have errors.
