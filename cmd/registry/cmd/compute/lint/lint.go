@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/log"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
@@ -37,7 +38,7 @@ func Command() *cobra.Command {
 	var filter string
 	var linter string
 	var jobs int
-	var dryRun bool
+	var dryRun, debug bool
 	cmd := &cobra.Command{
 		Use:   "lint SPEC",
 		Short: "Compute lint results for API specs",
@@ -77,6 +78,7 @@ func Command() *cobra.Command {
 					spec:   spec,
 					linter: linter,
 					dryRun: dryRun,
+					debug:  debug,
 				}
 				return nil
 			})
@@ -88,6 +90,7 @@ func Command() *cobra.Command {
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
+	cmd.Flags().BoolVar(&debug, "debug", false, "if set, working directory will be retained instead of deleted")
 	return cmd
 }
 
@@ -96,6 +99,7 @@ type computeLintTask struct {
 	spec   *rpc.ApiSpec
 	linter string
 	dryRun bool
+	debug  bool
 }
 
 func (task *computeLintTask) String() string {
@@ -109,7 +113,13 @@ func lintRelation(linter string) string {
 func (task *computeLintTask) Run(ctx context.Context) error {
 	root, err := conformance.WriteSpecForLinting(ctx, task.client, task.spec)
 	if root != "" {
-		defer os.RemoveAll(root)
+		defer func() {
+			if task.debug {
+				log.FromContext(ctx).Debugf("%s temp dir: %s", task.spec.Name, root)
+			} else {
+				defer os.RemoveAll(root)
+			}
+		}()
 	}
 	if err != nil {
 		return err
