@@ -1,0 +1,6 @@
+apiVersion: apigeeregistry/v1
+kind: Project
+metadata:
+  name: patch-export-test
+data:
+  displayName: Test
