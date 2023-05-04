@@ -79,7 +79,7 @@ Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "he
 
 Available Plugins:
 {{- range Plugins}}
-  {{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+{{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
