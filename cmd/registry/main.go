@@ -17,10 +17,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -31,6 +31,21 @@ import (
 )
 
 const pluginPrefix string = "registry-"
+
+var pluginExclusions []*regexp.Regexp
+
+func init() {
+	for _, r := range []string{
+		"^server$",
+		"^basenames$",
+		"^encode-spec$",
+		"^decode-spec$",
+		"^graphql$",
+		"^lint-.*$",
+	} {
+		pluginExclusions = append(pluginExclusions, regexp.MustCompile(r))
+	}
+}
 
 func main() {
 	// Bind a logger instance to the local context with metadata for outbound requests.
@@ -96,17 +111,25 @@ Need more help?
 https://github.com/apigee/registry/wiki
 `
 
-// list of executable files on path matching `registry-*
+// list of executable files on env.PATH matching pluginPrefix,
+// excluding pluginExclusions
 func plugins() []string {
 	plugs := []string{}
 	paths := filepath.SplitList(os.Getenv("PATH"))
 	for _, path := range paths {
-		if files, err := ioutil.ReadDir(path); err == nil {
+		if files, err := os.ReadDir(path); err == nil {
+		skip:
 			for _, file := range files {
-				if strings.HasPrefix(file.Name(), pluginPrefix) {
-					plug := strings.TrimPrefix(file.Name(), pluginPrefix)
+				filename := file.Name()
+				if strings.HasPrefix(filename, pluginPrefix) {
+					plug := strings.TrimPrefix(filename, pluginPrefix)
+					for _, re := range pluginExclusions {
+						if re.MatchString(plug) {
+							continue skip
+						}
+					}
 					if !contains(plugs, plug) {
-						if info, err := os.Stat(filepath.Join(path, file.Name())); err == nil {
+						if info, err := os.Stat(filepath.Join(path, filename)); err == nil {
 							if info.Mode()&0o111 != 0 {
 								plugs = append(plugs, plug)
 							}
