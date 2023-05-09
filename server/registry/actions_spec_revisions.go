@@ -127,7 +127,7 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 		// This is necessary to ensure the new tag is associated with a revision ID, not another tag.
 		name, err = names.ParseSpecRevision(revision.RevisionName())
 		if err != nil {
-			return status.Error(codes.InvalidArgument, err.Error())
+			return status.Error(codes.Internal, err.Error())
 		}
 		tag := models.NewSpecRevisionTag(name, req.GetTag())
 		if err := db.SaveSpecRevisionTag(ctx, tag); err != nil {

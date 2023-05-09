@@ -127,6 +127,14 @@ func TestCreateApiDeploymentResponseCodes(t *testing.T) {
 		want codes.Code
 	}{
 		{
+			desc: "invalid parent name",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
+			req: &rpc.CreateApiDeploymentRequest{
+				Parent: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "parent not found",
 			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
 			req: &rpc.CreateApiDeploymentRequest{
@@ -351,6 +359,14 @@ func TestGetApiDeploymentResponseCodes(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/a/deployments/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "invalid name",
+			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"},
+			req: &rpc.GetApiDeploymentRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
 		},
 	}
 
@@ -899,12 +915,10 @@ func TestListApiDeploymentsSequence(t *testing.T) {
 	}
 }
 
-// This test prevents the list sequence from ending before a known filter match is listed.
-// For simplicity, it does not guarantee the resource is returned on a later page.
-func TestListApiDeploymentsLargeCollectionFiltering(t *testing.T) {
+func TestListApiDeploymentsLargeCollection(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seed := make([]*rpc.ApiDeployment, 0, 100)
+	seed := make([]*rpc.ApiDeployment, 0, 1001)
 	for i := 1; i <= cap(seed); i++ {
 		seed = append(seed, &rpc.ApiDeployment{
 			Name: fmt.Sprintf("projects/my-project/locations/global/apis/a/deployments/d%03d", i),
@@ -915,24 +929,46 @@ func TestListApiDeploymentsLargeCollectionFiltering(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	req := &rpc.ListApiDeploymentsRequest{
-		Parent:   "projects/my-project/locations/global/apis/a",
-		PageSize: 1,
-		Filter:   "name == 'projects/my-project/locations/global/apis/a/deployments/d099'",
-	}
+	// This test prevents the list sequence from ending before a known filter match is listed.
+	// For simplicity, it does not guarantee the resource is returned on a later page.
+	t.Run("filter", func(t *testing.T) {
+		req := &rpc.ListApiDeploymentsRequest{
+			Parent:   "projects/my-project/locations/global/apis/a",
+			PageSize: 1,
+			Filter:   "name == 'projects/my-project/locations/global/apis/a/deployments/d099'",
+		}
 
-	got, err := server.ListApiDeployments(ctx, req)
-	if err != nil {
-		t.Fatalf("ListApiDeployments(%+v) returned error: %s", req, err)
-	}
+		got, err := server.ListApiDeployments(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiDeployments(%+v) returned error: %s", req, err)
+		}
 
-	if len(got.GetApiDeployments()) == 1 && got.GetNextPageToken() != "" {
-		t.Errorf("ListApiDeployments(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
-	} else if len(got.GetApiDeployments()) == 0 && got.GetNextPageToken() == "" {
-		t.Errorf("ListApiDeployments(%+v) returned an empty next page token before listing the only matching resource", req)
-	} else if count := len(got.GetApiDeployments()); count > 1 {
-		t.Errorf("ListApiDeployments(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiDeployments())
-	}
+		if len(got.GetApiDeployments()) == 1 && got.GetNextPageToken() != "" {
+			t.Errorf("ListApiDeployments(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		} else if len(got.GetApiDeployments()) == 0 && got.GetNextPageToken() == "" {
+			t.Errorf("ListApiDeployments(%+v) returned an empty next page token before listing the only matching resource", req)
+		} else if count := len(got.GetApiDeployments()); count > 1 {
+			t.Errorf("ListApiDeployments(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiDeployments())
+		}
+	})
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListApiDeploymentsRequest{
+			Parent:   "projects/my-project/locations/global/apis/a",
+			PageSize: 1001,
+		}
+
+		got, err := server.ListApiDeployments(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiDeployments(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetApiDeployments()) != 1000 {
+			t.Errorf("GetApiDeployments(%+v) should have returned 1000 items, got: %+v", req, len(got.GetApiDeployments()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("GetApiDeployments(%+v) should return a next page token", req)
+		}
+	})
 }
 
 func TestUpdateApiDeployment(t *testing.T) {

@@ -396,6 +396,22 @@ func TestGetApiSpecResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
+		{
+			desc: "invalid name",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.GetApiSpecRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "revision not found",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.GetApiSpecRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@missing",
+			},
+			want: codes.NotFound,
+		},
 	}
 
 	for _, test := range tests {
@@ -425,6 +441,14 @@ func TestGetApiSpecContents(t *testing.T) {
 			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
 				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "revision not found",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@missing",
 			},
 			want: codes.NotFound,
 		},
@@ -1181,12 +1205,10 @@ func TestListApiSpecsSequence(t *testing.T) {
 	}
 }
 
-// This test prevents the list sequence from ending before a known filter match is listed.
-// For simplicity, it does not guarantee the resource is returned on a later page.
-func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
+func TestListApiSpecsLargeCollection(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seed := make([]*rpc.ApiSpec, 0, 100)
+	seed := make([]*rpc.ApiSpec, 0, 1001)
 	for i := 1; i <= cap(seed); i++ {
 		seed = append(seed, &rpc.ApiSpec{
 			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v1/specs/s%03d", i),
@@ -1197,24 +1219,46 @@ func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	req := &rpc.ListApiSpecsRequest{
-		Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
-		PageSize: 1,
-		Filter:   "name == 'projects/my-project/locations/global/apis/my-api/versions/v1/specs/s099'",
-	}
+	// This test prevents the list sequence from ending before a known filter match is listed.
+	// For simplicity, it does not guarantee the resource is returned on a later page.
+	t.Run("filter", func(t *testing.T) {
+		req := &rpc.ListApiSpecsRequest{
+			Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
+			PageSize: 1,
+			Filter:   "name == 'projects/my-project/locations/global/apis/my-api/versions/v1/specs/s099'",
+		}
 
-	got, err := server.ListApiSpecs(ctx, req)
-	if err != nil {
-		t.Fatalf("ListApiSpecs(%+v) returned error: %s", req, err)
-	}
+		got, err := server.ListApiSpecs(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiSpecs(%+v) returned error: %s", req, err)
+		}
 
-	if len(got.GetApiSpecs()) == 1 && got.GetNextPageToken() != "" {
-		t.Errorf("ListApiSpecs(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
-	} else if len(got.GetApiSpecs()) == 0 && got.GetNextPageToken() == "" {
-		t.Errorf("ListApiSpecs(%+v) returned an empty next page token before listing the only matching resource", req)
-	} else if count := len(got.GetApiSpecs()); count > 1 {
-		t.Errorf("ListApiSpecs(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiSpecs())
-	}
+		if len(got.GetApiSpecs()) == 1 && got.GetNextPageToken() != "" {
+			t.Errorf("ListApiSpecs(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		} else if len(got.GetApiSpecs()) == 0 && got.GetNextPageToken() == "" {
+			t.Errorf("ListApiSpecs(%+v) returned an empty next page token before listing the only matching resource", req)
+		} else if count := len(got.GetApiSpecs()); count > 1 {
+			t.Errorf("ListApiSpecs(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiSpecs())
+		}
+	})
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListApiSpecsRequest{
+			Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
+			PageSize: 1001,
+		}
+
+		got, err := server.ListApiSpecs(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiSpecs(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetApiSpecs()) != 1000 {
+			t.Errorf("GetApiSpecs(%+v) should have returned 1000 items, got: %+v", req, len(got.GetApiSpecs()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("GetApiSpecs(%+v) should return a next page token", req)
+		}
+	})
 }
 
 func TestUpdateApiSpec(t *testing.T) {

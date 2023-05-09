@@ -89,7 +89,6 @@ func (s *RegistryServer) DeleteApiDeploymentRevision(ctx context.Context, req *r
 	// return the latest revision of the current deployment
 	response, err = s.getApiDeployment(ctx, name.Deployment())
 	if err != nil {
-		// The get will fail if we are deleting the only revision.
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
@@ -127,7 +126,7 @@ func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.
 		// This is necessary to ensure the new tag is associated with a revision ID, not another tag.
 		name, err = names.ParseDeploymentRevision(revision.RevisionName())
 		if err != nil {
-			return status.Error(codes.InvalidArgument, err.Error())
+			return status.Error(codes.Internal, err.Error())
 		}
 		tag := models.NewDeploymentRevisionTag(name, req.GetTag())
 		if err := db.SaveDeploymentRevisionTag(ctx, tag); err != nil {
@@ -135,7 +134,7 @@ func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.
 		}
 		response, err = revision.BasicMessage(tag.String())
 		if err != nil {
-			return err
+			return status.Error(codes.Internal, err.Error())
 		}
 		revisionName = name.String()
 		return nil

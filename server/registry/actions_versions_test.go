@@ -129,6 +129,14 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		want codes.Code
 	}{
 		{
+			desc: "invalid parent",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "parent not found",
 			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
@@ -335,6 +343,14 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 		req  *rpc.GetApiVersionRequest
 		want codes.Code
 	}{
+		{
+			desc: "invalid name",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.GetApiVersionRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
 		{
 			desc: "resource not found",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
@@ -660,6 +676,13 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 		want  codes.Code
 	}{
 		{
+			desc: "invalid parent",
+			req: &rpc.ListApiVersionsRequest{
+				Parent: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "parent api not found",
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/my-project/locations/global/apis/my-api",
@@ -861,12 +884,10 @@ func TestListApiVersionsSequence(t *testing.T) {
 	}
 }
 
-// This test prevents the list sequence from ending before a known filter match is listed.
-// For simplicity, it does not guarantee the resource is returned on a later page.
-func TestListApiVersionsLargeCollectionFiltering(t *testing.T) {
+func TestListApiVersionsLargeCollection(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seed := make([]*rpc.ApiVersion, 0, 100)
+	seed := make([]*rpc.ApiVersion, 0, 1001)
 	for i := 1; i <= cap(seed); i++ {
 		seed = append(seed, &rpc.ApiVersion{
 			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v%03d", i),
@@ -877,24 +898,46 @@ func TestListApiVersionsLargeCollectionFiltering(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	req := &rpc.ListApiVersionsRequest{
-		Parent:   "projects/my-project/locations/global/apis/my-api",
-		PageSize: 1,
-		Filter:   "name == 'projects/my-project/locations/global/apis/my-api/versions/v099'",
-	}
+	// This test prevents the list sequence from ending before a known filter match is listed.
+	// For simplicity, it does not guarantee the resource is returned on a later page.
+	t.Run("filter", func(t *testing.T) {
+		req := &rpc.ListApiVersionsRequest{
+			Parent:   "projects/my-project/locations/global/apis/my-api",
+			PageSize: 1,
+			Filter:   "name == 'projects/my-project/locations/global/apis/my-api/versions/v099'",
+		}
 
-	got, err := server.ListApiVersions(ctx, req)
-	if err != nil {
-		t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
-	}
+		got, err := server.ListApiVersions(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
+		}
 
-	if len(got.GetApiVersions()) == 1 && got.GetNextPageToken() != "" {
-		t.Errorf("ListApiVersions(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
-	} else if len(got.GetApiVersions()) == 0 && got.GetNextPageToken() == "" {
-		t.Errorf("ListApiVersions(%+v) returned an empty next page token before listing the only matching resource", req)
-	} else if count := len(got.GetApiVersions()); count > 1 {
-		t.Errorf("ListApiVersions(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiVersions())
-	}
+		if len(got.GetApiVersions()) == 1 && got.GetNextPageToken() != "" {
+			t.Errorf("ListApiVersions(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		} else if len(got.GetApiVersions()) == 0 && got.GetNextPageToken() == "" {
+			t.Errorf("ListApiVersions(%+v) returned an empty next page token before listing the only matching resource", req)
+		} else if count := len(got.GetApiVersions()); count > 1 {
+			t.Errorf("ListApiVersions(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiVersions())
+		}
+	})
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListApiVersionsRequest{
+			Parent:   "projects/my-project/locations/global/apis/my-api",
+			PageSize: 1001,
+		}
+
+		got, err := server.ListApiVersions(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetApiVersions()) != 1000 {
+			t.Errorf("GetApiVersions(%+v) should have returned 1000 items, got: %+v", req, len(got.GetApiVersions()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("GetApiVersions(%+v) should return a next page token", req)
+		}
+	})
 }
 
 func TestUpdateApiVersion(t *testing.T) {
@@ -1068,6 +1111,16 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 		req  *rpc.UpdateApiVersionRequest
 		want codes.Code
 	}{
+		{
+			desc: "invalid name",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: "invalid",
+				},
+			},
+			want: codes.InvalidArgument,
+		},
 		{
 			desc: "resource not found",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
@@ -1252,6 +1305,13 @@ func TestDeleteApiVersionResponseCodes(t *testing.T) {
 		req  *rpc.DeleteApiVersionRequest
 		want codes.Code
 	}{
+		{
+			desc: "invalid name",
+			req: &rpc.DeleteApiVersionRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
 		{
 			desc: "resource not found",
 			req: &rpc.DeleteApiVersionRequest{

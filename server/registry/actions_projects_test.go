@@ -289,6 +289,14 @@ func TestGetProjectResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
+		{
+			desc: "invalid name",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.GetProjectRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -725,7 +733,7 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seed := make([]*rpc.Project, 0, 100)
+	seed := make([]*rpc.Project, 0, 1001)
 	for i := 1; i <= cap(seed); i++ {
 		seed = append(seed, &rpc.Project{
 			Name: fmt.Sprintf("projects/project%03d", i),
@@ -736,23 +744,42 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	req := &rpc.ListProjectsRequest{
-		PageSize: 1,
-		Filter:   "name == 'projects/project099'",
-	}
+	t.Run("filter", func(t *testing.T) {
+		req := &rpc.ListProjectsRequest{
+			PageSize: 1,
+			Filter:   "name == 'projects/project099'",
+		}
 
-	got, err := server.ListProjects(ctx, req)
-	if err != nil {
-		t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
-	}
+		got, err := server.ListProjects(ctx, req)
+		if err != nil {
+			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
+		}
 
-	if len(got.GetProjects()) == 1 && got.GetNextPageToken() != "" {
-		t.Errorf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
-	} else if len(got.GetProjects()) == 0 && got.GetNextPageToken() == "" {
-		t.Errorf("ListProjects(%+v) returned an empty next page token before listing the only matching resource", req)
-	} else if count := len(got.GetProjects()); count > 1 {
-		t.Errorf("ListProjects(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetProjects())
-	}
+		if len(got.GetProjects()) == 1 && got.GetNextPageToken() != "" {
+			t.Errorf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		} else if len(got.GetProjects()) == 0 && got.GetNextPageToken() == "" {
+			t.Errorf("ListProjects(%+v) returned an empty next page token before listing the only matching resource", req)
+		} else if count := len(got.GetProjects()); count > 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetProjects())
+		}
+	})
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListProjectsRequest{
+			PageSize: 1001,
+		}
+
+		got, err := server.ListProjects(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiDeployments(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetProjects()) != 1000 {
+			t.Errorf("GetProjects(%+v) should have returned 1000 items, got: %+v", req, len(got.GetProjects()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("GetProjects(%+v) should return a next page token", req)
+		}
+	})
 }
 
 func TestUpdateProject(t *testing.T) {
@@ -1124,6 +1151,13 @@ func TestDeleteProjectResponseCodes(t *testing.T) {
 		req  *rpc.DeleteProjectRequest
 		want codes.Code
 	}{
+		{
+			desc: "invalid name",
+			req: &rpc.DeleteProjectRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
 		{
 			desc: "resource not found",
 			req: &rpc.DeleteProjectRequest{

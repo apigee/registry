@@ -187,14 +187,14 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 
 // UpdateApiDeployment handles the corresponding API request.
 func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
+	// Deployment body must be valid.
+	if req.GetApiDeployment() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
+	}
 	// Deployment name must be valid.
 	name, err := names.ParseDeployment(req.ApiDeployment.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// Deployment body must be valid.
-	if req.GetApiDeployment() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
 	}
 	// Update mask must be valid.
 	if err := models.ValidateMask(req.GetApiDeployment(), req.GetUpdateMask()); err != nil {

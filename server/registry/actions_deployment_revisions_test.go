@@ -169,7 +169,17 @@ func TestTagApiDeploymentRevisionResponseCodes(t *testing.T) {
 		want codes.Code
 	}{
 		{
-			desc: "contains uppercase leters",
+			desc: "empty tag",
+			tag:  "",
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "too long",
+			tag:  strings.Repeat("x", 41),
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "contains uppercase letters",
 			tag:  "TestTag",
 			want: codes.InvalidArgument,
 		},
@@ -205,6 +215,34 @@ func TestTagApiDeploymentRevisionResponseCodes(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("invalid revision name", func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedDeployments(ctx, server, &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"}); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
+		if _, err := server.TagApiDeploymentRevision(ctx, &rpc.TagApiDeploymentRevisionRequest{
+			Name: "invalid",
+			Tag:  "test",
+		}); status.Code(err) != codes.InvalidArgument {
+			t.Errorf("TagApiDeploymentRevision(%+v) returned status code %q, want %q: %v", "test", status.Code(err), codes.InvalidArgument, err)
+		}
+	})
+
+	t.Run("missing revision", func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedDeployments(ctx, server, &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"}); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
+		if _, err := server.TagApiDeploymentRevision(ctx, &rpc.TagApiDeploymentRevisionRequest{
+			Name: "projects/my-project/locations/global/apis/a/deployments/d@9999",
+			Tag:  "test",
+		}); status.Code(err) != codes.NotFound {
+			t.Errorf("TagApiDeploymentRevision(%+v) returned status code %q, want %q: %v", "test", status.Code(err), codes.NotFound, err)
+		}
+	})
 }
 
 func TestRollbackApiDeployment(t *testing.T) {
@@ -291,6 +329,16 @@ func TestDeleteApiDeploymentRevision(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup: GetApiSpecRequest(%+v) returned error: %s", getReq, err)
 	}
+
+	t.Run("invalid name", func(t *testing.T) {
+		req := &rpc.DeleteApiDeploymentRevisionRequest{
+			Name: "invalid",
+		}
+
+		if _, err := server.DeleteApiDeploymentRevision(ctx, req); status.Code(err) != codes.InvalidArgument {
+			t.Fatalf("DeleteApiDeploymentRevision(%+v) returned unexpected status code %q, want %q: %v", req, status.Code(err), codes.FailedPrecondition, err)
+		}
+	})
 
 	t.Run("only remaining revision", func(t *testing.T) {
 		req := &rpc.DeleteApiDeploymentRevisionRequest{
@@ -518,6 +566,45 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 	}
 }
 
+func TestListApiDeploymentRevisionsLargeCollection(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	if err := seeder.SeedDeployments(ctx, server, &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/d"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	for i := 0; i <= 1001; i++ {
+		updateReq := &rpc.UpdateApiDeploymentRequest{
+			ApiDeployment: &rpc.ApiDeployment{
+				Name:            "projects/my-project/locations/global/apis/my-api/deployments/d",
+				ApiSpecRevision: fmt.Sprintf("/projects/p/apis/a/versions/v/specs/s%03d", i),
+			},
+		}
+		_, err := server.UpdateApiDeployment(ctx, updateReq)
+		if err != nil {
+			t.Fatalf("Setup: UpdateApiDeployment(%+v) returned error: %s", updateReq, err)
+		}
+	}
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListApiDeploymentRevisionsRequest{
+			Name:     "projects/my-project/locations/global/apis/my-api/deployments/d",
+			PageSize: 1001,
+		}
+
+		got, err := server.ListApiDeploymentRevisions(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiDeploymentRevisions(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetApiDeployments()) != 1000 {
+			t.Errorf("ListApiDeploymentRevisions(%+v) should have returned 1000 items, got: %+v", req, len(got.GetApiDeployments()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("ListApiDeploymentRevisions(%+v) should return a next page token", req)
+		}
+	})
+}
+
 func TestListApiDeploymentRevisionsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
@@ -627,6 +714,71 @@ func TestListApiDeploymentRevisionsSequence(t *testing.T) {
 			t.Errorf("ListApiDeploymentRevisions(%+v) returned next_page_token, expected no next page", req)
 		}
 	})
+}
+
+func TestListDeploymentRevisionsResponseCodes(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	if err := seeder.SeedDeployments(ctx, server, &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	tests := []struct {
+		admin bool
+		desc  string
+		seed  *rpc.ApiDeployment
+		req   *rpc.ListApiDeploymentRevisionsRequest
+		want  codes.Code
+	}{
+		{
+			desc: "negative page size",
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name:     "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+				PageSize: -1,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid filter",
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name:   "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+				Filter: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid page token",
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name:      "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+				PageToken: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid name",
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedDeployments(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+
+			if _, err := server.ListApiDeploymentRevisions(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("ListApiDeploymentRevisions(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestUpdateApiDeploymentRevisions(t *testing.T) {

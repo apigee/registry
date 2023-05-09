@@ -324,6 +324,27 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid parent",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent: "invalid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid contents",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global",
+				ArtifactId: "identifier",
+				Artifact: &rpc.Artifact{
+					MimeType: "something+gzip",
+					Contents: []byte("invalid"),
+				},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -446,6 +467,14 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 				Name: "projects/my-project/locations/global/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "invalid name",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.GetArtifactRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
 		},
 	}
 
@@ -1169,12 +1198,10 @@ func TestListArtifactsSequence(t *testing.T) {
 	}
 }
 
-// This test prevents the list sequence from ending before a known filter match is listed.
-// For simplicity, it does not guarantee the resource is returned on a later page.
-func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
+func TestListArtifactsLargeCollection(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seed := make([]*rpc.Artifact, 0, 100)
+	seed := make([]*rpc.Artifact, 0, 1001)
 	for i := 1; i <= cap(seed); i++ {
 		seed = append(seed, &rpc.Artifact{
 			Name: fmt.Sprintf("projects/my-project/locations/global/artifacts/a%03d", i),
@@ -1185,24 +1212,46 @@ func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	req := &rpc.ListArtifactsRequest{
-		Parent:   "projects/my-project/locations/global",
-		PageSize: 1,
-		Filter:   "name == 'projects/my-project/locations/global/artifacts/a099'",
-	}
+	// This test prevents the list sequence from ending before a known filter match is listed.
+	// For simplicity, it does not guarantee the resource is returned on a later page.
+	t.Run("filter", func(t *testing.T) {
+		req := &rpc.ListArtifactsRequest{
+			Parent:   "projects/my-project/locations/global",
+			PageSize: 1,
+			Filter:   "name == 'projects/my-project/locations/global/artifacts/a099'",
+		}
 
-	got, err := server.ListArtifacts(ctx, req)
-	if err != nil {
-		t.Fatalf("ListArtifacts(%+v) returned error: %s", req, err)
-	}
+		got, err := server.ListArtifacts(ctx, req)
+		if err != nil {
+			t.Fatalf("ListArtifacts(%+v) returned error: %s", req, err)
+		}
 
-	if len(got.GetArtifacts()) == 1 && got.GetNextPageToken() != "" {
-		t.Errorf("ListArtifacts(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
-	} else if len(got.GetArtifacts()) == 0 && got.GetNextPageToken() == "" {
-		t.Errorf("ListArtifacts(%+v) returned an empty next page token before listing the only matching resource", req)
-	} else if count := len(got.GetArtifacts()); count > 1 {
-		t.Errorf("ListArtifacts(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetArtifacts())
-	}
+		if len(got.GetArtifacts()) == 1 && got.GetNextPageToken() != "" {
+			t.Errorf("ListArtifacts(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		} else if len(got.GetArtifacts()) == 0 && got.GetNextPageToken() == "" {
+			t.Errorf("ListArtifacts(%+v) returned an empty next page token before listing the only matching resource", req)
+		} else if count := len(got.GetArtifacts()); count > 1 {
+			t.Errorf("ListArtifacts(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetArtifacts())
+		}
+	})
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListArtifactsRequest{
+			Parent:   "projects/my-project/locations/global",
+			PageSize: 1001,
+		}
+
+		got, err := server.ListArtifacts(ctx, req)
+		if err != nil {
+			t.Fatalf("ListArtifacts(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetArtifacts()) != 1000 {
+			t.Errorf("ListArtifacts(%+v) should have returned 1000 items, got: %+v", req, len(got.GetArtifacts()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("ListArtifacts(%+v) should return a next page token", req)
+		}
+	})
 }
 
 func TestReplaceArtifact(t *testing.T) {
@@ -1440,6 +1489,13 @@ func TestDeleteArtifactResponseCodes(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "invalid name",
+			req: &rpc.DeleteArtifactRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
 		},
 	}
 
