@@ -155,14 +155,14 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 
 // UpdateApiVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
+	// Version body must be valid.
+	if req.GetApiVersion() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
+	}
 	// Version name must be valid.
 	name, err := names.ParseVersion(req.ApiVersion.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// Version body must be valid.
-	if req.GetApiVersion() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
 	}
 	// Update mask must be valid.
 	if err := models.ValidateMask(req.GetApiVersion(), req.GetUpdateMask()); err != nil {

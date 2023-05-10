@@ -241,14 +241,14 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 
 // UpdateApiSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
+	// Spec body must be valid.
+	if req.GetApiSpec() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
+	}
 	// Spec name must be valid.
 	name, err := names.ParseSpec(req.ApiSpec.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// Spec body must be valid.
-	if req.GetApiSpec() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
 	}
 	// Update mask must be valid.
 	if err := models.ValidateMask(req.GetApiSpec(), req.GetUpdateMask()); err != nil {

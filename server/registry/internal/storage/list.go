@@ -936,6 +936,11 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		token.Filter = opts.Filter
 	}
 
+	filter, err := filtering.NewFilter(opts.Filter, specFields)
+	if err != nil {
+		return DeploymentList{}, err
+	}
+
 	// Check existence of the deepest fully specified resource in the parent name.
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" && parent.RevisionID != "-" {
 		if _, err := c.GetDeploymentRevision(ctx, parent); err != nil {
@@ -953,11 +958,6 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
 			return DeploymentList{}, err
 		}
-	}
-
-	filter, err := filtering.NewFilter(opts.Filter, specFields)
-	if err != nil {
-		return DeploymentList{}, err
 	}
 
 	op := c.db.WithContext(ctx).

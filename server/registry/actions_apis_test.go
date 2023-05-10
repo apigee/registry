@@ -222,6 +222,14 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid parent",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -353,6 +361,14 @@ func TestGetApiResponseCodes(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "invalid name",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.GetApiRequest{
+				Name: "projects",
+			},
+			want: codes.InvalidArgument,
 		},
 	}
 
@@ -701,6 +717,14 @@ func TestListApisResponseCodes(t *testing.T) {
 			req: &rpc.ListApisRequest{
 				Parent:  "projects/my-project/locations/global",
 				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid name",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.ListApisRequest{
+				Parent: "projects",
 			},
 			want: codes.InvalidArgument,
 		},
@@ -1134,6 +1158,24 @@ func TestUpdateApiResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid name",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name: "projects",
+				},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing api",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.UpdateApiRequest{
+				Api: nil,
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -1299,6 +1341,16 @@ func TestDeleteApiResponseCodes(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/my-api",
 			},
 			want: codes.FailedPrecondition,
+		},
+		{
+			desc: "invalid name",
+			seed: &rpc.Artifact{
+				Name: "projects/my-project/locations/global/apis/my-api/artifacts/my-artifact",
+			},
+			req: &rpc.DeleteApiRequest{
+				Name: "invalid",
+			},
+			want: codes.InvalidArgument,
 		},
 	}
 

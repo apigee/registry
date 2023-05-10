@@ -155,14 +155,14 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 
 // UpdateApi handles the corresponding API request.
 func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
+	// API body must be nonempty.
+	if req.GetApi() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())
+	}
 	// API name must be valid.
 	name, err := names.ParseApi(req.Api.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// API body must be nonempty.
-	if req.GetApi() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())
 	}
 	// Update mask must be valid.
 	if err := models.ValidateMask(req.GetApi(), req.GetUpdateMask()); err != nil {

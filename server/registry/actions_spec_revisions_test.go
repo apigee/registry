@@ -164,6 +164,16 @@ func TestTagApiSpecRevisionResponseCodes(t *testing.T) {
 		want codes.Code
 	}{
 		{
+			desc: "empty tag",
+			tag:  "",
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "too long",
+			tag:  strings.Repeat("x", 41),
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "contains uppercase leters",
 			tag:  "TestTag",
 			want: codes.InvalidArgument,
@@ -200,6 +210,34 @@ func TestTagApiSpecRevisionResponseCodes(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("invalid revision name", func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedSpecs(ctx, server, &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s"}); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
+		if _, err := server.TagApiSpecRevision(ctx, &rpc.TagApiSpecRevisionRequest{
+			Name: "invalid",
+			Tag:  "test",
+		}); status.Code(err) != codes.InvalidArgument {
+			t.Errorf("TagApiSpecRevision(%+v) returned status code %q, want %q: %v", "test", status.Code(err), codes.InvalidArgument, err)
+		}
+	})
+
+	t.Run("missing revision", func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedSpecs(ctx, server, &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s"}); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
+		if _, err := server.TagApiSpecRevision(ctx, &rpc.TagApiSpecRevisionRequest{
+			Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s@9999",
+			Tag:  "test",
+		}); status.Code(err) != codes.NotFound {
+			t.Errorf("TagApiSpecRevision(%+v) returned status code %q, want %q: %v", "test", status.Code(err), codes.NotFound, err)
+		}
+	})
 }
 
 func TestRollbackApiSpec(t *testing.T) {
@@ -273,6 +311,50 @@ func TestRollbackApiSpec(t *testing.T) {
 	}
 }
 
+func TestRollbackApiSpecRevisionResponseCodes(t *testing.T) {
+	tests := []struct {
+		desc       string
+		name       string
+		revisionID string
+		want       codes.Code
+	}{
+		{
+			desc:       "empty revisionID",
+			name:       "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s",
+			revisionID: "",
+			want:       codes.InvalidArgument,
+		},
+		{
+			desc:       "invalid name",
+			name:       "invalid",
+			revisionID: "whatever",
+			want:       codes.InvalidArgument,
+		},
+		{
+			desc:       "missing revisionID",
+			name:       "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s",
+			revisionID: "revision",
+			want:       codes.NotFound,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+
+			req := &rpc.RollbackApiSpecRequest{
+				Name:       test.name,
+				RevisionId: test.revisionID,
+			}
+
+			if _, err := server.RollbackApiSpec(ctx, req); status.Code(err) != test.want {
+				t.Errorf("RollbackApiSpec(%+v) returned status code %q, want %q: %v", test.name, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestDeleteApiSpecRevision(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
@@ -287,6 +369,16 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup: GetApiSpecRequest(%+v) returned error: %s", getReq, err)
 	}
+
+	t.Run("invalid name", func(t *testing.T) {
+		req := &rpc.DeleteApiSpecRevisionRequest{
+			Name: "invalid",
+		}
+
+		if _, err := server.DeleteApiSpecRevision(ctx, req); status.Code(err) != codes.InvalidArgument {
+			t.Fatalf("DeleteApiSpecRevision(%+v) returned unexpected status code %q, want %q: %v", req, status.Code(err), codes.FailedPrecondition, err)
+		}
+	})
 
 	t.Run("only remaining revision", func(t *testing.T) {
 		req := &rpc.DeleteApiSpecRevisionRequest{
@@ -642,6 +734,47 @@ func TestListApiSpecRevisionsSequence(t *testing.T) {
 
 		if got.GetNextPageToken() != "" {
 			t.Errorf("ListApiSpecRevisions(%+v) returned next_page_token, expected no next page", req)
+		}
+	})
+}
+
+func TestListApiSpecRevisionsLargeCollection(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	if err := seeder.SeedSpecs(ctx, server, &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	for i := 0; i <= 1001; i++ {
+		contents := []byte(fmt.Sprintf(`{"openapi": "3.0.0", "info": {"title": "My API", "version": "%d"}, "paths": {}}`, i))
+		updateReq := &rpc.UpdateApiSpecRequest{
+			ApiSpec: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s",
+				Contents: contents,
+			},
+		}
+
+		_, err := server.UpdateApiSpec(ctx, updateReq)
+		if err != nil {
+			t.Fatalf("Setup: UpdateApiSpec(%+v) returned error: %s", updateReq, err)
+		}
+	}
+
+	t.Run("max page size", func(t *testing.T) {
+		req := &rpc.ListApiSpecRevisionsRequest{
+			Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s",
+			PageSize: 1001,
+		}
+
+		got, err := server.ListApiSpecRevisions(ctx, req)
+		if err != nil {
+			t.Fatalf("ListApiSpecRevisions(%+v) returned error: %s", req, err)
+		}
+
+		if len(got.GetApiSpecs()) != 1000 {
+			t.Errorf("GetApiSpecs(%+v) should have returned 1000 items, got: %+v", req, len(got.GetApiSpecs()))
+		} else if got.GetNextPageToken() == "" {
+			t.Errorf("GetApiSpecs(%+v) should return a next page token", req)
 		}
 	})
 }
