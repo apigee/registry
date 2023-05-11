@@ -34,7 +34,7 @@ runs:
       id: check      
       shell: bash
       run: |
-        REPORT=$(registry check ${{ inputs.pattern }} --enable "${{ inputs.enable }}" --disable "${{ inputs.enable }}" --filter "${{ inputs.filter }}" --error-level "${{ inputs.error-level }}")
+        REPORT=$(registry check ${{ inputs.pattern }} --enable "${{ inputs.enable }}" --disable "${{ inputs.disable }}" --filter "${{ inputs.filter }}" --error-level "${{ inputs.error-level }}")
         echo "REPORT<<EOF"$'\n'"${REPORT}"$'\n'EOF >> $GITHUB_OUTPUT
         echo "Check Report:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
