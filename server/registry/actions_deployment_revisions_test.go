@@ -726,7 +726,6 @@ func TestListDeploymentRevisionsResponseCodes(t *testing.T) {
 	tests := []struct {
 		admin bool
 		desc  string
-		seed  *rpc.ApiDeployment
 		req   *rpc.ListApiDeploymentRevisionsRequest
 		want  codes.Code
 	}{
@@ -765,15 +764,6 @@ func TestListDeploymentRevisionsResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			if test.admin && adminServiceUnavailable() {
-				t.Skip(testRequiresAdminService)
-			}
-			ctx := context.Background()
-			server := defaultTestServer(t)
-			if err := seeder.SeedDeployments(ctx, server, test.seed); err != nil {
-				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-			}
-
 			if _, err := server.ListApiDeploymentRevisions(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListApiDeploymentRevisions(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
 			}
