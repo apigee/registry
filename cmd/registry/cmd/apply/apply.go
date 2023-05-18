@@ -29,6 +29,7 @@ func Command() *cobra.Command {
 	var project string
 	var recursive bool
 	var jobs int
+	var yamlArchives bool
 	cmd := &cobra.Command{
 		Use:   "apply (-f FILE | -f -)",
 		Short: "Apply YAML to the API Registry",
@@ -71,6 +72,9 @@ func Command() *cobra.Command {
 			if err := visitor.VerifyLocation(ctx, client, project); err != nil {
 				return fmt.Errorf("parent project %q does not exist: %s", project, err)
 			}
+			if yamlArchives { // TODO: remove when default
+				ctx = patch.SetStoreArchivesAsYaml(ctx)
+			}
 			return patch.Apply(ctx, client, adminClient, cmd.InOrStdin(), project, recursive, jobs, files...)
 		},
 	}
@@ -78,6 +82,7 @@ func Command() *cobra.Command {
 	_ = cmd.MarkFlagRequired("file")
 	cmd.Flags().StringVar(&project, "parent", "", "GCP project containing the API registry")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false, "process the directory used in -f, --file recursively")
+	cmd.Flags().BoolVarP(&yamlArchives, "yaml", "y", false, "store the archive data as yaml text instead of binary")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }

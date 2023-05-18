@@ -103,6 +103,17 @@ func artifactName(parent string, metadata encoding.Metadata) (names.Artifact, er
 	return names.ParseArtifact(parent + "/artifacts/" + metadata.Name)
 }
 
+// TODO: remove when default
+var yamlArchiveKey = struct{}{}
+
+func SetStoreArchivesAsYaml(ctx context.Context) context.Context {
+	return context.WithValue(ctx, yamlArchiveKey, true)
+}
+
+func storeArchivesAsYaml(ctx context.Context) bool {
+	return ctx.Value(yamlArchiveKey) != nil && ctx.Value(yamlArchiveKey).(bool)
+}
+
 func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *encoding.Artifact, parent string, filename string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	encoding.StyleForJSON(&content.Data)
@@ -116,6 +127,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	if err != nil {
 		return err
 	}
+	var mimeType string
 	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
@@ -131,26 +143,38 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 				}
 			}
 		}
-		// Marshal the message struct to bytes.
-		bytes, err = proto.Marshal(m)
-		if err != nil {
-			return err
+		if storeArchivesAsYaml(ctx) {
+			mimeType = mime.YamlMimeTypeForKind(content.Kind)
+			encoding.StyleForYAML(&content.Data)
+			bytes, err = yaml.Marshal(content.Data)
+			if err != nil {
+				return err
+			}
+		} else {
+			mimeType = mime.MimeTypeForKind(content.Kind)
+			// Marshal the message struct to bytes.
+			bytes, err = proto.Marshal(m)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		// If there was no struct defined for the type, marshal it struct as YAML
+		mimeType = mime.MimeTypeForKind(content.Kind)
 		encoding.StyleForYAML(&content.Data)
 		bytes, err = yaml.Marshal(content.Data)
 		if err != nil {
 			return err
 		}
 	}
+
 	name, err := artifactName(parent, content.Header.Metadata)
 	if err != nil {
 		return err
 	}
 	artifact := &rpc.Artifact{
 		Name:        name.String(),
-		MimeType:    mime.MimeTypeForKind(content.Kind),
+		MimeType:    mimeType,
 		Contents:    bytes,
 		Labels:      content.Metadata.Labels,
 		Annotations: content.Metadata.Annotations,

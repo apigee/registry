@@ -93,6 +93,12 @@ func MimeTypeForMessageType(protoType string) string {
 
 // MessageTypeForMimeType returns the Protocol Buffer message type represented by a MIME type.
 func MessageTypeForMimeType(protoType string) (string, error) {
+	re1 := regexp.MustCompile("^application/yaml;type=(.*)$")
+	m1 := re1.FindStringSubmatch(protoType)
+	if m1 != nil && len(m1[1]) > 0 {
+		return strings.TrimSuffix(m1[1], "+gzip"), nil
+	}
+
 	re := regexp.MustCompile("^application/octet-stream;type=(.*)$")
 	m := re.FindStringSubmatch(protoType)
 	if m == nil || len(m) < 2 || len(m[1]) == 0 {
@@ -104,7 +110,9 @@ func MessageTypeForMimeType(protoType string) (string, error) {
 // KindForMimeType returns the name to be used as the "kind" of an exported artifact.
 func KindForMimeType(mimeType string) string {
 	if strings.HasPrefix(mimeType, "application/yaml;type=") {
-		return strings.TrimPrefix(mimeType, "application/yaml;type=")
+		typeParameter := strings.TrimPrefix(mimeType, "application/yaml;type=")
+		parts := strings.Split(typeParameter, ".")
+		return parts[len(parts)-1]
 	} else if strings.HasPrefix(mimeType, "application/octet-stream;type=") {
 		typeParameter := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
 		parts := strings.Split(typeParameter, ".")
@@ -145,6 +153,19 @@ func MimeTypeForKind(kind string) string {
 	for k := range artifactMessageTypes {
 		if strings.HasSuffix(k, "."+kind) {
 			return fmt.Sprintf("application/octet-stream;type=%s", k)
+		}
+	}
+	return fmt.Sprintf("application/yaml;type=%s", kind)
+}
+
+// YamlMimeTypeForKind returns a YAML mime type that corresponds to a kind.
+func YamlMimeTypeForKind(kind string) string {
+	if kind == "" {
+		return "application/yaml"
+	}
+	for k := range artifactMessageTypes {
+		if strings.HasSuffix(k, "."+kind) {
+			return fmt.Sprintf("application/yaml;type=%s", k)
 		}
 	}
 	return fmt.Sprintf("application/yaml;type=%s", kind)
