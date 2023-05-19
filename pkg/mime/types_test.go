@@ -254,6 +254,16 @@ func TestProtobufMessageTypes(t *testing.T) {
 			messageType: "gnostic.metrics.Vocabulary",
 			mimeType:    "application/octet-stream;type=gnostic.metrics.Vocabulary",
 		},
+		{
+			kind:        "FieldSet",
+			messageType: "google.cloud.apigeeregistry.v1.apihub.FieldSet",
+			mimeType:    "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.FieldSet",
+		},
+		{
+			kind:        "FieldSetDefinition",
+			messageType: "google.cloud.apigeeregistry.v1.apihub.FieldSetDefinition",
+			mimeType:    "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.FieldSetDefinition",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.kind, func(t *testing.T) {
@@ -293,6 +303,24 @@ func TestProtobufMessageTypes(t *testing.T) {
 			if type2 != test.kind {
 				t.Errorf("incorrect message for kind, expected %s got %s", test.kind, type2)
 			}
+
+			// yaml variations of the above
+			yamlType := strings.Replace(test.mimeType, "octet-stream", "yaml", 1)
+			value = YamlMimeTypeForKind(test.kind)
+			if value != yamlType {
+				t.Errorf("incorrect mime type for kind, expected %s got %s", yamlType, value)
+			}
+			value = KindForMimeType(yamlType)
+			if value != test.kind {
+				t.Errorf("incorrect kind, expected %s got %s", test.kind, value)
+			}
+			value, err = MessageTypeForMimeType(yamlType)
+			if err != nil {
+				t.Errorf("Error getting message type for mime type %s", err)
+			}
+			if value != test.messageType {
+				t.Errorf("incorrect message type, expected %s got %s", test.messageType, value)
+			}
 		})
 	}
 }
@@ -314,6 +342,10 @@ func TestYamlMessageTypes(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.mimeType, func(t *testing.T) {
 			value := MimeTypeForKind(test.kind)
+			if value != test.mimeType {
+				t.Errorf("incorrect mime type for kind, expected %s got %s", test.mimeType, value)
+			}
+			value = YamlMimeTypeForKind(test.kind)
 			if value != test.mimeType {
 				t.Errorf("incorrect mime type for kind, expected %s got %s", test.mimeType, value)
 			}
