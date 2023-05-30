@@ -11,7 +11,7 @@ inputs:
   version:
     description: The Registry version label to use.
     required: false
-    default: latest
+    default: ""
   name:
     description: The config name to create.
     required: false
