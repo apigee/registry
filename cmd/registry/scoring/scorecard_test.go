@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/connection/grpctest"
@@ -25,7 +26,6 @@ import (
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -522,7 +522,7 @@ func TestCalculateScoreCard(t *testing.T) {
 			}
 
 			gotScoreCard := &scoring.ScoreCard{}
-			err = proto.Unmarshal(scoreCardArtifact.GetContents(), gotScoreCard)
+			err = patch.UnmarshalContents(scoreCardArtifact.GetContents(), scoreCardArtifact.GetMimeType(), gotScoreCard)
 			if err != nil {
 				t.Errorf("failed unmarshalling ScoreCard artifact from registry: %s", err)
 			}

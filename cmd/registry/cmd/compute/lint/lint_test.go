@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
@@ -26,7 +27,6 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
-	"google.golang.org/protobuf/proto"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -104,7 +104,7 @@ func TestComputeLint(t *testing.T) {
 		artifactName := specName.Artifact("lint-test")
 		if err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			var lint style.Lint
-			if err = proto.Unmarshal(message.Contents, &lint); err != nil {
+			if err = patch.UnmarshalContents(message.Contents, message.MimeType, &lint); err != nil {
 				return err
 			}
 			return nil
@@ -123,7 +123,7 @@ func TestComputeLint(t *testing.T) {
 		artifactName := specName.Artifact("lint-test")
 		if err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			var lint style.Lint
-			if err = proto.Unmarshal(message.Contents, &lint); err != nil {
+			if err = patch.UnmarshalContents(message.Contents, message.MimeType, &lint); err != nil {
 				return err
 			}
 			return nil
@@ -142,7 +142,7 @@ func TestComputeLint(t *testing.T) {
 		artifactName := specName.Artifact("lint-test")
 		if err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			var lint style.Lint
-			if err = proto.Unmarshal(message.Contents, &lint); err != nil {
+			if err = patch.UnmarshalContents(message.Contents, message.MimeType, &lint); err != nil {
 				return err
 			}
 			return nil

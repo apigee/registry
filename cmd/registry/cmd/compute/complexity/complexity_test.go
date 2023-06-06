@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
@@ -33,7 +34,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -81,7 +81,7 @@ func TestComputeComplexity(t *testing.T) {
 		artifactName := project.Api("apigeeregistry").Version("v1").Spec("protos").Artifact("complexity")
 		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			complexity := &metrics.Complexity{}
-			err = proto.Unmarshal(message.Contents, complexity)
+			err = patch.UnmarshalContents(message.Contents, message.MimeType, complexity)
 			if err != nil {
 				return err
 			}
@@ -106,7 +106,7 @@ func TestComputeComplexity(t *testing.T) {
 		artifactName := project.Api("apigeeregistry").Version("v1").Spec("openapi").Artifact("complexity")
 		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			complexity := &metrics.Complexity{}
-			err = proto.Unmarshal(message.Contents, complexity)
+			err = patch.UnmarshalContents(message.Contents, message.MimeType, complexity)
 			if err != nil {
 				return err
 			}
@@ -131,7 +131,7 @@ func TestComputeComplexity(t *testing.T) {
 		artifactName := project.Api("apigeeregistry").Version("v1").Spec("discovery").Artifact("complexity")
 		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			complexity := &metrics.Complexity{}
-			err = proto.Unmarshal(message.Contents, complexity)
+			err = patch.UnmarshalContents(message.Contents, message.MimeType, complexity)
 			if err != nil {
 				return err
 			}
@@ -251,7 +251,7 @@ func TestComputeComplexityValues(t *testing.T) {
 				t.Fatalf("Failed getting artifact contents %s: %s", test.getPattern, err)
 			}
 			gotProto := &metrics.Complexity{}
-			if err := proto.Unmarshal(contents.GetData(), gotProto); err != nil {
+			if err := patch.UnmarshalContents(contents.GetData(), contents.GetContentType(), gotProto); err != nil {
 				t.Fatalf("Failed to unmarshal artifact: %s", err)
 			}
 			opts := cmp.Options{protocmp.Transform()}

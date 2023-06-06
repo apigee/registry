@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/conformance"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
@@ -28,7 +29,6 @@ import (
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/proto"
 )
 
 var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"))
@@ -78,7 +78,7 @@ func Command() *cobra.Command {
 			guides := make([]*style.StyleGuide, 0)
 			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
 				guide := new(style.StyleGuide)
-				if err := proto.Unmarshal(artifact.GetContents(), guide); err != nil {
+				if err := patch.UnmarshalContents(artifact.GetContents(), artifact.GetMimeType(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
 					return nil
 				}

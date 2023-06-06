@@ -19,13 +19,13 @@ import (
 
 	scoring_message "github.com/apigee/registry/pkg/application/scoring"
 
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/proto"
 )
 
 func Command() *cobra.Command {
@@ -68,7 +68,7 @@ func Command() *cobra.Command {
 			for _, d := range scoreCardDefinitions {
 				// Extract definition
 				definition := &scoring_message.ScoreCardDefinition{}
-				if err := proto.Unmarshal(d.GetContents(), definition); err != nil {
+				if err := patch.UnmarshalContents(d.GetContents(), d.GetMimeType(), definition); err != nil {
 					return err
 				}
 				mergedPattern, mergedFilter, err := scoring.GenerateCombinedPattern(definition.GetTargetResource(), inputPattern, filter)

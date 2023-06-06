@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/application/style"
@@ -17,7 +18,6 @@ import (
 	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -307,7 +307,7 @@ func TestTimestampCalculateScore(t *testing.T) {
 			}
 
 			gotScore := &scoring.Score{}
-			err = proto.Unmarshal(scoreArtifact.GetContents(), gotScore)
+			err = patch.UnmarshalContents(scoreArtifact.GetContents(), scoreArtifact.GetMimeType(), gotScore)
 			if err != nil {
 				t.Errorf("failed unmarshalling score artifact from registry: %s", err)
 			}

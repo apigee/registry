@@ -20,10 +20,10 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
 var ruleNum = 1002
@@ -72,7 +72,7 @@ var internalMimeTypeContents = &lint.FieldRule{
 			}
 
 			// does not validate contents, just proves type compatibility
-			err = proto.Unmarshal(contents, message)
+			err = patch.UnmarshalContents(contents, declared, message)
 			if err != nil {
 				return []*check.Problem{{
 					Severity:   check.Problem_ERROR,

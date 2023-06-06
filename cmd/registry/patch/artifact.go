@@ -216,3 +216,23 @@ func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
 
 	return rBytes, nil
 }
+
+func UnmarshalContents(contents []byte, mimeType string, message proto.Message) error {
+	if !mime.IsYamlKind(mimeType) {
+		return proto.Unmarshal(contents, message)
+	}
+	var node yaml.Node
+	if err := yaml.Unmarshal(contents, &node); err != nil {
+		return err
+	}
+	encoding.StyleForJSON(&node)
+	bytes, err := yaml.Marshal(&node)
+	if err != nil {
+		return err
+	}
+	if err := protojson.Unmarshal(bytes, message); err != nil {
+		return err
+	}
+
+	return err
+}

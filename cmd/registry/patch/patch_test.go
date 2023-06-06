@@ -17,6 +17,7 @@ package patch
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/pkg/application/apihub"
@@ -36,6 +37,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -1009,64 +1011,82 @@ func TestMessageArtifactPatches(t *testing.T) {
 			},
 		},
 	}
-	ctx := context.Background()
-	registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-message-artifact-test", []seeder.RegistryResource{
-		&rpc.ApiSpec{
-			Name: root + "/apis/a/versions/v/specs/s",
-		},
-	})
 
-	for _, test := range tests {
-		t.Run(test.artifactID, func(t *testing.T) {
-			b, err := os.ReadFile(test.yamlFile)
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			var collection string
-			if test.parent != "" {
-				collection = root + "/" + test.parent + "/artifacts/"
-			} else {
-				collection = root + "/artifacts/"
-			}
-			artifactName, err := names.ParseArtifact(collection + test.artifactID)
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			err = visitor.GetArtifact(ctx, registryClient, artifactName, true,
-				func(ctx context.Context, artifact *rpc.Artifact) error {
-					contents, err := getArtifactMessageContents(artifact)
+	storageTypes := []struct {
+		mimeBase string
+		ctx      context.Context
+	}{
+		{"application/octet-stream", context.Background()},
+		{"application/yaml", SetStoreArchivesAsYaml(context.Background())},
+	}
+
+	for _, storage := range storageTypes {
+		t.Run(storage.mimeBase, func(t *testing.T) {
+			ctx := storage.ctx
+
+			registryClient, _ := grpctest.SetupRegistry(ctx, t, "patch-message-artifact-test", []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name: root + "/apis/a/versions/v/specs/s",
+				},
+			})
+
+			for _, test := range tests {
+				t.Run(test.artifactID, func(t *testing.T) {
+					b, err := os.ReadFile(test.yamlFile)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					opts := cmp.Options{protocmp.Transform()}
-					if !cmp.Equal(test.message, contents, opts) {
-						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, contents, opts))
-					}
-					model, err := NewArtifact(ctx, registryClient, artifact)
+					err = applyArtifactPatchBytes(ctx, registryClient, b, root, "patch.yaml")
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if model.Header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
+					var collection string
+					if test.parent != "" {
+						collection = root + "/" + test.parent + "/artifacts/"
+					} else {
+						collection = root + "/artifacts/"
 					}
-					if model.Header.Metadata.Name != test.artifactID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
-					}
-					out, err := encoding.EncodeYAML(model)
+					artifactName, err := names.ParseArtifact(collection + test.artifactID)
 					if err != nil {
-						t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
+						t.Fatalf("%s", err)
 					}
-					if !cmp.Equal(b, out, opts) {
-						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					err = visitor.GetArtifact(ctx, registryClient, artifactName, true,
+						func(ctx context.Context, artifact *rpc.Artifact) error {
+							// sanity check that we're really testing the right mime types
+							if !strings.HasPrefix(artifact.GetMimeType(), storage.mimeBase) {
+								t.Fatalf("unexpected storage type, want: %s, got: %s", storage.mimeBase, artifact.GetMimeType())
+							}
+							contents, err := getArtifactMessageContents(artifact)
+							if err != nil {
+								t.Fatalf("%s", err)
+							}
+							opts := cmp.Options{protocmp.Transform()}
+							if !cmp.Equal(test.message, contents, opts) {
+								t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, contents, opts))
+							}
+							model, err := NewArtifact(ctx, registryClient, artifact)
+							if err != nil {
+								t.Fatalf("%s", err)
+							}
+							if model.Header.Metadata.Parent != test.parent {
+								t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
+							}
+							if model.Header.Metadata.Name != test.artifactID {
+								t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
+							}
+							out, err := encoding.EncodeYAML(model)
+							if err != nil {
+								t.Errorf("encoding.EncodeYAML(%+v) returned an error: %s", model, err)
+							}
+							if !cmp.Equal(b, out, opts) {
+								t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+							}
+							return nil
+						})
+					if err != nil {
+						t.Fatalf("%s", err)
 					}
-					return nil
 				})
-			if err != nil {
-				t.Fatalf("%s", err)
 			}
 		})
 	}
@@ -1199,14 +1219,21 @@ func getArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	return unmarshal(artifact.GetContents(), message)
-}
+	err = UnmarshalContents(artifact.GetContents(), artifact.GetMimeType(), message)
 
-func unmarshal(value []byte, message proto.Message) (proto.Message, error) {
-	if err := proto.Unmarshal(value, message); err != nil {
-		return nil, err
+	// restore id and kind
+	s := strings.Split(artifact.GetName(), "/")
+	id := s[len(s)-1]
+	kind := mime.KindForMimeType(artifact.GetMimeType())
+	fields := message.ProtoReflect().Descriptor().Fields()
+	if fd := fields.ByTextName("id"); fd != nil {
+		message.ProtoReflect().Set(fd, protoreflect.ValueOfString(id))
 	}
-	return message, nil
+	if fd := fields.ByTextName("kind"); fd != nil {
+		message.ProtoReflect().Set(fd, protoreflect.ValueOfString(kind))
+	}
+
+	return message, err
 }
 
 func TestEmptyArtifactPatches(t *testing.T) {

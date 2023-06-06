@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/scoring/extensions"
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/application/controller"
@@ -67,30 +68,30 @@ func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
 
 	switch messageType {
 	case "gnostic.metrics.Complexity":
-		return unmarshalAndMap(contents, &metrics.Complexity{})
+		return unmarshalAndMap(contents, mimeType, &metrics.Complexity{})
 	case "gnostic.metrics.Vocabulary":
-		return unmarshalAndMap(contents, &metrics.Vocabulary{})
+		return unmarshalAndMap(contents, mimeType, &metrics.Vocabulary{})
 	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
-		return unmarshalAndMap(contents, &style.ConformanceReport{})
+		return unmarshalAndMap(contents, mimeType, &style.ConformanceReport{})
 	case "google.cloud.apigeeregistry.v1.style.Lint":
-		return unmarshalAndMap(contents, &style.Lint{})
+		return unmarshalAndMap(contents, mimeType, &style.Lint{})
 	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
-		return unmarshalAndMap(contents, &apihub.ReferenceList{})
+		return unmarshalAndMap(contents, mimeType, &apihub.ReferenceList{})
 	case "google.cloud.apigeeregistry.v1.controller.Receipt":
-		return unmarshalAndMap(contents, &controller.Receipt{})
+		return unmarshalAndMap(contents, mimeType, &controller.Receipt{})
 	case "google.cloud.apigeeregistry.v1.scoring.Score":
-		return unmarshalAndMap(contents, &scoring.Score{})
+		return unmarshalAndMap(contents, mimeType, &scoring.Score{})
 	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
-		return unmarshalAndMap(contents, &scoring.ScoreCard{})
+		return unmarshalAndMap(contents, mimeType, &scoring.ScoreCard{})
 	// TODO: Add support for JSON artifacts
 	default:
 		return nil, fmt.Errorf("unsupported artifact type: %s", messageType)
 	}
 }
 
-func unmarshalAndMap(contents []byte, message proto.Message) (map[string]interface{}, error) {
+func unmarshalAndMap(contents []byte, mimeType string, message proto.Message) (map[string]interface{}, error) {
 	// Convert to proto
-	err := proto.Unmarshal(contents, message)
+	err := patch.UnmarshalContents(contents, mimeType, message)
 	if err != nil {
 		return nil, fmt.Errorf("failed unmarshling: %s", err)
 	}

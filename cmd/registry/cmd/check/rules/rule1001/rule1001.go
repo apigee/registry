@@ -22,11 +22,11 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
 var ruleNum = 1001
@@ -84,7 +84,7 @@ func taxonomies(ctx context.Context, project names.Project) *TaxList {
 	})
 	if err == nil {
 		tl := new(apihub.TaxonomyList)
-		if err = proto.Unmarshal(ac.Data, tl); err == nil {
+		if err = patch.UnmarshalContents(ac.Data, ac.GetContentType(), tl); err == nil {
 			return &TaxList{tl}
 		}
 	}

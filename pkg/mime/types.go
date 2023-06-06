@@ -86,6 +86,10 @@ func IsPrintableType(mimeType string) bool {
 		strings.HasPrefix(mimeType, "application/json")
 }
 
+func IsYamlKind(mimeType string) bool {
+	return strings.HasPrefix(mimeType, "application/yaml;type=") && KindForMimeType(mimeType) != ""
+}
+
 // MimeTypeForMessageType returns a MIME type that represents a Protocol Buffer message type.
 func MimeTypeForMessageType(protoType string) string {
 	return fmt.Sprintf("application/octet-stream;type=%s", protoType)
