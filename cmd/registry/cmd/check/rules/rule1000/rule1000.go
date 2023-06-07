@@ -20,13 +20,13 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/mime"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/pkg/visitor"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
 var ruleNum = 1000
@@ -92,7 +92,7 @@ var requiredArtifacts = &lint.ProjectRule{
 func checkTaxonomies(a *rpc.Artifact) []*check.Problem {
 	message, err := mime.MessageForMimeType(a.GetMimeType())
 	if err == nil {
-		err = proto.Unmarshal(a.GetContents(), message)
+		err = patch.UnmarshalContents(a.GetContents(), a.GetMimeType(), message)
 	}
 	if err != nil {
 		return []*check.Problem{{

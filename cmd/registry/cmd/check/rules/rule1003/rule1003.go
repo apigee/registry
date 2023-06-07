@@ -21,11 +21,11 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/application/apihub"
 	"github.com/apigee/registry/pkg/application/check"
 	"github.com/apigee/registry/pkg/names"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
 var ruleNum = 1003
@@ -62,7 +62,7 @@ var stateIsValidLifecycleStage = &lint.ApiVersionRule{
 		})
 		if err == nil {
 			lc = new(apihub.Lifecycle)
-			err = proto.Unmarshal(ac.Data, lc)
+			err = patch.UnmarshalContents(ac.Data, ac.ContentType, lc)
 		}
 		if err != nil {
 			return []*check.Problem{{

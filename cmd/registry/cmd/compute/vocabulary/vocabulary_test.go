@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/pkg/names"
@@ -26,7 +27,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	metrics "github.com/google/gnostic/metrics"
-	"google.golang.org/protobuf/proto"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -73,7 +73,7 @@ func TestComputeVocabulary(t *testing.T) {
 		artifactName := project.Api("apigeeregistry").Version("v1").Spec("protos").Artifact("vocabulary")
 		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			vocabulary := &metrics.Vocabulary{}
-			err = proto.Unmarshal(message.Contents, vocabulary)
+			err = patch.UnmarshalContents(message.Contents, message.MimeType, vocabulary)
 			if err != nil {
 				return err
 			}
@@ -98,7 +98,7 @@ func TestComputeVocabulary(t *testing.T) {
 		artifactName := project.Api("apigeeregistry").Version("v1").Spec("openapi").Artifact("vocabulary")
 		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			vocabulary := &metrics.Vocabulary{}
-			err = proto.Unmarshal(message.Contents, vocabulary)
+			err = patch.UnmarshalContents(message.Contents, message.MimeType, vocabulary)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func TestComputeVocabulary(t *testing.T) {
 		artifactName := project.Api("apigeeregistry").Version("v1").Spec("discovery").Artifact("vocabulary")
 		err = visitor.GetArtifact(ctx, registryClient, artifactName, true, func(ctx context.Context, message *rpc.Artifact) error {
 			vocabulary := &metrics.Vocabulary{}
-			err = proto.Unmarshal(message.Contents, vocabulary)
+			err = patch.UnmarshalContents(message.Contents, message.MimeType, vocabulary)
 			if err != nil {
 				return err
 			}

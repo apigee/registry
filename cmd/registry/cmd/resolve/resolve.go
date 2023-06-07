@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/controller"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/tasks"
 	controller_message "github.com/apigee/registry/pkg/application/controller"
 	"github.com/apigee/registry/pkg/connection"
@@ -27,7 +28,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/proto"
 )
 
 func fetchManifest(
@@ -45,7 +45,7 @@ func fetchManifest(
 	}
 
 	contents := body.GetData()
-	err = proto.Unmarshal(contents, manifest)
+	err = patch.UnmarshalContents(contents, body.GetContentType(), manifest)
 	if err != nil {
 		return nil, err
 	}

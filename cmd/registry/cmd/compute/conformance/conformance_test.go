@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -32,7 +33,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -477,7 +477,7 @@ func TestConformance(t *testing.T) {
 			}
 
 			gotProto := &style.ConformanceReport{}
-			if err := proto.Unmarshal(contents.GetData(), gotProto); err != nil {
+			if err := patch.UnmarshalContents(contents.GetData(), contents.GetContentType(), gotProto); err != nil {
 				t.Fatalf("Failed to unmarshal artifact: %s", err)
 			}
 

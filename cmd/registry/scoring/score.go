@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/application/scoring"
 	"github.com/apigee/registry/pkg/log"
@@ -50,7 +51,7 @@ func FetchScoreDefinitions(
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(ctx context.Context, artifact *rpc.Artifact) error {
 			definition := &scoring.ScoreDefinition{}
-			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
+			if err1 := patch.UnmarshalContents(artifact.GetContents(), artifact.GetMimeType(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
 				log.Debugf(ctx, "Skipping definition %q: %s", artifact.GetName(), err1)
 				return nil
@@ -79,7 +80,7 @@ func CalculateScore(
 
 	// Extract definition
 	definition := &scoring.ScoreDefinition{}
-	if err := proto.Unmarshal(defArtifact.GetContents(), definition); err != nil {
+	if err := patch.UnmarshalContents(defArtifact.GetContents(), defArtifact.GetMimeType(), definition); err != nil {
 		return err
 	}
 

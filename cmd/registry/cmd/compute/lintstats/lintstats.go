@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/application/style"
 	"github.com/apigee/registry/pkg/connection"
@@ -135,7 +136,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		}
 
 		lint := &style.Lint{}
-		err = proto.Unmarshal(contents.GetData(), lint)
+		err = patch.UnmarshalContents(contents.GetData(), contents.GetContentType(), lint)
 		if err != nil {
 			return nil
 		}
@@ -153,7 +154,7 @@ func computeLintStatsSpecs(ctx context.Context,
 				return nil // ignore missing results
 			}
 			complexity := &metrics.Complexity{}
-			err := proto.Unmarshal(contents.GetData(), complexity)
+			err := patch.UnmarshalContents(contents.GetData(), contents.GetContentType(), complexity)
 			if err != nil {
 				return nil
 			}
@@ -283,7 +284,7 @@ func aggregateLintStats(ctx context.Context,
 		return // ignore missing results
 	}
 	stats := &style.LintStats{}
-	err := proto.Unmarshal(contents.GetData(), stats)
+	err := patch.UnmarshalContents(contents.GetData(), contents.GetContentType(), stats)
 	if err != nil {
 		return
 	}
