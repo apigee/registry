@@ -81,7 +81,7 @@ func main() {
 // adds `Available Plugins` and `Need more help?` sections to default
 const usageTemplate = `Usage:{{if .Runnable}}
 {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-{{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
 Aliases:
 {{.NameAndAliases}}{{end}}{{if .HasExample}}
@@ -90,11 +90,11 @@ Examples:
 {{.Example}}{{end}}{{if .HasAvailableSubCommands}}
 
 Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-{{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if gt (len Plugins) 0}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if gt (len Plugins) 0}}
 
 Available Plugins:
 {{- range Plugins}}
-{{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+  {{.}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
