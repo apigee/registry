@@ -15,7 +15,6 @@
 package config_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -49,7 +48,7 @@ func TestActiveSettings(t *testing.T) {
 
 	// missing config file
 	f := filepath.Join(config.Directory, config.ActivePointerFilename)
-	err = ioutil.WriteFile(f, []byte("missing"), os.FileMode(0644)) // rw,r,r
+	err = os.WriteFile(f, []byte("missing"), os.FileMode(0644)) // rw,r,r
 	if err != nil {
 		t.Fatal(err)
 	}
