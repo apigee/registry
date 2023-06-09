@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,7 +68,7 @@ func CreateFlagSet() *pflag.FlagSet {
 
 // Configurations returns stored Configurations by name
 func Configurations() (map[string]Configuration, error) {
-	files, err := ioutil.ReadDir(Directory)
+	files, err := os.ReadDir(Directory)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func Activate(name string) error {
 	}
 
 	f := filepath.Join(Directory, ActivePointerFilename)
-	return ioutil.WriteFile(f, []byte(name), os.FileMode(0644)) // rw,r,r
+	return os.WriteFile(f, []byte(name), os.FileMode(0644)) // rw,r,r
 }
 
 // ReadValid reads the specified Configuration, resolves it, and
@@ -253,7 +252,7 @@ func Delete(name string) error {
 // Returns "" if active_config is not found.
 func ActiveName() (string, error) {
 	f := filepath.Join(Directory, ActivePointerFilename)
-	bytes, err := ioutil.ReadFile(f)
+	bytes, err := os.ReadFile(f)
 	if errors.Is(err, os.ErrNotExist) {
 		return "", nil
 	} else if err != nil {
