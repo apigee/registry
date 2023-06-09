@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ARG ENVOY_VERSION=v1.20-latest
-ARG GO_VERSION=1.18
+ARG GO_VERSION=1.20
 
 FROM golang:${GO_VERSION} as builder
 

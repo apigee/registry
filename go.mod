@@ -1,6 +1,6 @@
 module github.com/apigee/registry
 
-go 1.18
+go 1.20
 
 require (
 	cloud.google.com/go/longrunning v0.4.1
