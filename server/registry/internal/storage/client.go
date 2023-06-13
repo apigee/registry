@@ -209,19 +209,25 @@ func (c *Client) ensureForeignKeys(ctx context.Context) (err error) {
 }
 
 func (c *Client) migrateArtifactsToRevisions(ctx context.Context) (err error) {
-	return c.db.Model(&models.Artifact{}).
-		Where("revision_id is null and spec_id != ''").
-		Update("revision_id",
-			c.db.Model(&models.Spec{}).Select("revision_id").
-				Where("artifacts.project_id = specs.project_id").
-				Where("artifacts.api_id = specs.api_id").
-				Where("artifacts.version_id = specs.version_id").
-				Where("artifacts.spec_id = specs.spec_id")).Joins(`join (?) latest
-					ON artifacts.project_id = latest.project_id
-					AND artifacts.api_id = latest.api_id
-					AND artifacts.version_id = latest.version_id
-					AND artifacts.spec_id = latest.spec_id
-					AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx)).Error
+	return c.db.Exec(`
+	UPDATE artifacts
+	SET revision_id = specs.revision_id
+	FROM
+		-- ONLY LASTEST SPEC REVISIONS
+		(SELECT *
+		FROM
+			(SELECT *, row_number()
+			OVER
+			   (partition by project_id,api_id,version_id,spec_id order by revision_create_time desc) as row
+			FROM specs) 
+		AS rev
+		WHERE rev.row = 1) as specs
+	WHERE
+		artifacts.project_id = specs.project_id 
+		AND artifacts.api_id = specs.api_id 
+		AND artifacts.version_id = specs.version_id 
+		AND artifacts.spec_id = specs.spec_id
+	`).Error
 }
 
 func (c *Client) DatabaseName(ctx context.Context) string {
