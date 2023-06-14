@@ -24,9 +24,10 @@ import (
 
 func describeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "describe CONFIGURATION",
-		Short: "Describes a named configuration by listing its properties",
-		Args:  cobra.ExactArgs(1),
+		Use:     "describe CONFIGURATION",
+		Short:   "Describes a named configuration by listing its properties",
+		Example: `registry config configurations describe localhost`,
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 			s, err := config.Read(name)

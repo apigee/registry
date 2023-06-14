@@ -23,9 +23,18 @@ import (
 
 func getCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get PROPERTY",
-		Short: "Print a property value in the active configuration",
-		Args:  cobra.ExactArgs(1),
+		Use:     "get PROPERTY",
+		Short:   "Print a property value in the active configuration",
+		Example: `registry config get address`,
+		Long: `Print a property value in the active configuration.
+
+The following are valid configuration properties:
+	- address
+	- insecure
+	- location
+	- project
+	- token-source`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, c, err := config.ActiveRaw()
 			if err != nil {

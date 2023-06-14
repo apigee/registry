@@ -24,9 +24,10 @@ import (
 
 func deleteCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "delete CONFIGURATION_1 ... CONFIGURATION_N",
-		Short: "Deletes a named configuration",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "delete CONFIGURATION_1 ... CONFIGURATION_N",
+		Short:   "Deletes a named configuration",
+		Example: `registry config configurations delete local`,
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, name := range args {
 				if err := config.ValidateName(name); err != nil {

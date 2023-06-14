@@ -25,14 +25,16 @@ func setCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set PROPERTY VALUE",
 		Short: "Set a property value in the active configuration",
-		Long: "Set a property value in the active configuration. The following are valid properties:\n" +
-			"  - registry.address\n" +
-			"  - registry.insecure\n" +
-			"  - registry.location\n" +
-			"  - registry.project\n" +
-			"  - token-source",
-		Example: "registry config set registry.address localhost:8080\n" +
-			"registry config set token-source 'gcloud auth print-access-token email@example.com'",
+		Long: `Set a property value in the active configuration.
+
+The following are valid configuration properties:
+	- address
+	- insecure
+	- location
+	- project
+	- token-source`,
+		Example: `registry config set address localhost:8080
+registry config set token-source 'gcloud auth print-access-token email@example.com'`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target, c, err := config.ActiveRaw()

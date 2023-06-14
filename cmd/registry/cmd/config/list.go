@@ -23,9 +23,10 @@ import (
 
 func listCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List properties in the active configuration",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "List properties in the active configuration",
+		Example: `registry config list`,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			target, c, err := config.ActiveRaw()
 			if err != nil {

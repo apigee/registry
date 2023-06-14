@@ -27,9 +27,10 @@ import (
 
 func listCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "Lists existing named configs",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "Lists existing named configurations",
+		Example: `registry config configurations list`,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			configs, err := config.Configurations()
 			if errors.Is(err, fs.ErrNotExist) || len(configs) == 0 {
