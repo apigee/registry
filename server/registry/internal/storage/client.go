@@ -227,6 +227,7 @@ func (c *Client) migrateArtifactsToRevisions(ctx context.Context) (err error) {
 		AND artifacts.api_id = specs.api_id 
 		AND artifacts.version_id = specs.version_id 
 		AND artifacts.spec_id = specs.spec_id
+		AND artifacts.revision_id is null
 	`).Error
 }
 
