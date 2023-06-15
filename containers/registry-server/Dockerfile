@@ -17,7 +17,7 @@
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.20 as builder
+FROM golang:1.20.4 as builder
 RUN apt-get update
 RUN apt-get -y install unzip
 
@@ -37,19 +37,7 @@ RUN ./tools/FETCH-PROTOC.sh && make protos
 # Build registry-server.
 RUN CGO_ENABLED=1 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
-# Prepare bash dependencies for the final image.
-RUN apt-get -y install wget bash-static \
-    && wget -q http://landley.net/toybox/bin/toybox-x86_64 \
-    -O /usr/local/bin/toybox \
-    && chmod 755 /usr/local/bin/toybox \
-    && cd /usr/local/bin; for i in $(./toybox); do ln -s toybox $i; done
-
 FROM gcr.io/distroless/base:latest
-# Copy bash dependencies.
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY --from=builder /bin/bash-static /bin/bash
-RUN [ "/usr/local/bin/toybox", "ln", "-s", "/bin/bash", "/bin/sh" ]
-RUN chmod -R 755 /usr/local/bin
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server
