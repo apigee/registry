@@ -30,10 +30,13 @@ func createCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create CONFIGURATION",
 		Short: "Creates and activates a new named configuration",
-		Long: "Creates and activates a new named configuration. Values will be populated from active " +
-			"configuration (if any) and any passed property flags (unless using --gcloud).",
-		Example: "registry config configurations create localhost --registry.address='locahost:8080'\n" +
-			"registry config configurations create hosted --gcloud",
+		Long: `Creates and activates a new named configuration. 
+		
+Values in the new configuration will default to the currently active
+configuration (if any) but can be overridden by setting property flags
+(unless using --gcloud).`,
+		Example: `registry config configurations create localhost --registry.address='locahost:8080'
+registry config configurations create hosted --gcloud`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]

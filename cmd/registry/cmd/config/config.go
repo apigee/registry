@@ -23,10 +23,21 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Maintain properties in the active configuration",
-		Long: "Configurations manage sets of properties used when connecting to the registry. " +
-			"These commands manipulate the property values in the active configuration. " +
-			"See `config configurations --help` for information on how to manage configurations. " +
-			"See `config set --help` for the list of properties available.",
+		Long: `Maintain properties in the active configuration.
+		
+Configurations manage sets of properties used when a client connects to the 
+API Registry. These commands display manipulate the property values in the 
+active configuration.
+
+The following are valid configuration properties:
+	- address
+	- insecure
+	- location
+	- project
+	- token-source
+
+See 'config configurations --help' for information on how to manage configurations.
+See 'config set --help' for the list of properties available.`,
 	}
 
 	cmd.AddCommand(configurations.Command())

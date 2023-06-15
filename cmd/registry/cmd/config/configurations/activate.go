@@ -23,9 +23,10 @@ import (
 
 func activateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "activate CONFIGURATION",
-		Short: "Activates an existing named configuration",
-		Args:  cobra.ExactArgs(1),
+		Use:     "activate CONFIGURATION",
+		Short:   "Activates an existing named configuration",
+		Example: `registry config configurations activate local`,
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 			if err := config.ValidateName(name); err != nil {
