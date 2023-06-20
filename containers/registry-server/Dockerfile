@@ -17,7 +17,7 @@
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.20.4 as builder
+FROM golang:1.20-bullseye as builder
 RUN apt-get update
 RUN apt-get -y install unzip
 
