@@ -136,6 +136,18 @@ func TestCreateArtifact(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "create empty artifact",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global",
+				ArtifactId: "my-artifact",
+				Artifact:   nil,
+			},
+			want: &rpc.Artifact{
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -243,16 +255,6 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.NotFound,
-		},
-		{
-			desc: "missing resource body",
-			seed: &rpc.Project{Name: "projects/my-project"},
-			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project/locations/global",
-				ArtifactId: "valid-id",
-				Artifact:   nil,
-			},
-			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing custom identifier",

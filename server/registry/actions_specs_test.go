@@ -86,6 +86,18 @@ func TestCreateApiSpec(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "empty resource",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
+				ApiSpecId: "my-spec",
+				ApiSpec:   nil,
+			},
+			want: &rpc.ApiSpec{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -157,16 +169,6 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.NotFound,
-		},
-		{
-			desc: "missing resource body",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
-				ApiSpecId: "valid-id",
-				ApiSpec:   nil,
-			},
-			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing custom identifier",

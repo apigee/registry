@@ -28,10 +28,6 @@ import (
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
-	// Project body must be nonempty.
-	if req.GetProject() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
-	}
 	// Project name must be valid.
 	name := names.Project{ProjectID: req.GetProjectId()}
 	if err := name.Validate(); err != nil {

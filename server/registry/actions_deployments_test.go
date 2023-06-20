@@ -64,6 +64,18 @@ func TestCreateApiDeployment(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "empty resource",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
+			req: &rpc.CreateApiDeploymentRequest{
+				Parent:          "projects/my-project/locations/global/apis/a",
+				ApiDeploymentId: "my-deployment",
+				ApiDeployment:   nil,
+			},
+			want: &rpc.ApiDeployment{
+				Name: "projects/my-project/locations/global/apis/a/deployments/my-deployment",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -143,16 +155,6 @@ func TestCreateApiDeploymentResponseCodes(t *testing.T) {
 				ApiDeployment:   &rpc.ApiDeployment{},
 			},
 			want: codes.NotFound,
-		},
-		{
-			desc: "missing resource body",
-			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
-			req: &rpc.CreateApiDeploymentRequest{
-				Parent:          "projects/my-project/locations/global/apis/a",
-				ApiDeploymentId: "valid-id",
-				ApiDeployment:   nil,
-			},
-			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing custom identifier",
