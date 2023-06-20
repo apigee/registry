@@ -120,6 +120,14 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 		want codes.Code
 	}{
 		{
+			desc: "missing resource body",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "valid-id",
+				Project:   nil,
+			},
+			want: codes.OK,
+		},
+		{
 			desc: "missing custom identifier",
 			req: &rpc.CreateProjectRequest{
 				ProjectId: "",

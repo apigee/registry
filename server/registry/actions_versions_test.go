@@ -161,6 +161,16 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/locations/global/apis/my-api",
+				ApiVersionId: "valid-id",
+				ApiVersion:   nil,
+			},
+			want: codes.OK,
+		},
+		{
 			desc: "missing custom identifier",
 			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{

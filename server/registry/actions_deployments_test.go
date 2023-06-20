@@ -157,6 +157,16 @@ func TestCreateApiDeploymentResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
+			req: &rpc.CreateApiDeploymentRequest{
+				Parent:          "projects/my-project/locations/global/apis/a",
+				ApiDeploymentId: "valid-id",
+				ApiDeployment:   nil,
+			},
+			want: codes.OK,
+		},
+		{
 			desc: "missing custom identifier",
 			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
 			req: &rpc.CreateApiDeploymentRequest{

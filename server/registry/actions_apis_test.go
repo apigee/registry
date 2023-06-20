@@ -157,6 +157,16 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project/locations/global",
+				ApiId:  "valid-id",
+				Api:    nil,
+			},
+			want: codes.OK,
+		},
+		{
 			desc: "missing custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{

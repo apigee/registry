@@ -257,6 +257,16 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global",
+				ArtifactId: "valid-id",
+				Artifact:   nil,
+			},
+			want: codes.OK,
+		},
+		{
 			desc: "missing custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
