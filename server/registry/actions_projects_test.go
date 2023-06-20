@@ -54,6 +54,16 @@ func TestCreateProject(t *testing.T) {
 				Description: "My Description",
 			},
 		},
+		{
+			desc: "empty resource",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "my-project",
+				Project:   nil,
+			},
+			want: &rpc.Project{
+				Name: "projects/my-project",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -115,7 +125,7 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 				ProjectId: "valid-id",
 				Project:   nil,
 			},
-			want: codes.InvalidArgument,
+			want: codes.OK,
 		},
 		{
 			desc: "missing custom identifier",

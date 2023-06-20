@@ -74,6 +74,20 @@ func TestCreateApi(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "empty resource",
+			seed: &rpc.Project{
+				Name: "projects/my-project",
+			},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project/locations/global",
+				ApiId:  "my-api",
+				Api:    nil,
+			},
+			want: &rpc.Api{
+				Name: "projects/my-project/locations/global/apis/my-api",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -150,7 +164,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 				ApiId:  "valid-id",
 				Api:    nil,
 			},
-			want: codes.InvalidArgument,
+			want: codes.OK,
 		},
 		{
 			desc: "missing custom identifier",

@@ -72,6 +72,20 @@ func TestCreateApiVersion(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "empty resource",
+			seed: &rpc.Api{
+				Name: "projects/my-project/locations/global/apis/my-api",
+			},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/locations/global/apis/my-api",
+				ApiVersionId: "v1",
+				ApiVersion:   nil,
+			},
+			want: &rpc.ApiVersion{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -154,7 +168,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 				ApiVersionId: "valid-id",
 				ApiVersion:   nil,
 			},
-			want: codes.InvalidArgument,
+			want: codes.OK,
 		},
 		{
 			desc: "missing custom identifier",

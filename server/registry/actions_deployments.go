@@ -33,10 +33,6 @@ func (s *RegistryServer) CreateApiDeployment(ctx context.Context, req *rpc.Creat
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	// Deployment body must be nonempty.
-	if req.GetApiDeployment() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
-	}
 	// Deployment name must be valid.
 	name := parent.Deployment(req.GetApiDeploymentId())
 	if err := name.Validate(); err != nil {

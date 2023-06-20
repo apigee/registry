@@ -60,10 +60,6 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	// Artifact body must be nonempty.
-	if req.GetArtifact() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
-	}
 	var response *rpc.Artifact
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Creation should only succeed when the parent exists.
