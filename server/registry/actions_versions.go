@@ -33,10 +33,6 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	// Version body must be nonempty.
-	if req.GetApiVersion() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
-	}
 	// Version name must be valid.
 	name := parent.Version(req.GetApiVersionId())
 	if err := name.Validate(); err != nil {

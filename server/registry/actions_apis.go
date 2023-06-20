@@ -33,11 +33,6 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	// API body must be nonempty.
-	if req.GetApi() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
-	}
-	// API name must be valid.
 	name := parent.Api(req.GetApiId())
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

@@ -37,10 +37,6 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	// Spec body must be nonempty.
-	if req.GetApiSpec() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
-	}
 	// Spec name must be valid.
 	name := parent.Spec(req.GetApiSpecId())
 	if err := name.Validate(); err != nil {
