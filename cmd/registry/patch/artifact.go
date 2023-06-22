@@ -122,31 +122,39 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	if err != nil {
 		return err
 	}
-	// Populate Id and Kind fields in the contents of the artifact
-	jWithIdAndKind, err := populateIdAndKind(j, content.Kind, content.Metadata.Name)
-	if err != nil {
-		return err
-	}
 	var mimeType string
 	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
 	m, err = mime.MessageForKind(content.Kind)
 	if err == nil {
+		// First try with id and kind fields included
+		jWithIdAndKind, err := populateIdAndKind(j, content.Kind, content.Metadata.Name)
+		if err != nil {
+			return err
+		}
 		err = protojson.Unmarshal(jWithIdAndKind, m)
 		if err != nil {
 			if strings.Contains(err.Error(), "unknown field") {
 				// Try unmarshaling the original YAML (without the additional Id and Kind fields).
 				err = protojson.Unmarshal(j, m)
-				if err != nil {
-					return err
-				}
 			}
+			if err != nil {
+				return err
+			}
+		} else {
+			j = jWithIdAndKind
 		}
+
 		if storeArchivesAsYaml(ctx) {
+			var node yaml.Node
+			err = yaml.Unmarshal(j, &node)
+			if err != nil {
+				return err
+			}
 			mimeType = mime.YamlMimeTypeForKind(content.Kind)
-			encoding.StyleForYAML(&content.Data)
-			bytes, err = yaml.Marshal(content.Data)
+			encoding.StyleForYAML(&node)
+			bytes, err = yaml.Marshal(&node)
 			if err != nil {
 				return err
 			}

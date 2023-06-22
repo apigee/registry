@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"))
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s') || mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"), mime.YamlMimeTypeForKind("StyleGuide"))
 
 func Command() *cobra.Command {
 	var filter string
