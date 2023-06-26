@@ -16,8 +16,6 @@ package patch
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -115,62 +113,29 @@ func storeArchivesAsYaml(ctx context.Context) bool {
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *encoding.Artifact, parent string, filename string) error {
-	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
-	encoding.StyleForJSON(&content.Data)
-	// Marshal the YAML representation into the JSON serialization.
-	j, err := yaml.Marshal(content.Data)
-	if err != nil {
-		return err
-	}
 	var mimeType string
 	var bytes []byte
-	// Unmarshal the JSON serialization into the message struct.
-	var m proto.Message
-	m, err = mime.MessageForKind(content.Kind)
-	if err == nil {
-		// First try with id and kind fields included
-		jWithIdAndKind, err := populateIdAndKind(j, content.Kind, content.Metadata.Name)
+	msg, err := mime.MessageForKind(content.Kind)
+	if storeArchivesAsYaml(ctx) || err != nil {
+		mimeType = mime.YamlMimeTypeForKind(content.Kind)
+		encoding.StyleForYAML(&content.Data)
+		bytes, err = yaml.Marshal(content.Data)
 		if err != nil {
 			return err
 		}
-		err = protojson.Unmarshal(jWithIdAndKind, m)
-		if err != nil {
-			if strings.Contains(err.Error(), "unknown field") {
-				// Try unmarshaling the original YAML (without the additional Id and Kind fields).
-				err = protojson.Unmarshal(j, m)
-			}
-			if err != nil {
-				return err
-			}
-		} else {
-			j = jWithIdAndKind
-		}
-
-		if storeArchivesAsYaml(ctx) {
-			var node yaml.Node
-			err = yaml.Unmarshal(j, &node)
-			if err != nil {
-				return err
-			}
-			mimeType = mime.YamlMimeTypeForKind(content.Kind)
-			encoding.StyleForYAML(&node)
-			bytes, err = yaml.Marshal(&node)
-			if err != nil {
-				return err
-			}
-		} else {
-			mimeType = mime.MimeTypeForKind(content.Kind)
-			// Marshal the message struct to bytes.
-			bytes, err = proto.Marshal(m)
-			if err != nil {
-				return err
-			}
-		}
 	} else {
-		// If there was no struct defined for the type, marshal it struct as YAML
+		// Convert YAML to JSON for protojson
+		encoding.StyleForJSON(&content.Data)
+		j, err := yaml.Marshal(content.Data)
+		if err != nil {
+			return err
+		}
+		err = protojson.Unmarshal(j, msg)
+		if err != nil {
+			return err
+		}
 		mimeType = mime.MimeTypeForKind(content.Kind)
-		encoding.StyleForYAML(&content.Data)
-		bytes, err = yaml.Marshal(content.Data)
+		bytes, err = proto.Marshal(msg)
 		if err != nil {
 			return err
 		}
@@ -202,27 +167,6 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 		}
 	}
 	return nil
-}
-
-// populateIdAndKind inserts the "id" and "kind" fields in the supplied json bytes.
-func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
-	var jsonData map[string]interface{}
-	err := json.Unmarshal(bytes, &jsonData)
-	if err != nil {
-		return nil, err
-	}
-	if jsonData == nil {
-		return nil, errors.New("missing data")
-	}
-	jsonData["id"] = id
-	jsonData["kind"] = kind
-
-	rBytes, err := json.Marshal(jsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	return rBytes, nil
 }
 
 func UnmarshalContents(contents []byte, mimeType string, message proto.Message) error {
