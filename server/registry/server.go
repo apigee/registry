@@ -38,6 +38,7 @@ type Config struct {
 	LogFormat string
 	Notify    bool
 	ProjectID string
+	NoMigrate bool
 }
 
 // RegistryServer implements a Registry server.
@@ -74,6 +75,11 @@ func New(config Config) (*RegistryServer, error) {
 	}
 	if err := s.storageClient.EnsureTables(ctx); err != nil {
 		return nil, err
+	}
+	if !config.NoMigrate {
+		if err := s.storageClient.Migrate(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	if s.notifyEnabled {
