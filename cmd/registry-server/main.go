@@ -112,9 +112,10 @@ var config = ServerConfig{
 
 func main() {
 	var configPath string
-	var printVersion bool
+	var printVersion, noMigrate bool
 	pflag.StringVarP(&configPath, "configuration", "c", "", "The server configuration file to load.")
 	pflag.BoolVarP(&printVersion, "version", "v", false, "Emit version and exit")
+	pflag.BoolVar(&noMigrate, "no-migrate", false, "Disable database auto-migrate")
 	pflag.Parse()
 
 	if printVersion {
@@ -156,6 +157,7 @@ func main() {
 		LogFormat: config.Logging.Format,
 		Notify:    config.Pubsub.Enable,
 		ProjectID: config.Pubsub.Project,
+		NoMigrate: !noMigrate,
 	})
 	if err != nil {
 		logger.WithError(err).Fatalf("Failed to create registry server")
