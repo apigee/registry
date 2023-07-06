@@ -28,13 +28,13 @@ import (
 type Deployment struct {
 	Key                string    `gorm:"primaryKey"`
 	ProjectID          string    // Uniquely identifies a project.
-	ApiID              string    `gorm:"index"` // Uniquely identifies an api within a project.
-	DeploymentID       string    // Uniquely identifies a deployment within an api.
+	ApiID              string    `gorm:"index:latest"` // Uniquely identifies an api within a project.
+	DeploymentID       string    `gorm:"index:latest"` // Uniquely identifies a deployment within an api.
 	RevisionID         string    // Uniquely identifies a revision of a deployment.
 	DisplayName        string    // A human-friendly name.
 	Description        string    // A detailed description.
 	CreateTime         time.Time // Creation time.
-	RevisionCreateTime time.Time // Revision creation time.
+	RevisionCreateTime time.Time `gorm:"index:latest,sort:desc"` // Revision creation time.
 	RevisionUpdateTime time.Time // Time of last change.
 	ApiSpecRevision    string    // The spec being served by the deployment.
 	EndpointURI        string    // The address where the deployment is serving.
