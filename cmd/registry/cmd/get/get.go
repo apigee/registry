@@ -72,6 +72,7 @@ func Command() *cobra.Command {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 				Pattern:        pattern,
+				PageSize:       1000,
 				Filter:         filter,
 			}); err != nil {
 				if status.Code(err) == codes.NotFound {

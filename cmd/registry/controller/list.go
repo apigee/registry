@@ -22,19 +22,19 @@ type RegistryLister struct {
 }
 
 func (r *RegistryLister) ListAPIs(ctx context.Context, api names.Api, filter string, handler visitor.ApiHandler) error {
-	return visitor.ListAPIs(ctx, r.RegistryClient, api, filter, handler)
+	return visitor.ListAPIs(ctx, r.RegistryClient, api, 0, filter, handler)
 }
 
 func (r *RegistryLister) ListVersions(ctx context.Context, version names.Version, filter string, handler visitor.VersionHandler) error {
-	return visitor.ListVersions(ctx, r.RegistryClient, version, filter, handler)
+	return visitor.ListVersions(ctx, r.RegistryClient, version, 0, filter, handler)
 }
 
 func (r *RegistryLister) ListSpecs(ctx context.Context, spec names.Spec, filter string, handler visitor.SpecHandler) error {
-	return visitor.ListSpecs(ctx, r.RegistryClient, spec, filter, false, handler)
+	return visitor.ListSpecs(ctx, r.RegistryClient, spec, 0, filter, false, handler)
 }
 
 func (r *RegistryLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler visitor.ArtifactHandler) error {
-	return visitor.ListArtifacts(ctx, r.RegistryClient, artifact, filter, contents, handler)
+	return visitor.ListArtifacts(ctx, r.RegistryClient, artifact, 0, filter, contents, handler)
 }
 
 func listResources(ctx context.Context, client listingClient, pattern, filter string) ([]patterns.ResourceInstance, error) {

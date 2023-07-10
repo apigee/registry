@@ -40,10 +40,10 @@ func (v *SubtreeVisitor) ProjectHandler() ProjectHandler {
 		if err := v.Visitor.ProjectHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
-		if err := ListAPIs(ctx, v.Options.RegistryClient, name.Api("-"), v.Options.Filter, v.ApiHandler()); err != nil {
+		if err := ListAPIs(ctx, v.Options.RegistryClient, name.Api("-"), v.Options.PageSize, v.Options.Filter, v.ApiHandler()); err != nil {
 			return err
 		}
 		return nil
@@ -57,13 +57,13 @@ func (v *SubtreeVisitor) ApiHandler() ApiHandler {
 		if err := v.Visitor.ApiHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
-		if err := ListVersions(ctx, v.Options.RegistryClient, name.Version("-"), v.Options.Filter, v.VersionHandler()); err != nil {
+		if err := ListVersions(ctx, v.Options.RegistryClient, name.Version("-"), v.Options.PageSize, v.Options.Filter, v.VersionHandler()); err != nil {
 			return err
 		}
-		if err := ListDeployments(ctx, v.Options.RegistryClient, name.Deployment("-"), v.Options.Filter, v.DeploymentHandler()); err != nil {
+		if err := ListDeployments(ctx, v.Options.RegistryClient, name.Deployment("-"), v.Options.PageSize, v.Options.Filter, v.DeploymentHandler()); err != nil {
 			return err
 		}
 		return nil
@@ -77,10 +77,10 @@ func (v *SubtreeVisitor) VersionHandler() VersionHandler {
 		if err := v.Visitor.VersionHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
-		if err := ListSpecs(ctx, v.Options.RegistryClient, name.Spec("-"), v.Options.Filter, v.Options.GetContents, v.SpecHandler()); err != nil {
+		if err := ListSpecs(ctx, v.Options.RegistryClient, name.Spec("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.SpecHandler()); err != nil {
 			return err
 		}
 		return nil
@@ -94,7 +94,7 @@ func (v *SubtreeVisitor) DeploymentHandler() DeploymentHandler {
 		if err := v.Visitor.DeploymentHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
 		return nil
@@ -108,7 +108,7 @@ func (v *SubtreeVisitor) DeploymentRevisionHandler() DeploymentHandler {
 		if err := v.Visitor.DeploymentRevisionHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
 		return nil
@@ -122,7 +122,7 @@ func (v *SubtreeVisitor) SpecHandler() SpecHandler {
 		if err := v.Visitor.SpecHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
 		return nil
@@ -136,7 +136,7 @@ func (v *SubtreeVisitor) SpecRevisionHandler() SpecHandler {
 		if err := v.Visitor.SpecRevisionHandler()(ctx, message); err != nil {
 			return err
 		}
-		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
+		if err := ListArtifacts(ctx, v.Options.RegistryClient, name.Artifact("-"), v.Options.PageSize, v.Options.Filter, v.Options.GetContents, v.ArtifactHandler()); err != nil {
 			return err
 		}
 		return nil

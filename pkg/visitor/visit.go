@@ -40,6 +40,7 @@ type VisitorOptions struct {
 	RegistryClient  connection.RegistryClient
 	AdminClient     connection.AdminClient
 	Pattern         string
+	PageSize        int32
 	Filter          string
 	GetContents     bool
 	ImplicitProject *rpc.Project // used as placeholder if Project is unaccessible
@@ -51,43 +52,44 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	name := options.Pattern
 	ac := options.AdminClient
 	rc := options.RegistryClient
+	pageSize := options.PageSize
 
 	// First try to match collection names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
-		return ListProjects(ctx, ac, project, options.ImplicitProject, filter, v.ProjectHandler())
+		return ListProjects(ctx, ac, project, options.ImplicitProject, pageSize, filter, v.ProjectHandler())
 	} else if api, err := names.ParseApiCollection(name); err == nil {
-		return ListAPIs(ctx, rc, api, filter, v.ApiHandler())
+		return ListAPIs(ctx, rc, api, pageSize, filter, v.ApiHandler())
 	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
-		return ListDeployments(ctx, rc, deployment, filter, v.DeploymentHandler())
+		return ListDeployments(ctx, rc, deployment, pageSize, filter, v.DeploymentHandler())
 	} else if rev, err := names.ParseDeploymentRevisionCollection(name); err == nil {
-		return ListDeploymentRevisions(ctx, rc, rev, filter, v.DeploymentRevisionHandler())
+		return ListDeploymentRevisions(ctx, rc, rev, pageSize, filter, v.DeploymentRevisionHandler())
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
-		return ListVersions(ctx, rc, version, filter, v.VersionHandler())
+		return ListVersions(ctx, rc, version, pageSize, filter, v.VersionHandler())
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		return ListSpecs(ctx, rc, spec, filter, options.GetContents, v.SpecHandler())
+		return ListSpecs(ctx, rc, spec, pageSize, filter, options.GetContents, v.SpecHandler())
 	} else if rev, err := names.ParseSpecRevisionCollection(name); err == nil {
-		return ListSpecRevisions(ctx, rc, rev, filter, options.GetContents, v.SpecRevisionHandler())
+		return ListSpecRevisions(ctx, rc, rev, pageSize, filter, options.GetContents, v.SpecRevisionHandler())
 	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
-		return ListArtifacts(ctx, rc, artifact, filter, options.GetContents, v.ArtifactHandler())
+		return ListArtifacts(ctx, rc, artifact, pageSize, filter, options.GetContents, v.ArtifactHandler())
 	}
 	// Then try to match resource names containing wildcards, these also are treated as collections.
 	if strings.Contains(name, "/-") || strings.Contains(name, "@-") {
 		if project, err := names.ParseProject(name); err == nil {
-			return ListProjects(ctx, ac, project, options.ImplicitProject, filter, v.ProjectHandler())
+			return ListProjects(ctx, ac, project, options.ImplicitProject, pageSize, filter, v.ProjectHandler())
 		} else if api, err := names.ParseApi(name); err == nil {
-			return ListAPIs(ctx, rc, api, filter, v.ApiHandler())
+			return ListAPIs(ctx, rc, api, pageSize, filter, v.ApiHandler())
 		} else if deployment, err := names.ParseDeployment(name); err == nil {
-			return ListDeployments(ctx, rc, deployment, filter, v.DeploymentHandler())
+			return ListDeployments(ctx, rc, deployment, pageSize, filter, v.DeploymentHandler())
 		} else if rev, err := names.ParseDeploymentRevision(name); err == nil {
-			return ListDeploymentRevisions(ctx, rc, rev, filter, v.DeploymentRevisionHandler())
+			return ListDeploymentRevisions(ctx, rc, rev, pageSize, filter, v.DeploymentRevisionHandler())
 		} else if version, err := names.ParseVersion(name); err == nil {
-			return ListVersions(ctx, rc, version, filter, v.VersionHandler())
+			return ListVersions(ctx, rc, version, pageSize, filter, v.VersionHandler())
 		} else if spec, err := names.ParseSpec(name); err == nil {
-			return ListSpecs(ctx, rc, spec, filter, options.GetContents, v.SpecHandler())
+			return ListSpecs(ctx, rc, spec, pageSize, filter, options.GetContents, v.SpecHandler())
 		} else if rev, err := names.ParseSpecRevision(name); err == nil {
-			return ListSpecRevisions(ctx, rc, rev, filter, options.GetContents, v.SpecRevisionHandler())
+			return ListSpecRevisions(ctx, rc, rev, pageSize, filter, options.GetContents, v.SpecRevisionHandler())
 		} else if artifact, err := names.ParseArtifact(name); err == nil {
-			return ListArtifacts(ctx, rc, artifact, filter, options.GetContents, v.ArtifactHandler())
+			return ListArtifacts(ctx, rc, artifact, pageSize, filter, options.GetContents, v.ArtifactHandler())
 		}
 		return fmt.Errorf("unsupported pattern %+v", name)
 	}
