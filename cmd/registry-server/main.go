@@ -157,7 +157,7 @@ func main() {
 		LogFormat: config.Logging.Format,
 		Notify:    config.Pubsub.Enable,
 		ProjectID: config.Pubsub.Project,
-		NoMigrate: !noMigrate,
+		NoMigrate: noMigrate,
 	})
 	if err != nil {
 		logger.WithError(err).Fatalf("Failed to create registry server")
