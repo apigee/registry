@@ -195,7 +195,8 @@ func (c *Client) ensureForeignKeys(ctx context.Context) (err error) {
 				Where("spec_revision_tags.project_id = specs.project_id").
 				Where("spec_revision_tags.api_id = specs.api_id").
 				Where("spec_revision_tags.version_id = specs.version_id").
-				Where("spec_revision_tags.spec_id = specs.spec_id")).Error
+				Where("spec_revision_tags.spec_id = specs.spec_id").
+				Where("spec_revision_tags.revision_id = specs.revision_id")).Error
 	if err != nil {
 		return err
 	}
