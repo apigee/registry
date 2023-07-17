@@ -132,7 +132,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse spec name: %s", err)
 		}
 		count := 0
-		err = ListSpecs(ctx, registryClient, specName, "", true, func(ctx context.Context, spec *rpc.ApiSpec) error {
+		err = ListSpecs(ctx, registryClient, specName, 0, "", true, func(ctx context.Context, spec *rpc.ApiSpec) error {
 			count++
 			if !bytes.Equal(spec.Contents, specContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
@@ -167,7 +167,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse spec revision name: %s", err)
 		}
 		count := 0
-		err = ListSpecRevisions(ctx, registryClient, specRevisionName, "", true, func(ctx context.Context, spec *rpc.ApiSpec) error {
+		err = ListSpecRevisions(ctx, registryClient, specRevisionName, 0, "", true, func(ctx context.Context, spec *rpc.ApiSpec) error {
 			count++
 			if !bytes.Equal(spec.Contents, specContents) {
 				t.Fatalf("Fetched unexpected spec contents: wanted %q got %q", specContents, spec.Contents)
@@ -202,7 +202,7 @@ func TestFetch(t *testing.T) {
 			t.Fatalf("Failed to parse artifact name: %s", err)
 		}
 		count := 0
-		err = ListArtifacts(ctx, registryClient, artifactName, "", true, func(ctx context.Context, artifact *rpc.Artifact) error {
+		err = ListArtifacts(ctx, registryClient, artifactName, 0, "", true, func(ctx context.Context, artifact *rpc.Artifact) error {
 			count++
 			if string(artifact.Contents) != artifactContents {
 				t.Fatalf("Fetched unexpected artifact contents: wanted %q got %q", artifactContents, artifact.Contents)

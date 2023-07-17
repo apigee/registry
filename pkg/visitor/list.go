@@ -33,6 +33,7 @@ func ListProjects(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
 	implicitProject *rpc.Project,
+	pageSize int32,
 	filter string,
 	handler ProjectHandler) error {
 	if id := name.ProjectID; id != "" && id != "-" {
@@ -43,7 +44,8 @@ func ListProjects(ctx context.Context,
 	}
 
 	it := client.ListProjects(ctx, &rpc.ListProjectsRequest{
-		Filter: filter,
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil && status.Code(err) == codes.Unimplemented && implicitProject != nil {
@@ -66,6 +68,7 @@ func ListProjects(ctx context.Context,
 func ListAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Api,
+	pageSize int32,
 	filter string,
 	handler ApiHandler) error {
 	if id := name.ApiID; id != "" && id != "-" {
@@ -76,8 +79,9 @@ func ListAPIs(ctx context.Context,
 	}
 
 	it := client.ListApis(ctx, &rpc.ListApisRequest{
-		Parent: name.Parent(),
-		Filter: filter,
+		Parent:   name.Parent(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
@@ -94,6 +98,7 @@ func ListAPIs(ctx context.Context,
 func ListDeployments(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Deployment,
+	pageSize int32,
 	filter string,
 	handler DeploymentHandler) error {
 	if id := name.DeploymentID; id != "" && id != "-" {
@@ -104,8 +109,9 @@ func ListDeployments(ctx context.Context,
 	}
 
 	it := client.ListApiDeployments(ctx, &rpc.ListApiDeploymentsRequest{
-		Parent: name.Parent(),
-		Filter: filter,
+		Parent:   name.Parent(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
@@ -122,10 +128,13 @@ func ListDeployments(ctx context.Context,
 func ListDeploymentRevisions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.DeploymentRevision,
+	pageSize int32,
 	filter string,
 	handler DeploymentHandler) error {
 	it := client.ListApiDeploymentRevisions(ctx, &rpc.ListApiDeploymentRevisionsRequest{
-		Name: name.String(),
+		Name:     name.String(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
@@ -141,6 +150,7 @@ func ListDeploymentRevisions(ctx context.Context,
 func ListVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
+	pageSize int32,
 	filter string,
 	handler VersionHandler) error {
 	if id := name.VersionID; id != "" && id != "-" {
@@ -151,8 +161,9 @@ func ListVersions(ctx context.Context,
 	}
 
 	it := client.ListApiVersions(ctx, &rpc.ListApiVersionsRequest{
-		Parent: name.Parent(),
-		Filter: filter,
+		Parent:   name.Parent(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
@@ -169,6 +180,7 @@ func ListVersions(ctx context.Context,
 func ListSpecs(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Spec,
+	pageSize int32,
 	filter string,
 	getContents bool,
 	handler SpecHandler) error {
@@ -180,8 +192,9 @@ func ListSpecs(ctx context.Context,
 	}
 
 	it := client.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{
-		Parent: name.Parent(),
-		Filter: filter,
+		Parent:   name.Parent(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
@@ -216,11 +229,14 @@ func ListSpecs(ctx context.Context,
 func ListSpecRevisions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.SpecRevision,
+	pageSize int32,
 	filter string,
 	getContents bool,
 	handler SpecHandler) error {
 	it := client.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
-		Name: name.String(),
+		Name:     name.String(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
@@ -255,6 +271,7 @@ func ListSpecRevisions(ctx context.Context,
 func ListArtifacts(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Artifact,
+	pageSize int32,
 	filter string,
 	getContents bool,
 	handler ArtifactHandler) error {
@@ -266,8 +283,9 @@ func ListArtifacts(ctx context.Context,
 	}
 
 	it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{
-		Parent: name.Parent(),
-		Filter: filter,
+		Parent:   name.Parent(),
+		PageSize: pageSize,
+		Filter:   filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {

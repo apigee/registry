@@ -61,7 +61,7 @@ var requiredArtifacts = &lint.ProjectRule{
 		}
 		projectName, _ := names.ParseProject(a.GetName())
 		var probs []*check.Problem
-		if err := visitor.ListArtifacts(ctx, client, projectName.Artifact("-"), filter, true, func(ctx context.Context, a *rpc.Artifact) error {
+		if err := visitor.ListArtifacts(ctx, client, projectName.Artifact("-"), 0, filter, true, func(ctx context.Context, a *rpc.Artifact) error {
 			found[a.GetName()] = true
 
 			name, _ := names.ParseArtifact(a.GetName())

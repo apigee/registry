@@ -61,12 +61,12 @@ func Command() *cobra.Command {
 
 			specs := make([]*rpc.ApiSpec, 0)
 			if name.RevisionID == "" {
-				err = visitor.ListSpecs(ctx, client, name.Spec(), filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecs(ctx, client, name.Spec(), 0, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					specs = append(specs, spec)
 					return nil
 				})
 			} else {
-				err = visitor.ListSpecRevisions(ctx, client, name, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
+				err = visitor.ListSpecRevisions(ctx, client, name, 0, filter, false, func(ctx context.Context, spec *rpc.ApiSpec) error {
 					specs = append(specs, spec)
 					return nil
 				})
@@ -76,7 +76,7 @@ func Command() *cobra.Command {
 			}
 
 			guides := make([]*style.StyleGuide, 0)
-			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
+			if err := visitor.ListArtifacts(ctx, client, name.Project().Artifact("-"), 0, styleguideFilter, true, func(ctx context.Context, artifact *rpc.Artifact) error {
 				guide := new(style.StyleGuide)
 				if err := patch.UnmarshalContents(artifact.GetContents(), artifact.GetMimeType(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())

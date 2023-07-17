@@ -28,5 +28,5 @@ func (r *RegistryArtifactClient) SetArtifact(ctx context.Context, artifact *rpc.
 }
 
 func (r *RegistryArtifactClient) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler visitor.ArtifactHandler) error {
-	return visitor.ListArtifacts(ctx, r.RegistryClient, artifact, filter, contents, handler)
+	return visitor.ListArtifacts(ctx, r.RegistryClient, artifact, 0, filter, contents, handler)
 }
