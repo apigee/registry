@@ -56,6 +56,16 @@ func Command() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			// default output
+			if output == "" {
+				if nested {
+					output = "yaml"
+				} else {
+					output = "name"
+				}
+			}
+
 			if nested && output != "yaml" {
 				return errors.New("--nested is only supported for yaml output")
 			}
@@ -92,7 +102,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
-	cmd.Flags().StringVarP(&output, "output", "o", "name", "output type (name|yaml|contents)")
+	cmd.Flags().StringVarP(&output, "output", "o", "", "output type (name|yaml|contents)")
 	cmd.Flags().BoolVar(&nested, "nested", false, "include nested subresources in YAML output")
 	return cmd
 }
