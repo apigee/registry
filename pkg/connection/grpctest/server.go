@@ -186,13 +186,19 @@ func NewServer(rc registry.Config) (*Server, error) {
 
 	// set registry configuration to use test server
 	addr := fmt.Sprintf("localhost:%d", s.Port())
-	config, err := connection.ActiveConfig()
+	conf, err := connection.ActiveConfig()
 	if err != nil {
-		return nil, err
+		if ve, ok := err.(config.ValidationError); ok {
+			if ve.Field != "registry.address" {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
-	config.Insecure = true
-	config.Address = addr
-	connection.SetConfig(config)
+	conf.Insecure = true
+	conf.Address = addr
+	connection.SetConfig(conf)
 
 	return s, nil
 }
