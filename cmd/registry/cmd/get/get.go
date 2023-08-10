@@ -40,7 +40,49 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get PATTERN",
 		Short: "Get resources from the API Registry",
-		Args:  cobra.ExactArgs(1),
+		Long: `Get resources from the API Registry.
+The PATTERN of an entity must be begin with "project" or "apis" and must match
+one of the following qualitied name patterns:
+
+- apis/NAME
+- apis/NAME/artifacts/NAME
+- apis/NAME/versions/NAME
+- apis/NAME/versions/NAME/specs/NAME[@REVISION]
+- apis/NAME/versions/NAME/specs/NAME[@REVISION]/artifacts/NAME
+- apis/NAME/deployments/NAME[@REVISION]/artifacts/NAME
+
+In each case, a prefix of "project/NAME/locations/global/" is allowed but
+not required, as it is assumed from the configuration.
+
+The /NAME is an optional suffix. If not present, all entities of that
+type are returned. A dash (-) may be also be used as a wildcard for
+the complete NAME - either within a PATTERN or as a suffix.
+The @REVISION is optional on Specs or Deployments. If missing, the latest
+revision will be returned. A dash may also be used for REVISION
+as a wildcard. Partial values with a wildcard are not supported.
+
+The output from this command is always a single type of entity. By default, 
+it generates a simple text-based list of fully-qualified names. 
+The "--output yaml" or "--nested" parameters will generate a single top-level
+YAML element, either the entity itself or an array named "items" that contains
+the entities. In addition, if "--nested" is specified, each returned YAML 
+element will recursively include all sub-elements within its YAML.
+
+Examples:
+
+Retrieve the names of all apis:
+
+	registry get apis
+
+Retrieve YAML for the latest revision of all specs named "openapi":
+
+	registry get --output yaml apis/-/versions/-/specs/openapi
+
+Retrieve YAML for all deployment revisions of the "bookstore" api:
+
+	registry get --output yaml apis/bookstore/deployments/-@-
+`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
