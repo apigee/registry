@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/datatypes"
 )
 
 // Api is the storage-side representation of an API.
@@ -35,8 +36,8 @@ type Api struct {
 	Availability          string    // Availability of the API.
 	RecommendedVersion    string    // Recommended API version.
 	RecommendedDeployment string    // Recommended API deployment.
-	Labels                []byte    // Serialized labels.
-	Annotations           []byte    // Serialized annotations.
+	Labels                datatypes.JSON
+	Annotations           []byte // Serialized annotations.
 	ParentProjectKey      string
 	ParentProject         *Project `gorm:"foreignKey:ParentProjectKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
@@ -57,7 +58,7 @@ func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
 		ParentProjectKey:      name.Project().String(),
 	}
 
-	api.Labels, err = bytesForMap(body.GetLabels())
+	api.Labels, err = jbytesForMap(body.GetLabels())
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 		UpdateTime:            timestamppb.New(api.UpdateTime),
 	}
 
-	message.Labels, err = api.LabelsMap()
+	message.Labels, err = jmapForBytes(api.Labels)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +122,7 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 			api.RecommendedDeployment = message.GetRecommendedDeployment()
 		case "labels":
 			var err error
-			if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+			if api.Labels, err = jbytesForMap(message.GetLabels()); err != nil {
 				return err
 			}
 		case "annotations":
@@ -133,9 +134,4 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 	}
 
 	return nil
-}
-
-// LabelsMap returns a map representation of stored labels.
-func (api *Api) LabelsMap() (map[string]string, error) {
-	return mapForBytes(api.Labels)
 }
