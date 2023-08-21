@@ -17,6 +17,7 @@ package visitor
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/compress"
 	"github.com/apigee/registry/gapic"
@@ -132,7 +133,8 @@ func ListDeploymentRevisions(ctx context.Context,
 	filter string,
 	handler DeploymentHandler) error {
 	it := client.ListApiDeploymentRevisions(ctx, &rpc.ListApiDeploymentRevisionsRequest{
-		Name:     name.String(),
+		// "@-" indicates a collection of revisions, but we only want to send the resource name to the List RPC.
+		Name:     strings.TrimSuffix(name.String(), "@-"),
 		PageSize: pageSize,
 		Filter:   filter,
 	})
@@ -234,7 +236,8 @@ func ListSpecRevisions(ctx context.Context,
 	getContents bool,
 	handler SpecHandler) error {
 	it := client.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
-		Name:     name.String(),
+		// "@-" indicates a collection of revisions, but we only want to send the resource name to the List RPC.
+		Name:     strings.TrimSuffix(name.String(), "@-"),
 		PageSize: pageSize,
 		Filter:   filter,
 	})
