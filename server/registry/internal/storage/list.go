@@ -327,7 +327,8 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	op := c.db.WithContext(ctx).
-		Limit(limit(opts))
+		Offset(token.Offset).
+		Limit(int(opts.Size) + 1) // + 1 to determine if next page
 
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
@@ -340,6 +341,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	if err != nil {
 		return ApiList{}, err
 	}
+	op = op.Where(filter.SQL)
 
 	if order, err := gormOrdering(opts.Order, "apis"); err != nil {
 		return ApiList{}, err
@@ -348,70 +350,24 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	response := ApiList{
-		Apis: make([]models.Api, 0, opts.Size),
+		Apis: make([]models.Api, 0, limit(opts)),
 	}
 
-	for {
-		var page []models.Api
-		err := op.Offset(token.Offset).Find(&page).Error
-
-		if err != nil {
-			return ApiList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
-		} else if len(page) == 0 {
-			break
-		}
-
-		for _, v := range page {
-			m, err := apiMap(v)
-			if err != nil {
-				return ApiList{}, status.Error(codes.Internal, err.Error())
-			}
-
-			match, err := filter.Matches(m)
-			if err != nil {
-				return ApiList{}, err
-			} else if !match {
-				token.Offset++
-				continue
-			}
-
-			if len(response.Apis) == int(opts.Size) {
-				response.Token, err = encodeToken(token)
-				if err != nil {
-					return ApiList{}, status.Error(codes.Internal, err.Error())
-				}
-				return response, nil
-			}
-
-			token.Offset++
-			response.Apis = append(response.Apis, v)
-		}
-		if op.RowsAffected < int64(opts.Size) {
-			break
-		}
-	}
-
-	return response, nil
-}
-
-func apiMap(api models.Api) (map[string]interface{}, error) {
-	labels, err := api.LabelsMap()
+	op = op.Find(&response.Apis)
+	err = op.Error
 	if err != nil {
-		return nil, err
+		return ApiList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 	}
 
-	return map[string]interface{}{
-		"name":                api.Name(),
-		"project_id":          api.ProjectID,
-		"api_id":              api.ApiID,
-		"display_name":        api.DisplayName,
-		"description":         api.Description,
-		"create_time":         api.CreateTime,
-		"update_time":         api.UpdateTime,
-		"availability":        api.Availability,
-		"recommended_version": api.RecommendedVersion,
-		"labels":              labels,
-	}, nil
+	if op.RowsAffected > int64(opts.Size) {
+		token.Offset = token.Offset + int(opts.Size)
+		response.Token, err = encodeToken(token)
+		if err != nil {
+			return ApiList{}, status.Error(codes.Internal, err.Error())
+		}
+		response.Apis = response.Apis[0:opts.Size]
+	}
+	return response, nil
 }
 
 // VersionList contains a page of version resources.

@@ -15,6 +15,8 @@
 package models
 
 import (
+	"encoding/json"
+
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -29,4 +31,19 @@ func mapForBytes(b []byte) (map[string]string, error) {
 		return nil, err
 	}
 	return m.Entries, nil
+}
+
+func jbytesForMap(entries map[string]string) ([]byte, error) {
+	if entries == nil {
+		entries = map[string]string{}
+	}
+	return json.Marshal(entries)
+}
+
+func jmapForBytes(b []byte) (map[string]string, error) {
+	m := map[string]string{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }

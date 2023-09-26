@@ -15,13 +15,15 @@
 package filtering
 
 import (
+	"strings"
+
+	"github.com/cockscomb/cel2sql"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 type FieldType int
@@ -35,6 +37,7 @@ const (
 
 type Filter struct {
 	program cel.Program
+	SQL     string
 }
 
 func (f *Filter) Matches(model map[string]interface{}) (bool, error) {
@@ -91,5 +94,12 @@ func NewFilter(filter string, fields map[string]FieldType) (Filter, error) {
 		return Filter{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return Filter{program: prg}, nil
+	sqlCondition, err := cel2sql.Convert(ast)
+	if err != nil {
+		return Filter{}, status.Error(codes.InvalidArgument, err.Error())
+	}
+	// TODO: quick hack to adjust field name
+	sqlCondition = strings.ReplaceAll(sqlCondition, "name", "key")
+
+	return Filter{program: prg, SQL: sqlCondition}, nil
 }
