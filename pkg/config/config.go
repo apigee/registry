@@ -37,7 +37,7 @@ var (
 	// `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
 	Flags *pflag.FlagSet = CreateFlagSet()
 
-	// Directory is $HOME/config/registry
+	// Directory is $HOME/.config/registry
 	Directory             string
 	ErrCannotDeleteActive = fmt.Errorf("cannot delete active configuration")
 	ErrReservedConfigName = fmt.Errorf("%q is reserved", ActivePointerFilename)
@@ -99,10 +99,6 @@ func ValidateName(name string) error {
 	}
 	if name == ActivePointerFilename {
 		return ErrReservedConfigName
-	}
-
-	if dir, _ := filepath.Split(name); dir != "" {
-		return fmt.Errorf("%q must not include a path", name)
 	}
 	return nil
 }
@@ -199,9 +195,10 @@ func ReadValid(name string) (c Configuration, err error) {
 }
 
 // Read loads a Configuration from yaml file matching `name`. If name
-// contains a path, the file will be read from that path, otherwise
-// the path is assumed as: ~/.config/registry. Does a simple read from the
-// file: does not bind to env vars or flags, resolve, or validate.
+// contains a path or refers to a local file, the file will be read
+// using name, otherwise the path is assumed as: ~/.config/registry.
+// Does a simple read from the file: does not bind to env vars or flags,
+// resolve, or validate.
 // See also: ReadValid()
 func Read(name string) (c Configuration, err error) {
 	if err = ValidateName(name); err != nil {
@@ -210,7 +207,11 @@ func Read(name string) (c Configuration, err error) {
 
 	dir, file := filepath.Split(name)
 	if dir == "" {
-		name = filepath.Join(Directory, file)
+		// If name refers to a local file, preferentially read the local file.
+		// Otherwise assume name refers to a file in the config directory.
+		if info, err := os.Stat(file); errors.Is(err, os.ErrNotExist) || info.IsDir() {
+			name = filepath.Join(Directory, file)
+		}
 	}
 	var r io.Reader
 	if r, err = os.Open(name); err != nil {
