@@ -15,6 +15,7 @@
 package config_test
 
 import (
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,6 +25,7 @@ import (
 	"github.com/apigee/registry/pkg/config"
 	"github.com/apigee/registry/pkg/config/test"
 	"github.com/google/go-cmp/cmp"
+	"gopkg.in/yaml.v2"
 )
 
 func TestMissingDirectory(t *testing.T) {
@@ -474,5 +476,42 @@ func TestResolve(t *testing.T) {
 
 	if c.Registry.Token != "hello" {
 		t.Errorf("want: %s, got: %s", "hello", c.Registry.Token)
+	}
+}
+
+func TestReadExternalFile(t *testing.T) {
+	c := config.Configuration{
+		Registry: config.Registry{Address: "example.com:443"},
+	}
+	bytes, err := yaml.Marshal(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.CreateTemp(".", "tmpfile-")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err = f.Write(bytes); err != nil {
+		log.Fatal(err)
+	}
+	if err = f.Close(); err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	// Verify that we can read a file using its full path name.
+	c2, err := config.Read(f.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c2.Registry.Address != c.Registry.Address {
+		t.Errorf("want: %s, got: %s", c2.Registry.Address, c.Registry.Address)
+	}
+	// Verify that we can read a local file using its base name.
+	c3, err := config.Read(filepath.Base(f.Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c3.Registry.Address != c.Registry.Address {
+		t.Errorf("want: %s, got: %s", c3.Registry.Address, c.Registry.Address)
 	}
 }
