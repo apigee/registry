@@ -514,4 +514,21 @@ func TestReadExternalFile(t *testing.T) {
 	if c3.Registry.Address != c.Registry.Address {
 		t.Errorf("want: %s, got: %s", c3.Registry.Address, c.Registry.Address)
 	}
+	// Repeat the above with config.ReadValid
+	// Verify that we can read a file using its full path name.
+	c4, err := config.ReadValid(f.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c4.Registry.Address != c.Registry.Address {
+		t.Errorf("want: %s, got: %s", c4.Registry.Address, c.Registry.Address)
+	}
+	// Verify that we can read a local file using its base name.
+	c5, err := config.ReadValid(filepath.Base(f.Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c5.Registry.Address != c.Registry.Address {
+		t.Errorf("want: %s, got: %s", c5.Registry.Address, c.Registry.Address)
+	}
 }
