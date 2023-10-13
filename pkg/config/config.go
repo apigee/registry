@@ -161,7 +161,11 @@ func ReadValid(name string) (c Configuration, err error) {
 	var r io.Reader = &bytes.Buffer{}
 	if file != "" {
 		if dir == "" {
-			name = filepath.Join(Directory, file)
+			// If name refers to a local file, preferentially read the local file.
+			// Otherwise assume name refers to a file in the config directory.
+			if info, err := os.Stat(file); errors.Is(err, os.ErrNotExist) || info.IsDir() {
+				name = filepath.Join(Directory, file)
+			}
 		}
 		r, err = os.Open(name)
 		if err != nil {
