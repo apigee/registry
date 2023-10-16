@@ -46,12 +46,17 @@ func ActiveConfig() (Config, error) {
 		return *active, nil
 	}
 
-	name, err := config.ActiveName()
+	c, err := config.Active()
 	if err != nil {
 		return Config{}, err
 	}
-
-	return ReadConfig(name)
+	return Config{
+		Address:  c.Registry.Address,
+		Insecure: c.Registry.Insecure,
+		Location: c.Registry.Location,
+		Project:  c.Registry.Project,
+		Token:    c.Registry.Token,
+	}, nil
 }
 
 // Reads a Config from a file. If name is empty, no
