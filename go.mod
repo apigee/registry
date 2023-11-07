@@ -19,11 +19,11 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
 	github.com/yoheimuta/go-protoparser/v4 v4.6.0
-	golang.org/x/oauth2 v0.6.0
+	golang.org/x/oauth2 v0.7.0
 	google.golang.org/api v0.114.0
-	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683
-	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.29.1
+	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
+	google.golang.org/grpc v1.56.3
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.3.10
 	gorm.io/driver/sqlite v1.4.3
@@ -32,9 +32,9 @@ require (
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
-	cloud.google.com/go/compute v1.18.0 // indirect
+	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v0.12.0 // indirect
+	cloud.google.com/go/iam v0.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
