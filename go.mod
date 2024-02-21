@@ -23,7 +23,7 @@ require (
 	google.golang.org/api v0.114.0
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
 	google.golang.org/grpc v1.56.3
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.3.10
 	gorm.io/driver/sqlite v1.4.3
@@ -67,7 +67,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/lib/pq v1.10.7
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/mattn/go-sqlite3 v1.14.15
+	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pkg/errors v0.9.1
