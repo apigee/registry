@@ -229,8 +229,6 @@ func TestArtifactStorage(t *testing.T) {
 		}
 
 		want := &apihub.Lifecycle{
-			Id:          "lifecycle", // deprecated field
-			Kind:        "Lifecycle", // deprecated field
 			DisplayName: "Lifecycle",
 			Description: "A series of stages that an API typically moves through in its lifetime",
 			Stages: []*apihub.Lifecycle_Stage{

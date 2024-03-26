@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"))
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s') || mime_type.contains('%s')", mime.MimeTypeForKind("StyleGuide"), mime.YamlMimeTypeForKind("StyleGuide"))
 
 func Command() *cobra.Command {
 	var filter string
@@ -82,6 +82,11 @@ func Command() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
 					return nil
 				}
+				name, err := names.ParseArtifact(artifact.GetName())
+				if err != nil {
+					return err
+				}
+				guide.Id = name.ArtifactID()
 				guides = append(guides, guide)
 				return nil
 			}); err != nil {
