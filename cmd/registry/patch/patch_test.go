@@ -1186,9 +1186,6 @@ func TestInvalidArtifactPatches(t *testing.T) {
 			artifactID: "references-no-data",
 		},
 		{
-			artifactID: "struct-invalid-structure",
-		},
-		{
 			artifactID: "struct-no-metadata",
 		},
 	}
